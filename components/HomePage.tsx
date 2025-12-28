@@ -73,7 +73,7 @@ const TopClientsChart = ({ data }: { data: { name: string; value: number }[] }) 
                         const heightPx = Math.max((item.value / maxValue) * 224, 25);
                         return (
                             <div key={index} className="flex-1 flex flex-col justify-end group relative min-w-[40px]">
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-slate-900 text-white text-xs rounded py-1 px-2 shadow-lg"><b>{item.name}</b>: {item.value.toLocaleString()} Dh</div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-slate-900 text-white text-xs rounded py-1 px-2 shadow-lg"><b>{item.name}</b>: {item.value.toLocaleString()} MAD</div>
                                 <div className="w-full bg-blue-600 dark:bg-blue-500 rounded-t hover:bg-blue-700 transition-all duration-200 cursor-pointer" style={{ height: `${heightPx}px` }}></div>
                             </div>
                         );
@@ -91,8 +91,8 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, content,
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                    <div className="flex items-center gap-3"><div className="p-2 bg-indigo-100 rounded-lg"><SparklesIcon className="w-6 h-6 text-indigo-600" /></div><div><h3 className="text-heading">Analyse intelligente</h3></div></div>
-                    <div className="flex gap-2"><button onClick={() => onLanguageChange('fr')} className={`px-3 py-1 text-xs rounded ${language === 'fr' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>Fr</button><button onClick={() => onLanguageChange('ar')} className={`px-3 py-1 text-xs rounded ${language === 'ar' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>Ar</button><button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><XMarkIcon className="w-6 h-6 text-slate-400" /></button></div>
+                    <div className="flex items-center gap-3"><div className="p-2 bg-indigo-100 rounded-lg"><SparklesIcon className="w-6 h-6 text-indigo-600" /></div><div><h3 className="text-heading">Analyse Intelligente</h3></div></div>
+                    <div className="flex gap-2"><button onClick={() => onLanguageChange('fr')} className={`px-3 py-1 text-xs rounded ${language === 'fr' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>FR</button><button onClick={() => onLanguageChange('ar')} className={`px-3 py-1 text-xs rounded ${language === 'ar' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>AR</button><button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><XMarkIcon className="w-6 h-6 text-slate-400" /></button></div>
                 </div>
                 <div className="p-6 overflow-y-auto flex-1">{isLoading ? <div className="flex flex-col items-center justify-center py-12"><SpinnerIcon className="w-10 h-10 text-indigo-600 animate-spin mb-4" /><p>Analyse en cours...</p></div> : <div className="prose dark:prose-invert max-w-none text-std leading-relaxed" dir={language === 'ar' ? 'rtl' : 'ltr'} dangerouslySetInnerHTML={{ __html: content }} />}</div>
                 <div className="p-4 border-t border-slate-100 flex justify-end"><button onClick={onClose} className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg">Fermer</button></div>
@@ -129,6 +129,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
         const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
+        // حساب تاريخ أول تسجيل لكل عميل
         const firstRegistrationDates = new Map<string, number>();
         stores.forEach(s => {
             const name = s.Magazin.trim().toLowerCase();
@@ -150,7 +151,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             const day = now.getDay();
             start = new Date(startOfToday); start.setDate(start.getDate() - day);
             end = now;
-            prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
+            prevStart = new Date(start); prevStart.setDate(start.getDate() - 7);
             prevEnd = start;
         } else if (selectedPeriod === 'Ce mois') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -169,6 +170,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             let rev = 0, qty = 0, buys = 0, revisits = 0, count = 0;
             const newClientsInPeriod = new Set<string>();
 
+            // حساب العملاء الجدد في الفترة المختارة
             firstRegistrationDates.forEach((regDate, name) => {
                 if (regDate >= s.getTime() && regDate <= e.getTime() && regDate >= thirtyDaysAgo.getTime()) {
                     newClientsInPeriod.add(name);
@@ -252,7 +254,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: `Analyste commercial expert. Analyse HTML/Tailwind basée sur: ${JSON.stringify(stats.userStats)}. Langue: ${lang}` });
             setAnalysisResult(response.text);
-        } catch (e) { setAnalysisResult('<p class="text-red-500">Erreur Ai</p>'); }
+        } catch (e) { setAnalysisResult('<p class="text-red-500">Erreur AI</p>'); }
         finally { setIsAnalyzing(false); }
     };
 
@@ -262,7 +264,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-heading text-3xl">Tableau de bord global</h1>
+                    <h1 className="text-heading text-3xl">Tableau de Bord Global</h1>
                     <p className="text-std mt-1">Données consolidées ({selectedPeriod})</p>
                 </div>
                 
@@ -286,8 +288,8 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={<CurrencyDollarIcon className="w-6 h-6" />} title="Ventes (Dh)" value={`${stats.revenue.toLocaleString()} Dh`} color="green" trend={stats.revenueTrend.val} trendDirection={stats.revenueTrend.dir} subtext={`Volume sur ${selectedPeriod}`} />
-                <StatCard icon={<UsersIcon className="w-6 h-6" />} title="Nouveaux clients" value={stats.newClientsCount} color="blue" subtext="Enregistrés (< 30j)" />
+                <StatCard icon={<CurrencyDollarIcon className="w-6 h-6" />} title="Ventes (DH)" value={`${stats.revenue.toLocaleString()} DH`} color="green" trend={stats.revenueTrend.val} trendDirection={stats.revenueTrend.dir} subtext={`Volume sur ${selectedPeriod}`} />
+                <StatCard icon={<UsersIcon className="w-6 h-6" />} title="Nouveaux Clients" value={stats.newClientsCount} color="blue" subtext="Enregistrés (< 30j)" />
                 <StatCard icon={<ChartBarIcon className="w-6 h-6" />} title="Articles" value={stats.totalQuantity} color="purple" trend={stats.quantityTrend.val} trendDirection={stats.quantityTrend.dir} subtext={`Pièces sur ${selectedPeriod}`} />
                 <StatCard icon={<CalendarDaysIcon className="w-6 h-6" />} title="Planning" value={stats.upcomingAppointmentsCount} color="amber" subtext="Rendez-vous futurs" />
             </div>
@@ -296,7 +298,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h3 className="text-heading mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><TagIcon className="w-4 h-4 text-rose-500" /> Segmentation</h3>
                     <div className="space-y-4">
-                        <ProgressBar label="Haute gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" />
+                        <ProgressBar label="Haute Gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" />
                         <ProgressBar label="Haute/Moyenne" count={stats.gamme.mixte} total={stats.gamme.total} colorClass="bg-blue-500" />
                         <ProgressBar label="Moyenne" count={stats.gamme.moyenne} total={stats.gamme.total} colorClass="bg-amber-500" />
                     </div>
@@ -314,7 +316,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                     <div className="space-y-6 text-sm font-medium">
                         <div className="flex justify-between"><span>Ventes</span><span className="font-bold text-emerald-600">{stats.actions.buy}</span></div>
                         <div className="flex justify-between"><span>En attente</span><span className="font-bold text-amber-500">{stats.actions.revisit}</span></div>
-                        <div className="pt-6 border-t text-center"><p className="text-sub text-[10px]">Taux de succès</p><p className="text-3xl font-black">{((stats.actions.buy / (stats.totalLeads || 1)) * 100).toFixed(1)}%</p></div>
+                        <div className="pt-6 border-t text-center"><p className="text-sub uppercase text-[10px]">Taux de succès</p><p className="text-3xl font-black">{((stats.actions.buy / (stats.totalLeads || 1)) * 100).toFixed(1)}%</p></div>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 p-6">
@@ -322,7 +324,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                     <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                         {stats.userStats.map(u => (
                             <div key={u.name} className="text-xs">
-                                <div className="flex justify-between font-bold mb-1"><span>{u.name}</span><span>{u.revenue.toLocaleString()} Dh</span></div>
+                                <div className="flex justify-between font-bold mb-1"><span>{u.name}</span><span>{u.revenue.toLocaleString()} DH</span></div>
                                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div className="bg-indigo-500 h-full" style={{ width: `${u.conversion}%` }}></div></div>
                             </div>
                         ))}
@@ -331,7 +333,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             </div>
 
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 p-8">
-                <h3 className="text-heading mb-8 flex items-center gap-2"><SparklesIcon className="w-6 h-6 text-yellow-500" /> Ventes par client ({selectedPeriod})</h3>
+                <h3 className="text-heading mb-8 flex items-center gap-2"><SparklesIcon className="w-6 h-6 text-yellow-500" /> Ventes par Client ({selectedPeriod})</h3>
                 <TopClientsChart data={stats.topClients} />
             </div>
         </div>

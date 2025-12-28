@@ -11,7 +11,6 @@ import ChevronLeftIcon from '../icons/ChevronLeftIcon.tsx';
 import ChevronRightIcon from '../icons/ChevronRightIcon.tsx';
 import EllipsisVerticalIcon from '../icons/EllipsisVerticalIcon.tsx';
 import SpinnerIcon from '../icons/SpinnerIcon.tsx';
-import ClockIcon from '../icons/ClockIcon.tsx';
 import NewAppointmentModal from '../NewAppointmentModal.tsx';
 import QuickLogModal from '../QuickLogModal.tsx';
 import EditVisitModal from '../EditVisitModal.tsx';
@@ -32,23 +31,6 @@ const FilterIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
     </svg>
-);
-
-const AdminStatCard: React.FC<{ title: string, count: number | string, icon: React.ReactNode, subtext?: string, iconColorClass?: string }> = ({ title, count, icon, subtext, iconColorClass }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 relative">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-2.5 rounded-lg text-slate-600 dark:text-slate-300 ${iconColorClass || 'bg-slate-50 dark:bg-slate-700/50'}`}>
-                {icon}
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 opacity-0">0%</span>
-        </div>
-        <div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">{count}</h3>
-            <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">{title}</p>
-            <p className="text-[10px] text-slate-400 font-bold mt-0.5">{subtext}</p>
-            <p className="text-[10px] text-slate-400 mt-2">Vs période précédente</p>
-        </div>
-    </div>
 );
 
 type TimePeriod = 'today' | 'thisWeek' | 'nextWeek' | 'thisMonth' | 'nextMonth' | 'calendar';
@@ -96,26 +78,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
 
   const users = useMemo(() => Array.from(new Set(allAppointments.map(a => a.user))).sort(), [allAppointments]);
   const cities = useMemo(() => Array.from(new Set(allAppointments.map(a => a.city))).sort(), [allAppointments]);
-
-  const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const endOfWeek = new Date(today);
-    endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
-    
-    return {
-        total: allAppointments.length,
-        today: allAppointments.filter(a => {
-            const d = new Date(a.date);
-            d.setHours(0,0,0,0);
-            return d.getTime() === today.getTime();
-        }).length,
-        thisWeek: allAppointments.filter(a => {
-            const d = new Date(a.date);
-            return d >= today && d <= endOfWeek;
-        }).length
-    };
-  }, [allAppointments]);
 
   const filteredAppointments = useMemo(() => {
     return allAppointments.filter(a => {
@@ -165,6 +127,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
         end = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
         break;
       case 'calendar': {
+        // FIX: تم تعديل المنطق ليعرض اليوم المحدد فقط بدلاً من الأسبوع بالكامل
         start = new Date(selectedDate);
         start.setHours(0,0,0,0);
         end = new Date(selectedDate);
@@ -309,13 +272,13 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center">
                     <button onClick={onClose} className="p-1 mr-2"><ArrowLeftIcon className="w-6 h-6 text-slate-600 dark:text-slate-300"/></button>
-                    <h1 className="font-bold text-slate-800 dark:text-white">Mes rendez-vous</h1>
+                    <h1 className="font-bold text-slate-800 dark:text-white">Mes Rendez-vous</h1>
                   </div>
                   <div className="flex items-center gap-2">
-                      <button onClick={() => setIsQuickLogModalOpen(true)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Rapport rapide">
+                      <button onClick={() => setIsQuickLogModalOpen(true)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Rapport Rapide">
                           <ClipboardDocumentCheckIcon className="w-5 h-5" />
                       </button>
-                      <button onClick={() => setIsNewAppointmentModalOpen(true)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" title="Nouveau Rdv">
+                      <button onClick={() => setIsNewAppointmentModalOpen(true)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" title="Nouveau RDV">
                           <PlusIcon className="w-5 h-5" />
                       </button>
                   </div>
@@ -340,7 +303,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                         <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onViewDetails(a.store)}>
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">{a.store.Magazin}</h3>
-                                <span className="text-[10px] font-black px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full">
+                                <span className="text-[10px] font-black px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full uppercase">
                                     {a.date.toLocaleDateString('fr-FR', { weekday: 'short' })}
                                 </span>
                             </div>
@@ -353,14 +316,14 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleEditClick(a.store); }} 
                                             className="p-2 text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 shadow-sm"
-                                            title="Modifier le Rdv"
+                                            title="Modifier le RDV"
                                         >
                                             <EditIcon className="w-4 h-4" />
                                         </button>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setAppointmentToDelete(a.store); }} 
                                             className="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 shadow-sm"
-                                            title="Supprimer le Rdv"
+                                            title="Supprimer le RDV"
                                         >
                                             <DeleteIcon className="w-4 h-4" />
                                         </button>
@@ -384,7 +347,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                 isOpen={!!appointmentToDelete} 
                 onClose={() => setAppointmentToDelete(null)} 
                 onConfirm={handleDeleteAppointment} 
-                title="Supprimer le Rdv" 
+                title="Supprimer le RDV" 
                 message="Êtes-vous sûr de vouloir supprimer ce rendez-vous ?" 
                 confirmText={isActionInProgress ? "Suppression..." : "Supprimer"} 
             />
@@ -399,8 +362,8 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
           <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">
             <CalendarDaysIcon className="w-4 h-4" /> Planning
           </div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white leading-none">Planning des rendez-vous</h1>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Suivi et organisation des missions commerciales.</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white leading-none">Planning des Rendez-vous</h1>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">{allAppointments.length} rendez-vous programmés.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -409,22 +372,16 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                 className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm shadow-sm hover:bg-slate-50 transition-all active:scale-95"
             >
                 <ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-500" />
-                Rapport rapide
+                Rapport Rapide
             </button>
             <button 
                 onClick={() => setIsNewAppointmentModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"
             >
                 <PlusIcon className="w-5 h-5 stroke-[3px]" />
-                Nouveau Rdv
+                Nouveau RDV
             </button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <AdminStatCard title="Rendez-vous" count={stats.total} subtext="Total programmé" icon={<CalendarDaysIcon className="w-6 h-6" />} iconColorClass="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600" />
-          <AdminStatCard title="Aujourd'hui" count={stats.today} subtext="Missions du jour" icon={<ClockIcon className="w-6 h-6" />} iconColorClass="bg-blue-50 dark:bg-blue-900/30 text-blue-600" />
-          <AdminStatCard title="Cette semaine" count={stats.thisWeek} subtext="Planning hebdomadaire" icon={<CalendarDaysIcon className="w-6 h-6" />} iconColorClass="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600" />
       </div>
 
       <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-wrap gap-4 items-center">
@@ -453,14 +410,14 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
             <div className="flex justify-between items-center mb-10">
-                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{selectedDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h3>
+                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{selectedDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h3>
                 <div className="flex gap-2">
                     <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"><ChevronLeftIcon className="w-5 h-5 text-slate-400" /></button>
                     <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"><ChevronRightIcon className="w-5 h-5 text-slate-400" /></button>
                 </div>
             </div>
             <div className="grid grid-cols-7 mb-4">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="text-center text-[11px] font-black text-slate-300 tracking-widest uppercase">{d}</div>)}
+                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => <div key={d} className="text-center text-[11px] font-black text-slate-300 tracking-widest">{d}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-y-4">
                 {calendarDays.map((dayData, idx) => {
@@ -477,8 +434,8 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
         </div>
         <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full min-h-[600px]">
             <div className="mb-8">
-                <h3 className="text-xl font-black text-slate-900 dark:text-white">{getTimeFilterLabel()}</h3>
-                <p className="text-sm font-bold text-slate-400 mt-1">{displayAppointments.length} activités prévues</p>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white capitalize">{getTimeFilterLabel()}</h3>
+                <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-tight">{displayAppointments.length} activités prévues</p>
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                 {displayAppointments.map((appt, i) => (
@@ -492,7 +449,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                         <p className="text-blue-600 dark:text-blue-400 font-bold text-xs mb-2">
                             {appt.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                         </p>
-                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-4">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase mb-4">
                             {appt.user.split('@')[0]} • {appt.city}
                         </div>
                         <div className="flex justify-between items-center">
@@ -500,14 +457,14 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); handleEditClick(appt.store); }} 
                                     className="p-2 text-amber-600 bg-white dark:bg-slate-700 border border-amber-100 dark:border-slate-600 rounded-lg hover:bg-amber-50 shadow-sm"
-                                    title="Modifier le Rdv"
+                                    title="Modifier le RDV"
                                 >
                                     <EditIcon className="w-4 h-4" />
                                 </button>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); setAppointmentToDelete(appt.store); }} 
                                     className="p-2 text-red-600 bg-white dark:bg-slate-700 border border-red-100 dark:border-slate-600 rounded-lg hover:bg-red-50 shadow-sm"
-                                    title="Supprimer le Rdv"
+                                    title="Supprimer le RDV"
                                 >
                                     <DeleteIcon className="w-4 h-4" />
                                 </button>
@@ -546,7 +503,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
         isOpen={!!appointmentToDelete} 
         onClose={() => setAppointmentToDelete(null)} 
         onConfirm={handleDeleteAppointment} 
-        title="Supprimer le Rdv" 
+        title="Supprimer le RDV" 
         message="Êtes-vous sûr de vouloir supprimer ce rendez-vous ?" 
         confirmText={isActionInProgress ? "Suppression..." : "Supprimer"} 
       />

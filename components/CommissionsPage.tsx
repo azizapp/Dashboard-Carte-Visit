@@ -29,25 +29,26 @@ const TrophyIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const KPICard = ({ title, value, subtext, icon, trendValue, iconBg, iconColor }: any) => {
     const isNegative = typeof trendValue === 'string' && trendValue.startsWith('-');
-    const isZero = trendValue === '0%' || trendValue === '0.0%' || trendValue === '0' || !trendValue;
+    const isZero = trendValue === '0%' || trendValue === '0.0%' || trendValue === '0';
     const trendDirection = isZero ? 'none' : (isNegative ? 'down' : 'up');
-    const trendColor = trendDirection === 'up' ? 'bg-emerald-50 text-emerald-500' : (trendDirection === 'down' ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 opacity-0');
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 relative">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
             <div className="flex justify-between items-start mb-4">
-                <div className={`p-2.5 rounded-lg ${iconBg || 'bg-slate-50 dark:bg-slate-700/50'} ${iconColor || 'text-slate-600'}`}>
+                <div className={`p-3 rounded-xl ${iconBg} ${iconColor}`}>
                     {icon}
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trendColor}`}>
-                    {trendValue || '0%'}
-                </span>
+                {trendValue && trendDirection !== 'none' && (
+                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${trendDirection === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                        {trendDirection === 'up' ? <ArrowTrendingUpIcon className="w-3 h-3" /> : <ArrowTrendingDownIcon className="w-3 h-3" />}
+                        {trendValue}
+                    </div>
+                )}
             </div>
             <div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">{value}</h3>
-                <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">{title}</p>
-                <p className="text-[10px] text-slate-400 font-bold mt-0.5">{subtext}</p>
-                <p className="text-[10px] text-slate-400 mt-2">Vs période précédente</p>
+                <h3 className="text-heading text-2xl mb-1">{value}</h3>
+                <p className="text-emph font-bold uppercase tracking-wider text-[11px]">{title}</p>
+                <p className="text-sub mt-2">{subtext}</p>
             </div>
         </div>
     );
@@ -240,17 +241,17 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
             const lastHour = allSales.filter(s => (s._parsedDate as Date) >= hourAgo);
             const qty = lastHour.reduce((sum, s) => sum + (Number(s.Quantité) || 0), 0);
             const rev = lastHour.reduce((sum, s) => sum + (Number(s.Prix) || 0), 0);
-            genAlerts.push({ title: 'Dernière heure', message: `Activité intense : ${qty} pièces vendues (${rev.toLocaleString()} Dh) récemment.`, time: "Récemment", icon: ClockIcon, iconColor: 'text-orange-500', bgColor: 'bg-orange-50' });
+            genAlerts.push({ title: 'Dernière Heure', message: `Activité intense : ${qty} pièces vendues (${rev.toLocaleString()} DH) récemment.`, time: "Récemment", icon: ClockIcon, iconColor: 'text-orange-500', bgColor: 'bg-orange-50' });
         }
         if (allSales.filter(s => (s._parsedDate as Date) >= startOfToday).length > 0) {
             const today = allSales.filter(s => (s._parsedDate as Date) >= startOfToday);
             const qty = today.reduce((sum, s) => sum + (Number(s.Quantité) || 0), 0);
             const rev = today.reduce((sum, s) => sum + (Number(s.Prix) || 0), 0);
-            genAlerts.push({ title: 'Performance du jour', message: `Cumul aujourd'hui : ${qty} unités (${rev.toLocaleString()} Dh) enregistrées.`, time: "Aujourd'hui", icon: TrophyIcon, iconColor: 'text-blue-500', bgColor: 'bg-blue-50' });
+            genAlerts.push({ title: 'Performance du Jour', message: `Cumul aujourd'hui : ${qty} unités (${rev.toLocaleString()} DH) enregistrées.`, time: "Aujourd'hui", icon: TrophyIcon, iconColor: 'text-blue-500', bgColor: 'bg-blue-50' });
         }
         if (allSales.length > 0) {
             const last = allSales[0];
-            genAlerts.push({ title: 'Dernière vente', message: `Succès : ${last.Magazin} a validé ${last.Quantité} pièces (${last.Prix.toLocaleString()} Dh).`, time: last.Date, icon: CheckCircleIcon, iconColor: 'text-emerald-500', bgColor: 'bg-emerald-50' });
+            genAlerts.push({ title: 'Dernière Vente', message: `Succès : ${last.Magazin} a validé ${last.Quantité} pièces (${last.Prix.toLocaleString()} DH).`, time: last.Date, icon: CheckCircleIcon, iconColor: 'text-emerald-500', bgColor: 'bg-emerald-50' });
         }
         return genAlerts;
     }, [stores, selectedUser]);
@@ -260,9 +261,9 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 text-sub mb-1">
-                        <ChartBarIcon className="w-4 h-4" /> <span>Suivi commercial</span>
+                        <ChartBarIcon className="w-4 h-4" /> <span>Suivi Commercial</span>
                     </div>
-                    <h1 className="text-heading text-3xl">Performance des ventes</h1>
+                    <h1 className="text-heading text-3xl">Performance des Ventes</h1>
                     <p className="text-std mt-1">Données basées sur la date d'écriture réelle des opérations</p>
                 </div>
             </div>
@@ -305,10 +306,10 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KPICard title="Unités facturées" value={Math.floor(currentMonthSold)} trendValue={statsCalculation.trends.sold} subtext="Volume de vente" icon={<CubeIcon className="w-6 h-6" />} iconBg="bg-blue-50" iconColor="text-blue-600" />
-                <KPICard title="Objectif prochain" value={Math.max(0, remainingGoal).toLocaleString()} subtext="Unités manquantes" icon={<TargetIcon className="w-6 h-6" />} iconBg="bg-amber-50" iconColor="text-amber-600" />
-                <KPICard title="Volume des ventes" value={`${currentMonthCommission.toLocaleString()} Dh`} trendValue={statsCalculation.trends.comm} subtext="Chiffre d'affaires net" icon={<CurrencyDollarIcon className="w-6 h-6" />} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-                <KPICard title="Portefeuille villes" value={`${currentMonthCities} Villes`} trendValue={statsCalculation.trends.cities} subtext="Zones géographiques" icon={<MapIcon className="w-6 h-6" />} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
+                <KPICard title="Unités Facturées" value={Math.floor(currentMonthSold)} trendValue={statsCalculation.trends.sold} subtext="Comparé à la période précédente" icon={<CubeIcon className="w-6 h-6" />} iconBg="bg-blue-50" iconColor="text-blue-600" />
+                <KPICard title="Objectif Prochain" value={Math.max(0, remainingGoal).toLocaleString()} subtext="Unités manquantes pour le palier" icon={<TargetIcon className="w-6 h-6" />} iconBg="bg-amber-50" iconColor="text-amber-600" />
+                <KPICard title="Volume des Ventes" value={`${currentMonthCommission.toLocaleString()} DH`} trendValue={statsCalculation.trends.comm} subtext="Chiffre d'affaires encaissé" icon={<CurrencyDollarIcon className="w-6 h-6" />} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+                <KPICard title="Portefeuille Villes" value={`${currentMonthCities} Villes`} trendValue={statsCalculation.trends.cities} subtext="Zones géographiques actives" icon={<MapIcon className="w-6 h-6" />} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -330,7 +331,7 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
                                         <div className="text-right"><p className="text-emph font-black">{level.max}</p><p className="text-[9px] text-slate-400 font-bold uppercase">Pièces</p></div>
                                     </div>
                                     <div className="space-y-3">
-                                        <div className="flex justify-between text-sub uppercase"><span>Avancement</span><span className={isCompleted ? 'text-emerald-500 font-black' : ''}>{isCompleted ? 'Terminé' : `${progressPercent.toFixed(0)}%`}</span></div>
+                                        <div className="flex justify-between text-sub uppercase"><span>Avancement</span><span className={isCompleted ? 'text-emerald-500 font-black' : ''}>{isCompleted ? 'TERMINÉ' : `${progressPercent.toFixed(0)}%`}</span></div>
                                         <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden"><div className={`${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'} h-full transition-all duration-700`} style={{ width: `${isCompleted ? 100 : progressPercent}%` }}></div></div>
                                     </div>
                                 </div>
@@ -339,7 +340,7 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                        <h3 className="text-heading text-lg mb-8">Performance par vendeur</h3>
+                        <h3 className="text-heading text-lg mb-8">Performance par Vendeur</h3>
                         <div className="space-y-6">
                             {userPerformanceData.length > 0 ? userPerformanceData.map((user, idx) => (
                                 <div key={user.name} className="flex items-center justify-between group">
@@ -348,7 +349,7 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
                                         <div><p className="text-emph text-sm group-hover:text-blue-600 transition-colors">{user.name}</p><p className="text-sub text-[10px]">{user.salesCount} ventes • {user.unitsSold} pièces</p></div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-emph text-sm">{user.comm.toLocaleString()} Dh</p>
+                                        <p className="text-emph text-sm">{user.comm.toLocaleString()} DH</p>
                                         <div className="w-24 bg-slate-100 dark:bg-slate-700 h-1 rounded-full mt-1.5 overflow-hidden"><div className="bg-blue-500 h-full" style={{ width: `${Math.min(100, (user.comm / (currentMonthCommission || 1)) * 100)}%` }}></div></div>
                                     </div>
                                 </div>
@@ -361,7 +362,7 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
                     <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-500"><BellIcon className="w-5 h-5" /></div>
-                            <h3 className="text-heading text-sm uppercase tracking-widest">Activité & alertes</h3>
+                            <h3 className="text-heading text-sm uppercase tracking-widest">Activité & Alertes</h3>
                         </div>
                         <div className="space-y-5">
                             {alerts.length > 0 ? alerts.map((alert, idx) => (
@@ -377,8 +378,8 @@ const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
                     </div>
                     <div className="bg-indigo-600 p-8 rounded-2xl shadow-xl text-white overflow-hidden relative group">
                         <div className="relative z-10">
-                            <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-4 opacity-80">Résumé performance</h4>
-                            <p className="text-3xl font-black mb-2">{currentMonthCommission.toLocaleString()} <span className="text-lg opacity-60">Dh</span></p>
+                            <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-4 opacity-80">Résumé Performance</h4>
+                            <p className="text-3xl font-black mb-2">{currentMonthCommission.toLocaleString()} <span className="text-lg opacity-60">DH</span></p>
                             <p className="text-xs font-bold opacity-70">Total net facturé sur la période</p>
                         </div>
                         <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-110 transition-transform duration-700"><CurrencyDollarIcon className="w-48 h-48" /></div>

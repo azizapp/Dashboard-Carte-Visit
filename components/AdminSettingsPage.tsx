@@ -80,11 +80,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div>
-                        <label className="text-sub mb-1 block">Email</label>
+                        <label className="text-sub uppercase mb-1 block">Email</label>
                         <p className="text-emph font-bold">{user.email}</p>
                     </div>
                     <div>
-                        <label className="text-sub mb-2 block">Code d'accès</label>
+                        <label className="text-sub uppercase mb-2 block">Code d'accès</label>
                         <input
                             type="text"
                             value={code}
@@ -93,14 +93,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
                         />
                     </div>
                     <div>
-                        <label className="text-sub mb-2 block">Rôle</label>
+                        <label className="text-sub uppercase mb-2 block">Rôle</label>
                         <div className="grid grid-cols-2 gap-2">
                             {['user', 'admin'].map(r => (
                                 <button
                                     key={r}
                                     type="button"
                                     onClick={() => setRole(r as any)}
-                                    className={`py-2 rounded-lg border font-bold text-xs ${role === r ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-600'}`}
+                                    className={`py-2 rounded-lg border font-bold text-xs uppercase tracking-widest ${role === r ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-600'}`}
                                 >
                                     {r === 'user' ? 'Utilisateur' : 'Admin'}
                                 </button>
@@ -190,8 +190,8 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         <ArrowLeftIcon className="w-6 h-6" />
                     </button>
                     <div>
-                        <h1 className="text-heading text-xl leading-none">Panneau de contrôle</h1>
-                        <p className="text-sub mt-1">Administration du système</p>
+                        <h1 className="text-heading text-xl leading-none">Panneau de Contrôle</h1>
+                        <p className="text-sub mt-1">Administration du Système</p>
                     </div>
                 </div>
                 <button
@@ -210,7 +210,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         <div className="p-6 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600"><UsersIcon className="w-5 h-5" /></div>
-                                <h2 className="text-heading text-sm">Utilisateurs autorisés</h2>
+                                <h2 className="text-heading text-sm uppercase tracking-tight">Utilisateurs Autorisés</h2>
                             </div>
                             <button onClick={() => setIsAddUserModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors">
                                 <UserPlusIcon className="w-4 h-4" /> Nouveau
@@ -218,7 +218,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-700/30 text-sub border-b border-slate-100 dark:border-slate-700">
+                                <thead className="bg-slate-50 dark:bg-slate-700/30 text-sub tracking-widest border-b border-slate-100 dark:border-slate-700">
                                     <tr><th className="px-6 py-4">Utilisateur</th><th className="px-6 py-4 text-center">Rôle</th><th className="px-6 py-4 text-right">Actions</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
@@ -253,11 +253,11 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600"><MapIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm">Paramètres de connexion</h2>
+                            <h2 className="text-heading text-sm uppercase tracking-tight">Paramètres de Connexion</h2>
                         </div>
                         <div className="space-y-4">
-                            <div><label className="text-sub block mb-2">Supabase Url</label><input type="text" value={sbUrl} onChange={(e) => setSbUrl(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
-                            <div><label className="text-sub block mb-2">Supabase Anon key</label><input type="password" value={sbKey} onChange={(e) => setSbKey(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
+                            <div><label className="text-sub tracking-widest block mb-2">Supabase URL</label><input type="text" value={sbUrl} onChange={(e) => setSbUrl(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
+                            <div><label className="text-sub tracking-widest block mb-2">Supabase Anon Key</label><input type="password" value={sbKey} onChange={(e) => setSbKey(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
                             <button onClick={handleSaveConnection} disabled={isSavingConn} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">{isSavingConn ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <CheckIcon className="w-4 h-4" />} Enregistrer les paramètres</button>
                         </div>
                     </section>
@@ -265,12 +265,12 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg text-amber-600"><ArrowPathIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm">Configuration système</h2>
+                            <h2 className="text-heading text-sm uppercase tracking-tight">Configuration Système</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-                                <p className="text-emph text-sm mb-1 font-bold">Mode de fonctionnement</p>
-                                <p className="text-[11px] text-slate-500 mb-4 text-std">Le mode Test n'affecte pas la base principale.</p>
+                                <p className="text-emph text-sm mb-1 font-bold">Mode de Fonctionnement</p>
+                                <p className="text-[11px] text-slate-500 mb-4 text-std">Le mode Test n'affectه pas la base principale.</p>
                                 <ModeToggle mode={mode} setMode={setMode} />
                             </div>
                             <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
@@ -286,11 +286,11 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600"><CheckIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm">Design global</h2>
+                            <h2 className="text-heading text-sm uppercase tracking-tight">Design Global</h2>
                         </div>
                         <div className="space-y-8">
                             <div>
-                                <label className="text-sub block mb-4">Couleur principale</label>
+                                <label className="text-sub tracking-widest block mb-4">Couleur Principale</label>
                                 <div className="grid grid-cols-5 gap-2">
                                     {accentColors.map(color => (
                                         <button key={color.name} type="button" onClick={() => setAccentColor(color.value)} className={`aspect-square rounded-xl flex items-center justify-center transition-all ${accentColor === color.value ? 'ring-4 ring-offset-2 ring-slate-200 scale-110' : ''}`} style={{ backgroundColor: color.value } as any}>
@@ -300,7 +300,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                                 </div>
                             </div>
                             <div>
-                                <label className="text-sub block mb-4">Typographie système</label>
+                                <label className="text-sub tracking-widest block mb-4">Typographie Système</label>
                                 <div className="space-y-2">
                                     {['Inter', 'Roboto', 'Lato'].map(f => (
                                         <button key={f} onClick={() => setFont(f)} className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all ${font === f ? 'border-blue-500 bg-blue-50/30 text-blue-700' : 'border-slate-100 text-slate-600'}`} style={{ fontFamily: f }}>
@@ -311,7 +311,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                                 </div>
                             </div>
                             <div className="pt-6 border-t border-slate-50 dark:border-slate-700">
-                                <div className="flex items-center justify-between"><span className="text-emph font-bold text-sm">Mode sombre</span><ThemeToggle theme={theme} setTheme={setTheme} /></div>
+                                <div className="flex items-center justify-between"><span className="text-emph font-bold text-sm">Mode Sombre</span><ThemeToggle theme={theme} setTheme={setTheme} /></div>
                             </div>
                         </div>
                     </section>

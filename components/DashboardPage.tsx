@@ -15,19 +15,16 @@ import UsersIcon from './icons/UsersIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
 import LeadPrioritizationModal from './LeadPrioritizationModal.tsx';
 
-const StatCard: React.FC<{ title: string, count: number | string, icon: React.ReactNode, subtext?: string, iconColorClass?: string }> = ({ title, count, icon, subtext, iconColorClass }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 relative">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-2.5 rounded-lg text-slate-600 dark:text-slate-300 ${iconColorClass || 'bg-slate-50 dark:bg-slate-700/50'}`}>
+const StatCard: React.FC<{ title: string, count: number, icon: React.ReactNode, iconColorClass?: string }> = ({ title, count, icon, iconColorClass }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm flex flex-col items-start gap-4 transition-all hover:shadow-md border border-slate-100 dark:border-slate-700">
+        <div className="flex justify-between w-full">
+            <div className={`p-3 rounded-xl ${iconColorClass || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
                 {icon}
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 opacity-0">0%</span>
         </div>
         <div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">{count}</h3>
-            <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">{title}</p>
-            <p className="text-[10px] text-slate-400 font-bold mt-0.5">{subtext || 'Données en temps réel'}</p>
-            <p className="text-[10px] text-slate-400 mt-2">Vs période précédente</p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1">{count.toLocaleString()}</p>
+            <p className="text-sub uppercase tracking-wider">{title}</p>
         </div>
     </div>
 )
@@ -39,7 +36,7 @@ const CsvIcon = () => (
 );
 
 const PdfIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-rose-600">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-rose-600">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
     </svg>
 );
@@ -173,7 +170,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
 
     const exportToExcel = () => {
         if (filteredStores.length === 0) return;
-        const headers = ['Id visite', 'Date visite', 'Magasin', 'Le gérant', 'Gsm 1', 'Ville', 'Gamme', 'Action', 'Prix', 'Quantité', 'Vendeur'];
+        const headers = ['ID Visite', 'Date Visite', 'Magazin', 'Le Gérant', 'GSM 1', 'Ville', 'Gamme', 'Action', 'Prix', 'Quantité', 'USER'];
         const csvRows = filteredStores.map(store => {
             const row = [store.ID, store.Date, store.Magazin, store['Le Gérant'], store.GSM1, store.Ville, store.Gamme, store['Action Client'], store.Prix, store.Quantité, store.USER];
             return row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
@@ -196,7 +193,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-heading text-3xl">{isAdmin ? 'Gestion des leads' : 'Mes prospects'}</h1>
+                    <h1 className="text-heading text-3xl">{isAdmin ? 'Gestion des Leads' : 'Mes Prospects'}</h1>
                     <p className="text-std mt-1">{isAdmin ? 'Suivi global des clients et performances.' : 'Suivez vos propres interactions clients.'}</p>
                 </div>
                 <button
@@ -204,16 +201,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                     className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 font-bold text-sm"
                 >
                     <SparklesIcon className="w-5 h-5 text-yellow-300" />
-                    <span>Prioriser با IA</span>
+                    <span>Prioriser avec IA</span>
                 </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <StatCard title="Magasins" count={stats.urgentes.toLocaleString()} subtext="Opticiens actifs" icon={<StoreIcon className="w-6 h-6" />} iconColorClass="bg-blue-50 dark:bg-blue-900/30 text-blue-600" />
-                <StatCard title="Rendez-vous" count={stats.appointments.toLocaleString()} subtext="Missions futures" icon={<CalendarDaysIcon className="w-6 h-6" />} iconColorClass="bg-purple-50 dark:bg-purple-900/30 text-purple-600" />
-                <StatCard title="Villes" count={stats.cities.toLocaleString()} subtext="Zones couvertes" icon={<MapIcon className="w-6 h-6" />} iconColorClass="bg-amber-50 dark:bg-amber-900/30 text-amber-600" />
-                <StatCard title="Articles" count={stats.quantity.toLocaleString()} subtext="Volume de stock" icon={<CubeIcon className="w-6 h-6" />} iconColorClass="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600" />
-                <StatCard title="Interactions" count={stats.total.toLocaleString()} subtext="Activités totales" icon={<UsersIcon className="w-6 h-6" />} iconColorClass="bg-green-50 dark:bg-green-900/30 text-green-600" />
+                <StatCard title="Magasins" count={stats.urgentes} icon={<StoreIcon className="w-6 h-6" />} iconColorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
+                <StatCard title="Rendez-vous" count={stats.appointments} icon={<CalendarDaysIcon className="w-6 h-6" />} iconColorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" />
+                <StatCard title="Villes" count={stats.cities} icon={<MapIcon className="w-6 h-6" />} iconColorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" />
+                <StatCard title="Articles" count={stats.quantity} icon={<CubeIcon className="w-6 h-6" />} iconColorClass="bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" />
+                <StatCard title="Interactions" count={stats.total} icon={<UsersIcon className="w-6 h-6" />} iconColorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" />
             </div>
 
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm space-y-4 border border-slate-100 dark:border-slate-700">
@@ -235,7 +232,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedVille(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-emph"
                     >
-                        <option value="">Toutes les villes</option>
+                        <option value="">Toutes les Villes</option>
                         {filterOptions.villes.map(v => <option key={v} value={v}>{v}</option>)}
                     </select>
                     <select
@@ -243,7 +240,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedGamme(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-emph"
                     >
-                        <option value="">Toutes les gammes</option>
+                        <option value="">Toutes les Gammes</option>
                         {filterOptions.gammes.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                     {isAdmin && (
@@ -252,7 +249,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                             onChange={(e) => setSelectedUser(e.target.value)}
                             className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-emph"
                         >
-                            <option value="">Tous les vendeurs</option>
+                            <option value="">Tous les Vendeurs</option>
                             {filterOptions.users.map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
                     )}
@@ -261,7 +258,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedActionClient(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-emph"
                     >
-                        <option value="">Toutes les actions</option>
+                        <option value="">Toutes les Actions</option>
                         {filterOptions.actions.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                 </div>
@@ -285,14 +282,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         className="px-4 py-2 text-sm font-bold text-slate-700 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2.5 transition-all active:scale-95"
                     >
                         <CsvIcon />
-                        <span>Export Csv</span>
+                        <span>Export CSV</span>
                     </button>
                     <button
                         onClick={exportToPdf}
                         className="px-4 py-2 text-sm font-bold text-slate-700 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2.5 transition-all active:scale-95"
                     >
                         <PdfIcon />
-                        <span>Export Pdf</span>
+                        <span>Export PDF</span>
                     </button>
                 </div>
             </div>
