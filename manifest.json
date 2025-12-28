@@ -1,0 +1,21 @@
+{
+  "name": "Carte Visit 6.1.4",
+  "short_name": "Carte Visit",
+  "description": "لقد قمت بتحديث التطبيق لتضمين عناوين URL الخاصة بالاتصال مباشرةً في الإعدادات، مما يلغي الحاجة إلى ملف config.json الخارجي.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
