@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#4f46e5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Load Inter, Roboto, Poppins, Lato, Montserrat, Open Sans -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@100..900&family=Montserrat:wght@100..900&family=Open+Sans:wght@300..800&family=Poppins:wght@100..900&family=Roboto:wght@100..900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -18,7 +17,6 @@
       theme: {
         extend: {
           fontFamily: {
-            // استخدام متغير CSS للخط الديناميكي
             sans: ['var(--app-font)', '"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
           },
         }
@@ -33,7 +31,6 @@
       --app-font-weight: 400;
     }
     
-    /* تطبيق الخط على كامل مستند التطبيق */
     html, body {
       font-family: var(--app-font);
       font-size: var(--app-font-size);
@@ -41,15 +38,11 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      /* تحسينات خط Inter */
       font-feature-settings: "cv11", "ss01", "ss03", "cv05";
       line-height: 1.5;
       -webkit-text-size-adjust: 100%;
     }
 
-    /* كلاسات مساعدة للخطوط بناءً على تحليل الصورة */
-
-    /* العناوين الرئيسية العريضة جداً (مثل Détails du Lead) */
     .text-heading {
       font-weight: 800;
       letter-spacing: -0.022em;
@@ -57,30 +50,26 @@
     }
     .dark .text-heading { color: #f8fafc; }
 
-    /* العناوين الفرعية الصغيرة الملونة بالأعلى (مثل GESTION DES LEADS) */
     .text-sub {
       font-weight: 600;
       font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      /* Removed text-transform: uppercase to support Title Case */
+      letter-spacing: 0.02em;
       color: #94a3b8;
     }
 
-    /* نصوص الحقول والقيم المميزة */
     .text-emph {
       font-weight: 600;
       color: #1e293b;
     }
     .dark .text-emph { color: #e2e8f0; }
 
-    /* النصوص العادية */
     .text-std {
       font-weight: 450;
       color: #475569;
     }
     .dark .text-std { color: #94a3b8; }
 
-    /* تحسين مظهر Scrollbar */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }

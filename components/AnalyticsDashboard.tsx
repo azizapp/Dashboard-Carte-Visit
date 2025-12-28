@@ -22,8 +22,8 @@ const DownloadIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const KpiCard = ({ title, value, change, subtext, icon }: any) => {
     const isNegative = change.startsWith('-');
-    const isZero = change === '0%' || change === '0.0%';
-    const tagBg = isZero ? 'bg-slate-50 text-slate-500' : (isNegative ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500');
+    const isZero = change === '0%' || change === '0.0%' || change === '+0%' || change === '0';
+    const tagColor = isZero ? 'bg-slate-50 text-slate-500' : (isNegative ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500');
     
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 relative">
@@ -31,15 +31,23 @@ const KpiCard = ({ title, value, change, subtext, icon }: any) => {
                 <div className="p-2.5 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-600 dark:text-slate-300">
                     {icon}
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tagBg}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tagColor}`}>
                     {change}
                 </span>
             </div>
             <div>
-                <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</h3>
-                <p className="text-emph font-bold mt-1">{title}</p>
-                <p className="text-sub uppercase mt-0.5">{subtext}</p>
-                <p className="text-[10px] text-slate-400 mt-2">vs période précédente</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-none mb-1">
+                    {value}
+                </h3>
+                <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">
+                    {title}
+                </p>
+                <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                    {subtext}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-2">
+                    Vs période précédente
+                </p>
             </div>
         </div>
     );
@@ -218,11 +226,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <div className="flex items-center gap-2 text-sub mb-1">
-                <span>Gestion des Leads</span>
+                <span>Gestion des leads</span>
                 <span>/</span>
                 <span className="text-blue-600">Analyses</span>
            </div>
-           <h1 className="text-heading text-3xl leading-none">Analyses & Rapports</h1>
+           <h1 className="text-heading text-3xl leading-none">Analyses & rapports</h1>
         </div>
         
         <div className="flex items-center gap-3">
@@ -250,17 +258,17 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <KpiCard title="Total des Leads" value={stats.totalLeads} change={stats.trends.leads} subtext="Prospects enregistrés" icon={<MapIcon className="w-6 h-6" />} />
-          <KpiCard title="Nouveaux Clients" value={stats.newClients} change={stats.trends.newClients} subtext="Enregistrés (< 30j)" icon={<UsersIcon className="w-6 h-6" />} />
-          <KpiCard title="Objectifs Conversion" value={`${stats.conversionRate.toFixed(1)}%`} change={stats.trends.convRate} subtext="Nouveaux / Total" icon={<ChartBarIcon className="w-6 h-6" />} />
-          <KpiCard title="Volume Chiffre" value={`${stats.revenue.toLocaleString()} MAD`} change={stats.trends.revenue} subtext="Chiffre d'affaires enregistré" icon={<CurrencyDollarIcon className="w-6 h-6" />} />
+          <KpiCard title="Total des leads" value={stats.totalLeads} change={stats.trends.leads} subtext="Prospects enregistrés" icon={<MapIcon className="w-6 h-6" />} />
+          <KpiCard title="Nouveaux clients" value={stats.newClients} change={stats.trends.newClients} subtext="Enregistrés (< 30j)" icon={<UsersIcon className="w-6 h-6" />} />
+          <KpiCard title="Objectifs conversion" value={`${stats.conversionRate.toFixed(1)}%`} change={stats.trends.convRate} subtext="Nouveaux / Total" icon={<ChartBarIcon className="w-6 h-6" />} />
+          <KpiCard title="Volume chiffre" value={`${stats.revenue.toLocaleString()} Dh`} change={stats.trends.revenue} subtext="Chiffre d'affaires enregistré" icon={<CurrencyDollarIcon className="w-6 h-6" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
          <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
              <div className="mb-10">
-                <h3 className="text-heading text-lg leading-none">Répartition par Ville</h3>
-                <p className="text-sub uppercase mt-1.5">Performance géographique par écriture ({period})</p>
+                <h3 className="text-heading text-lg leading-none">Répartition par ville</h3>
+                <p className="text-sub mt-1.5">Performance géographique par écriture ({period})</p>
              </div>
              
              <div className="flex items-end justify-between h-64 w-full px-4 border-b border-slate-100 overflow-x-auto min-w-full pb-8 scrollbar-hide">
@@ -275,7 +283,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
                              >
                                 <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-black text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">{count}</span>
                              </div>
-                             <span className="text-sub tracking-tight text-center whitespace-nowrap mb-[-24px] rotate-[-20deg] origin-top">{city}</span>
+                             <span className="text-sub text-center whitespace-nowrap mb-[-24px] rotate-[-20deg] origin-top">{city}</span>
                          </div>
                      );
                  }) : (
@@ -286,8 +294,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
 
          <div className="lg:col-span-4 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center">
              <div className="w-full mb-8">
-                 <h3 className="text-heading text-lg leading-none">Leads par Gamme</h3>
-                 <p className="text-sub uppercase mt-1.5">Qualification des prospects ({period})</p>
+                 <h3 className="text-heading text-lg leading-none">Leads par gamme</h3>
+                 <p className="text-sub mt-1.5">Qualification des prospects ({period})</p>
              </div>
              
              <div className="relative w-48 h-48 mb-10">
@@ -300,18 +308,18 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
                      <span className="text-heading text-3xl leading-none">{stats.totalLeads}</span>
-                     <span className="text-sub uppercase">Total</span>
+                     <span className="text-sub">Total</span>
                  </div>
              </div>
 
              <div className="w-full space-y-4">
                  {[
-                   { label: 'Haute Gamme', color: 'bg-emerald-500', val: stats.priority.haute },
-                   { label: 'Haute et Moyenne', color: 'bg-blue-500', val: stats.priority.hauteMoyenne },
-                   { label: 'Moyenne Gamme', color: 'bg-amber-500', val: stats.priority.moyenne },
-                   { label: 'Economie', color: 'bg-red-500', val: stats.priority.economie }
+                   { label: 'Haute gamme', color: 'bg-emerald-500', val: stats.priority.haute },
+                   { label: 'Haute et moyenne', color: 'bg-blue-500', val: stats.priority.hauteMoyenne },
+                   { label: 'Moyenne gamme', color: 'bg-amber-500', val: stats.priority.moyenne },
+                   { label: 'Économie', color: 'bg-red-500', val: stats.priority.economie }
                  ].map(item => (
-                    <div key={item.label} className="flex items-center justify-between text-[11px] font-bold uppercase">
+                    <div key={item.label} className="flex items-center justify-between text-[11px] font-bold">
                         <div className="flex items-center gap-2">
                             <span className={`w-2.5 h-2.5 rounded-full ${item.color}`}></span>
                             <span className="text-std">{item.label}</span>
@@ -330,12 +338,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
           <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 h-full">
              <div className="flex items-center justify-between mb-8">
                  <div>
-                    <h3 className="text-heading text-lg leading-none">Couverture Territoriale</h3>
-                    <p className="text-sub uppercase mt-1.5">Villes analysées par écriture ({period})</p>
+                    <h3 className="text-heading text-lg leading-none">Couverture territoriale</h3>
+                    <p className="text-sub mt-1.5">Villes analysées par écriture ({period})</p>
                  </div>
                  <div className="flex bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
-                    <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded text-[9px] font-black uppercase border border-emerald-100 dark:border-emerald-800/30">Actif</span>
-                    <span className="px-2 py-1 text-slate-400 rounded text-[9px] font-black uppercase ml-1">Prospect</span>
+                    <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded text-[9px] font-black border border-emerald-100 dark:border-emerald-800/30">Actif</span>
+                    <span className="px-2 py-1 text-slate-400 rounded text-[9px] font-black ml-1">Prospect</span>
                  </div>
              </div>
              
@@ -349,7 +357,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
                                 </div>
                                 <div>
                                     <h4 className="text-emph text-sm">{city.name}</h4>
-                                    <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${city.status === 'Actif' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${city.status === 'Actif' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
                                         {city.status}
                                     </span>
                                 </div>
@@ -389,7 +397,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
           </div>
 
           <div className="lg:col-span-4 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 h-full">
-             <h3 className="text-heading text-lg mb-8">Performance Régionale</h3>
+             <h3 className="text-heading text-lg mb-8">Performance régionale</h3>
              <div className="space-y-6">
                  {stats.sortedCities.slice(0, 7).map(([name, leads], i) => (
                     <div key={name} className="flex items-center justify-between">

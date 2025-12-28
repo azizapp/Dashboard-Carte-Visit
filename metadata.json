@@ -1,5 +1,5 @@
 {
-  "name": "Dashboard Carte Visit Supabase 1.0.2",
+  "name": "Dashboard Carte Visit Supabase 1.0.3",
   "description": "Système de gestion optimisé utilisant Supabase pour le stockage en temps réel, avec analyse IA intégrée et suppression des dépendances Google Sheets.",
   "requestFramePermissions": [
     "camera",
