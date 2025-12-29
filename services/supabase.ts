@@ -1,12 +1,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const DEFAULT_URL = 'https://isvhmsatlnwykmwukurh.supabase.co';
-const DEFAULT_KEY = 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
+// استخدام متغيرات البيئة التي سيتم إدخالها عبر Railway
+// في حالة عدم وجودها، سيتم استخدام القيم الافتراضية للتطوير
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://isvhmsatlnwykmwukurh.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
 
 const getStoredConfig = () => {
-  const url = localStorage.getItem('supabase_url') || DEFAULT_URL;
-  const key = localStorage.getItem('supabase_key') || DEFAULT_KEY;
+  const url = localStorage.getItem('supabase_url') || SUPABASE_URL;
+  const key = localStorage.getItem('supabase_key') || SUPABASE_KEY;
   return { url, key };
 };
 
@@ -24,7 +26,6 @@ export const updateSupabaseConfig = (url: string, key: string) => {
 // وظيفة مساعدة لتحويل Base64 إلى Blob لرفعه
 export const uploadImageToStorage = async (base64Data: string): Promise<string> => {
     try {
-        // تحويل Base64 إلى Blob
         const response = await fetch(base64Data);
         const blob = await response.blob();
         
@@ -39,7 +40,6 @@ export const uploadImageToStorage = async (base64Data: string): Promise<string> 
 
         if (error) throw error;
 
-        // الحصول على الرابط العام للوصول للصورة
         const { data: { publicUrl } } = supabase.storage
             .from('visit-images')
             .getPublicUrl(filePath);
