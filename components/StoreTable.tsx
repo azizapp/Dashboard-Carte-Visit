@@ -55,34 +55,26 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
         // @ts-ignore
         let bValue = b[sortConfig.key];
 
-        // Handle numeric values for Price and Quantity
         if (sortConfig.key === 'Prix' || sortConfig.key === 'Quantité') {
           const aNum = Number(aValue) || 0;
           const bNum = Number(bValue) || 0;
           return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum;
         }
 
-        // Handle strings
         aValue = String(aValue || '').toLowerCase();
         bValue = String(bValue || '').toLowerCase();
 
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     } else {
-      // Default sort: Quantity descending
       sortableItems.sort((a, b) => (Number(b.Quantité) || 0) - (Number(a.Quantité) || 0));
     }
     return sortableItems;
   }, [stores, sortConfig]);
 
   const totalPages = Math.ceil(sortedStores.length / itemsPerPage);
-
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentStores = sortedStores.slice(startIndex, endIndex);
@@ -136,43 +128,44 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
   if (stores.length === 0) {
     return (
       <div className="text-center py-10 px-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-        <h3 className="text-heading">Aucun lead trouvé</h3>
-        <p className="mt-1 text-std">Essayez de modifier votre recherche ou vos filtres.</p>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Aucun lead trouvé</h3>
+        <p className="mt-1 text-slate-500">Essayez de modifier votre recherche ou vos filtres.</p>
       </div>
     );
   }
 
   const columns = [
     { label: 'Magazin', key: 'Magazin' },
-    { label: 'Le Gérant', key: 'Le Gérant' },
     { label: 'Ville', key: 'Ville' },
+    { label: 'Gamme', key: 'Gamme' },
     { label: 'Prix', key: 'Prix' },
     { label: 'Quantité', key: 'Quantité' },
-    { label: 'USER', key: 'USER' },
     { label: 'Actions', key: null },
   ];
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-x-auto">
-      <table className="w-full text-left">
-        <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700">
+      <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+        <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-300">
           <tr>
-            <th scope="col" className="px-6 py-4 whitespace-nowrap w-4">
-              <input
-                type="checkbox"
-                className="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                checked={isAllSelected}
-                ref={input => {
-                  if (input) input.indeterminate = isIndeterminate;
-                }}
-                onChange={handleSelectAll}
-              />
+            <th scope="col" className="p-4">
+              <div className="flex items-center">
+                <input
+                  id="checkbox-all"
+                  type="checkbox"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  checked={isAllSelected}
+                  ref={input => { if (input) input.indeterminate = isIndeterminate; }}
+                  onChange={handleSelectAll}
+                />
+                <label htmlFor="checkbox-all" className="sr-only">checkbox</label>
+              </div>
             </th>
             {columns.map(({ label, key }) => (
               <th
                 key={label}
                 scope="col"
-                className={`px-6 py-4 whitespace-nowrap text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 ${key ? 'cursor-pointer select-none group hover:bg-slate-100 dark:hover:bg-slate-700' : ''}`}
+                className={`px-6 py-3 whitespace-nowrap ${key ? 'cursor-pointer select-none group hover:bg-slate-100 dark:hover:bg-slate-700' : ''}`}
                 onClick={() => key && handleSort(key)}
               >
                 <div className="flex items-center">
@@ -189,38 +182,46 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
         </thead>
         <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
           {currentStores.map((store) => {
-            const userName = store.USER ? store.USER.split('@')[0] : '-';
             const isSelected = selectedIds.has(store.ID);
             return (
               <tr
                 key={store.ID}
-                className={`transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
-                onClick={() => handleSelectRow(store.ID)}
+                className={`bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/50 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
               >
-                <td className="px-6 py-4 whitespace-nowrap w-4" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    checked={isSelected}
-                    onChange={() => handleSelectRow(store.ID)}
-                  />
+                <td className="w-4 p-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      checked={isSelected}
+                      onChange={() => handleSelectRow(store.ID)}
+                    />
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-emph font-bold whitespace-nowrap">{store.Magazin}</td>
-                <td className="px-6 py-4 text-std">{store['Le Gérant']}</td>
-                <td className="px-6 py-4 text-std">{store.Ville}</td>
-                <td className="px-6 py-4 text-emph font-bold">{store.Prix.toLocaleString()} DH</td>
-                <td className="px-6 py-4 text-emph font-bold">{store.Quantité}</td>
+                <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">{store.Magazin}</td>
+                <td className="px-6 py-4">{store.Ville}</td>
+                <td className="px-6 py-4">{store.Gamme}</td>
+                <td className="px-6 py-4">{Number(store.Prix).toLocaleString()}</td>
+                <td className="px-6 py-4">{store.Quantité}</td>
                 <td className="px-6 py-4">
-                  <span className="text-sub bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded font-bold uppercase">
-                    {userName}
-                  </span>
-                </td>
-                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center space-x-1">
-                    <button type="button" onClick={() => onViewDetails(store)} className="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all" title="Détails"><EyeIcon className="w-5 h-5" /></button>
-                    <button type="button" onClick={() => onEdit?.(store)} className="p-1.5 text-slate-400 hover:text-amber-600 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-all" title="Modifier"><EditIcon className="w-5 h-5" /></button>
-                    {isAdmin && (
-                      <button type="button" className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-all" title="Supprimer"><DeleteIcon className="w-5 h-5" /></button>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                        type="button" 
+                        onClick={() => onViewDetails(store)} 
+                        className="p-1.5 text-slate-500 hover:text-blue-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" 
+                        title="Détails"
+                    >
+                        <EyeIcon className="w-5 h-5" />
+                    </button>
+                    {onEdit && (
+                        <button 
+                            type="button" 
+                            onClick={() => onEdit(store)} 
+                            className="p-1.5 text-slate-500 hover:text-amber-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" 
+                            title="Modifier"
+                        >
+                            <EditIcon className="w-5 h-5" />
+                        </button>
                     )}
                   </div>
                 </td>
@@ -228,42 +229,56 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
             );
           })}
         </tbody>
-        <tfoot className="bg-slate-50 dark:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700">
-          <tr className="text-emph font-bold">
-            <td className="px-6 py-4"></td>
-            <td className="px-6 py-4">Total Cumulé</td>
-            <td className="px-6 py-4"></td>
-            <td className="px-6 py-4"></td>
-            <td className="px-6 py-4">
-              {stores.reduce((acc, store) => acc + (Number(store.Prix) || 0), 0).toLocaleString()} DH
+        <tfoot className="bg-slate-50 dark:bg-slate-700/50 font-semibold text-slate-900 dark:text-white">
+          <tr>
+            <td className="p-4"></td>
+            <td className="px-6 py-3">Total</td>
+            <td className="px-6 py-3"></td>
+            <td className="px-6 py-3"></td>
+            <td className="px-6 py-3">
+                {stores.reduce((acc, s) => acc + (Number(s.Prix) || 0), 0).toLocaleString()}
             </td>
-            <td className="px-6 py-4">
-              {stores.reduce((acc, store) => acc + (Number(store.Quantité) || 0), 0).toLocaleString()}
+            <td className="px-6 py-3">
+                {stores.reduce((acc, s) => acc + (Number(s.Quantité) || 0), 0).toLocaleString()}
             </td>
-            <td className="px-6 py-4"></td>
-            <td className="px-6 py-4"></td>
+            <td className="px-6 py-3"></td>
           </tr>
         </tfoot>
       </table>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg">
-        <div className="text-sub uppercase font-bold">
-          Page {currentPage} sur {totalPages || 1}
+      <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          Affichage de <span className="font-semibold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-semibold text-slate-900 dark:text-white">{Math.min(endIndex, stores.length)}</span> sur <span className="font-semibold text-slate-900 dark:text-white">{stores.length}</span> résultats
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`p-2 rounded-lg border ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded-md border ${currentPage === 1 ? 'border-slate-200 text-slate-300 cursor-not-allowed dark:border-slate-700 dark:text-slate-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700'}`}
           >
             <ChevronLeftIcon className="w-4 h-4" />
           </button>
+          
+          <div className="flex space-x-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                    <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm font-medium rounded-md border ${currentPage === pageNum ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-400' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'}`}
+                    >
+                        {pageNum}
+                    </button>
+                );
+            })}
+          </div>
 
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
-            className={`p-2 rounded-lg border ${currentPage === totalPages || totalPages === 0 ? 'opacity-30 cursor-not-allowed' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded-md border ${currentPage === totalPages || totalPages === 0 ? 'border-slate-200 text-slate-300 cursor-not-allowed dark:border-slate-700 dark:text-slate-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700'}`}
           >
             <ChevronRightIcon className="w-4 h-4" />
           </button>

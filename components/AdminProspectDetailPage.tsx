@@ -15,12 +15,17 @@ import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
 import NewAppointmentModal from './NewAppointmentModal.tsx';
 import QuickLogModal from './QuickLogModal.tsx';
-import ClipboardDocumentCheckIcon from './icons/ClipboardDocumentListIcon.tsx';
 import storeService from '../services/storeService.ts';
 
 const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
+const ChatBubbleLeftRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
     </svg>
 );
 
@@ -36,23 +41,40 @@ interface AdminProspectDetailPageProps {
 const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store, history, onClose, onEdit, onOptimisticUpdate, authenticatedUser }) => {
     const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
     const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
-    const [historyFilter, setHistoryFilter] = useState<'all' | 'rdv' | 'contacts'>('all');
-
-    // States for collapsible sections
-    const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
-    const [isPerformanceOpen, setIsPerformanceOpen] = useState(true);
-    const [isVisitDatesOpen, setIsVisitDatesOpen] = useState(false);
+    
+    // حالات القوائم المنسدلة (كلها مطوية افتراضياً)
+    const [isApercuOpen, setIsApercuOpen] = useState(false);
+    const [isContactsOpen, setIsContactsOpen] = useState(false);
+    const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
+    const [isCoordonneesOpen, setIsCoordonneesOpen] = useState(false);
 
     const stats = useMemo(() => {
         const totalVisits = history.length;
-        const buyActions = history.filter(h => h['Action Client']?.toLowerCase().includes('acheter')).length;
+        const buyActions = history.filter(h => h['Action Client']?.toLowerCase().includes('acheter'));
+        const buyCount = buyActions.length;
         const revisitActions = history.filter(h => h['Action Client']?.toLowerCase().includes('revisiter')).length;
         const totalValue = history.reduce((sum, h) => sum + (Number(h.Prix) || 0), 0);
         const totalQuantity = history.reduce((sum, h) => sum + (Number(h.Quantité) || 0), 0);
         
-        const whatsappContacts = history.filter(h => h['Contacté']?.toLowerCase().includes('whatsapp')).length;
-        const phoneContacts = history.filter(h => h['Contacté']?.toLowerCase().includes('téléphone')).length;
-        const emailContacts = history.filter(h => h['Contacté']?.toLowerCase().includes('email')).length;
+        // إحصائيات وسائل الاتصال
+        let emailCount = 0;
+        let whatsappCount = 0;
+        let phoneCount = 0;
+        let physicsCount = 0;
+
+        const contactHistory = history.filter(h => h['Contacté']).map(h => ({
+            method: h['Contacté'],
+            date: h.Date,
+            user: h.USER?.split('@')[0] || 'N/A'
+        }));
+
+        history.forEach(h => {
+            const method = (h['Contacté'] || '').toLowerCase().trim();
+            if (method === 'email') emailCount++;
+            else if (method.includes('whatsapp')) whatsappCount++;
+            else if (method.includes('téléphone') || method.includes('telephone')) phoneCount++;
+            else if (method.includes('physique')) physicsCount++;
+        });
 
         const now = new Date();
         const nextAppt = history
@@ -63,37 +85,19 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
 
         return { 
             totalVisits, 
-            buyActions, 
+            buyCount, 
+            buyActions,
             revisitActions, 
             totalValue, 
             totalQuantity,
-            whatsappContacts,
-            phoneContacts,
-            emailContacts,
-            nextAppt: nextAppt ? nextAppt.toLocaleDateString('fr-CA') : 'Aucun'
+            emailCount,
+            whatsappCount,
+            phoneCount,
+            physicsCount,
+            contactHistory,
+            nextAppt: nextAppt ? nextAppt.toLocaleString('fr-FR') : 'Aucun'
         };
     }, [history]);
-
-    const purchases = useMemo(() => {
-        return history
-            .filter(h => h['Action Client']?.toLowerCase().includes('acheter'))
-            .sort((a, b) => {
-                const dateA = new Date(a['Date Heure'] || a.Date).getTime();
-                const dateB = new Date(b['Date Heure'] || b.Date).getTime();
-                return dateB - dateA;
-            });
-    }, [history]);
-
-    const filteredHistory = useMemo(() => {
-        if (historyFilter === 'all') return history;
-        if (historyFilter === 'rdv') {
-            return history.filter(h => !!h['Rendez-Vous'] || h['Action Client'] === 'Revisiter');
-        }
-        if (historyFilter === 'contacts') {
-            return history.filter(h => !!h['Contacté'] || h['Action Client'] === 'Contact' || h['Action Client'] === 'Acheter');
-        }
-        return history;
-    }, [history, historyFilter]);
 
     const handleSaveAppointment = (customer: Customer, date: string, note: string, userEmail: string, action: string) => {
         const newStore: Store = {
@@ -145,7 +149,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
     };
 
     const displayId = `LEAD-${store.id.toString().substring(0, 4).toUpperCase()}`;
-    const createdDate = store.created_at ? new Date(store.created_at).toLocaleDateString('fr-FR') : 'Inconnue';
+    const createdDate = store.created_at ? new Date(store.created_at).toLocaleString('fr-FR') : 'Inconnue';
 
     const currentCustomerObj: Customer = {
         id: store.id,
@@ -163,488 +167,436 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
         region: store.region
     };
 
-    const isWhatsAppSupported = (val: string | undefined) => {
-        if (!val) return false;
-        const cleanVal = val.replace(/\s/g, '');
-        return !cleanVal.startsWith('05') && !cleanVal.startsWith('+2125');
-    };
-
     const leadEmail = store.Email || store.email;
 
     return (
         <div className="flex flex-col h-full bg-[#F7F8FA] dark:bg-slate-900 font-sans overflow-hidden">
-            {/* Page Header */}
-            <header className="px-8 py-6 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 flex-shrink-0 sticky top-0 z-20">
-                <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* Header */}
+            <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-sub uppercase tracking-widest mb-1">
-                            <button onClick={onClose} className="hover:text-blue-600 transition-colors">Gestion des Leads</button>
+                        <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+                            <button onClick={onClose} className="hover:text-blue-600 flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+                                </svg> 
+                                Gestion des Leads
+                            </button>
                             <span>/</span>
-                            <span className="text-blue-600 font-black">DÉTAILS DU LEAD</span>
+                            <span>Détails du Lead</span>
                         </div>
-                        <h1 className="text-heading text-3xl leading-none">Détails du Lead</h1>
-                        <div className="flex items-center gap-4 text-sub uppercase tracking-wider mt-3">
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Détails du Lead</h1>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                             <span>ID: {displayId}</span>
                             <span>•</span>
-                            <span>CRÉÉ LE {createdDate}</span>
+                            <span>Créé le {createdDate}</span>
                             <span>•</span>
-                            <span>VALEUR ESTIMÉE: {stats.totalValue.toLocaleString()} DH</span>
+                            <span>Valeur estimée: {stats.totalValue.toLocaleString()} DH</span>
                         </div>
                     </div>
-                    
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-600 transition-all text-emph">
-                            <SparklesIcon className="w-4 h-4" /> Stratégie IA
+                        <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:shadow-md transition-all">
+                            <SparklesIcon className="w-5 h-5 text-yellow-300" />
+                            Stratégie IA
                         </button>
                         <button 
                             onClick={() => setIsNewAppointmentModalOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 transition-all text-emph"
+                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-600"
                         >
-                            <CalendarDaysIcon className="w-4 h-4 text-slate-400" /> Nouveau RDV
+                            <CalendarDaysIcon className="w-5 h-5" />
+                            Planifier RDV
                         </button>
-                        <button 
-                            onClick={() => setIsQuickLogModalOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all text-emph"
-                        >
-                            <ClipboardDocumentCheckIcon className="w-4 h-4" /> Rapport Rapide
-                        </button>
-                        <button onClick={onClose} className="p-2.5 bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-slate-600 rounded-xl transition-colors">
-                            <XMarkIcon className="w-5 h-5" />
-                        </button>
+                        <a href={`tel:${store.GSM1 || ''}`} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                            <PhoneCallIcon className="w-5 h-5" />
+                            Appeler
+                        </a>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <div className="flex-1 p-8 bg-[#F7F8FA] dark:bg-slate-900/50 overflow-y-auto">
-                <div className="max-w-[1600px] mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-                        
-                        {/* Column 1: Contact Information */}
-                        <div className="lg:col-span-1">
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden h-full flex flex-col">
-                                <div className="p-6 border-b border-slate-50 dark:border-slate-700 flex items-center gap-4 flex-shrink-0">
-                                    <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600">
-                                        <UserCircleIcon className="w-6 h-6" />
+            {/* Main Section */}
+            <main className="p-6 overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Column 1: Contact Info Form */}
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <UserCircleIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-900 dark:text-white">Informations de Contact</h2>
+                                    <p className="text-xs text-slate-500">Détails du prospect et de l'entreprise</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Le Gérant <span className="text-red-500">*</span></label>
+                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store['Le Gérant'] || ''} name="Gérant" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Téléphone <span className="text-red-500">*</span></label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.GSM1 || ''} name="GSM" />
                                     </div>
                                     <div>
-                                        <h3 className="text-heading text-sm">Informations de Contact</h3>
-                                        <p className="text-sub tracking-tight">Profil de l'entreprise et coordonnées</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="p-8 space-y-6 flex-1">
-                                    <div>
-                                        <label className="text-sub uppercase tracking-widest block mb-2">Nom de l'entreprise *</label>
-                                        <div className="w-full bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100/30 dark:border-blue-800/30 text-heading text-base">
-                                            {store.Magazin}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sub uppercase tracking-widest block mb-2">Le Gérant *</label>
-                                            <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-emph">
-                                                {store['Le Gérant'] || 'N/A'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-sub uppercase tracking-widest block mb-2">Gamme Client</label>
-                                            <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-emph">
-                                                {store.Gamme || 'Non définie'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4 pt-2 border-t border-slate-50 dark:border-slate-700">
-                                        <h4 className="text-sub uppercase tracking-[0.2em] mb-4">Moyens de Communication</h4>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {[
-                                                { label: 'GSM 1 (Principal)', value: store.GSM1, icon: PhoneCallIcon, type: 'tel', wa: true },
-                                                { label: 'GSM 2', value: store.GSM2, icon: PhoneCallIcon, type: 'tel', wa: true },
-                                                { label: 'Ligne Fixe', value: store.Phone, icon: PhoneCallIcon, type: 'tel', wa: false },
-                                                { label: 'Email', value: leadEmail, icon: EnvelopeIcon, type: 'mailto', wa: false },
-                                            ].map((item, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase">{item.label}</p>
-                                                        <p className="text-emph truncate max-w-[180px]">{item.value || 'N/A'}</p>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {item.value && (
-                                                            <>
-                                                                {item.wa && isWhatsAppSupported(item.value) && (
-                                                                    <a href={`https://wa.me/${item.value.replace(/\s/g, '')}`} target="_blank" className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:scale-110 transition-transform">
-                                                                        <WhatsAppIcon className="w-4 h-4 fill-current" />
-                                                                    </a>
-                                                                )}
-                                                                <a href={`${item.type}:${item.value}`} className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-lg hover:scale-110 transition-transform">
-                                                                    <item.icon className="w-4 h-4" />
-                                                                </a>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="pt-4 border-t border-slate-50 dark:border-slate-700">
-                                        <h4 className="text-sub text-blue-600 uppercase tracking-[0.2em] mb-4">Géolocalisation</h4>
-                                        <div className="space-y-6">
-                                            <div>
-                                                <label className="text-sub uppercase tracking-widest block mb-2">Adresse</label>
-                                                <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-emph">
-                                                    {store.Adresse || 'N/A'}
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-sub uppercase tracking-widest block mb-2">Ville *</label>
-                                                    <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-emph">
-                                                        {store.Ville}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="text-sub uppercase tracking-widest block mb-2">Région</label>
-                                                    <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-emph">
-                                                        {store.Région || 'N/A'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-4 gap-2 pt-4 flex-shrink-0">
-                                        <a href={`tel:${store.GSM1}`} className="flex flex-col items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl hover:bg-blue-100 transition-colors">
-                                            <PhoneCallIcon className="w-5 h-5" />
-                                            <span className="text-[8px] uppercase tracking-widest font-black">Appeler</span>
-                                        </a>
-                                        <a href={`https://wa.me/${store.GSM1}`} target="_blank" className="flex flex-col items-center justify-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-colors">
-                                            <WhatsAppIcon className="w-5 h-5" />
-                                            <span className="text-[8px] uppercase tracking-widest font-black">WhatsApp</span>
-                                        </a>
-                                        {leadEmail && (
-                                            <a href={`mailto:${leadEmail}`} className="flex flex-col items-center justify-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-2xl hover:bg-amber-100 transition-colors">
-                                                <EnvelopeIcon className="w-5 h-5" />
-                                                <span className="text-[8px] uppercase tracking-widest font-black">Email</span>
-                                            </a>
-                                        )}
-                                        <a href={`https://www.google.com/maps?q=${store.Localisation || store.Ville}`} target="_blank" className="flex flex-col items-center justify-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-2xl hover:bg-purple-100 transition-colors">
-                                            <LocationMarkerIcon className="w-5 h-5" />
-                                            <span className="text-[8px] uppercase tracking-widest font-black">Maps</span>
-                                        </a>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* Column 2: Interaction History */}
-                        <div className="lg:col-span-1 relative">
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden lg:absolute lg:inset-0 flex flex-col h-full">
-                                <div className="p-6 border-b border-slate-50 dark:border-slate-700 flex flex-col gap-4 flex-shrink-0">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-600">
-                                                <ClockIcon className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-heading text-sm">Historique des Interactions</h3>
-                                                <p className="text-sub tracking-tight">Suivi chronologique des activités</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
-                                            {['all', 'rdv', 'contacts'].map(filter => (
-                                                <button 
-                                                    key={filter}
-                                                    onClick={() => setHistoryFilter(filter as any)}
-                                                    className={`px-3 py-1.5 text-[9px] font-black uppercase rounded transition-all ${historyFilter === filter ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                                >
-                                                    {filter === 'all' ? 'Tout' : filter.toUpperCase()}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex-1 p-8 space-y-10 relative overflow-y-auto custom-scrollbar">
-                                    <div className="absolute left-[39px] top-10 bottom-10 w-0.5 bg-slate-100 dark:bg-slate-700"></div>
-
-                                    {filteredHistory.length === 0 ? (
-                                        <div className="text-center py-20 text-std italic">Aucun enregistrement trouvé</div>
-                                    ) : filteredHistory.map((h, i) => (
-                                        <div key={i} className="relative pl-14 animate-in fade-in slide-in-from-left-4 duration-300">
-                                            <div className={`absolute left-[-4px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-800 z-10 shadow-sm ${h['Rendez-Vous'] ? 'bg-indigo-500' : h['Action Client'] === 'Acheter' ? 'bg-emerald-500' : 'bg-blue-600'}`}></div>
-                                            
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <h4 className="text-heading text-sm uppercase tracking-tight">{h['Action Client'] || 'Visite'}</h4>
-                                                        {h['Rendez-Vous'] && (
-                                                            <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">RDV Fixé</span>
-                                                        )}
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-slate-300 uppercase">#{history.length - i}</span>
-                                                </div>
-                                                <div className="text-sub uppercase tracking-tight">
-                                                    PAR {h.USER?.split('@')[0].toUpperCase()} • {h.created_at ? new Date(h.created_at).toLocaleString('fr-FR') : h.Date}
-                                                </div>
-
-                                                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 mt-3 space-y-3 shadow-sm">
-                                                    {h.Note && <p className="text-std italic text-slate-600 dark:text-slate-300">"{h.Note}"</p>}
-                                                    
-                                                    <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
-                                                        {(h['Contacté'] || h['Action Client'] === 'Contact') && (
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sub text-blue-500 uppercase">Contact via:</span>
-                                                                <span className="text-emph">{h['Contacté'] || 'Direct'}</span>
-                                                            </div>
-                                                        )}
-                                                        {h['Discuté'] && (
-                                                            <div className="flex flex-col gap-1">
-                                                                <span className="text-sub text-emerald-500 uppercase tracking-tighter">Sujet abordé:</span>
-                                                                <span className="text-std bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">{h['Discuté']}</span>
-                                                            </div>
-                                                        )}
-                                                        {h['Rendez-Vous'] && (
-                                                            <div className="flex items-center gap-2 bg-indigo-50/50 dark:bg-indigo-900/20 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900/30 mt-1">
-                                                                <CalendarDaysIcon className="w-3.5 h-3.5 text-indigo-500" />
-                                                                <span className="text-sub text-indigo-500 uppercase tracking-tighter">Prochain RDV:</span>
-                                                                <span className="text-emph text-indigo-700 dark:text-indigo-300">{h['Rendez-Vous']}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* Column 3: Stats & Visual Overviews */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="p-2.5 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600">
-                                        <TagIcon className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-heading text-sm">Classification du Lead</h3>
-                                        <p className="text-sub tracking-tight">Segmentation stratégique</p>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="email" value={leadEmail || ''} name="Email" />
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-sub uppercase tracking-widest mb-1.5">NIVEAU CLIENT ACTUEL</p>
-                                    <p className="text-emph">{store.Gamme || 'Non spécifié'}</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-3">Informations de l'Entreprise</p>
                                 </div>
-                            </section>
-
-                            {/* Historique des Achats (Collapsible) */}
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-                                <button 
-                                    onClick={() => setIsPurchasesOpen(!isPurchasesOpen)}
-                                    className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl text-emerald-600">
-                                            <CurrencyDollarIcon className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <h3 className="text-heading text-sm uppercase tracking-tight">Historique des Achats</h3>
-                                            <p className="text-sub tracking-tight">Transactions enregistrées</p>
-                                        </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Nom de l'Entreprise <span className="text-red-500">*</span></label>
+                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Magazin} name="Magazin" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Adresse</label>
+                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Adresse || ''} name="Adresse" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Ville <span className="text-red-500">*</span></label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Ville} name="Ville" />
                                     </div>
-                                    <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isPurchasesOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {isPurchasesOpen && (
-                                    <div className="p-6 pt-0 space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-300">
-                                        {purchases.length === 0 ? (
-                                            <div className="text-center py-6 text-sub italic text-[11px] border-2 border-dashed border-slate-50 dark:border-slate-700 rounded-xl">
-                                                Aucune transaction d'achat
-                                            </div>
-                                        ) : purchases.map((p, idx) => (
-                                            <div key={idx} className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-emerald-200 transition-colors">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <span className="text-emph font-black text-emerald-600 text-sm">{p.Prix.toLocaleString()} DH</span>
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-700">{p.Date}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-[10px]">
-                                                    <div className="flex items-center gap-1.5 text-slate-500 font-bold">
-                                                        <CubeIcon className="w-3 h-3" />
-                                                        <span>QTÉ: {p.Quantité}</span>
-                                                    </div>
-                                                    <span className="text-slate-400 font-black uppercase tracking-tighter">PAR {p.USER?.split('@')[0]}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Région</label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Région || ''} name="Région" />
                                     </div>
-                                )}
-                            </section>
+                                </div>
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-2">
+                                    <a href={`tel:${store.GSM1}`} className="flex flex-col items-center justify-center p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                        <PhoneCallIcon className="w-5 h-5 mb-1" />
+                                        <span className="text-xs font-medium">Appeler</span>
+                                    </a>
+                                    <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                        <WhatsAppIcon className="w-5 h-5 mb-1" />
+                                        <span className="text-xs font-medium">WhatsApp</span>
+                                    </a>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                                        <LocationMarkerIcon className="w-5 h-5 mb-1" />
+                                        <span className="text-xs font-medium">Localisation</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* Aperçu de Performance (Collapsible) */}
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-                                <button 
-                                    onClick={() => setIsPerformanceOpen(!isPerformanceOpen)}
-                                    className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group"
-                                >
-                                    <h3 className="text-heading text-sm uppercase tracking-wider">Aperçu de Performance</h3>
-                                    <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isPerformanceOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {isPerformanceOpen && (
-                                    <div className="p-6 pt-0 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sub uppercase tracking-tight">Visites Totales</span>
-                                            <span className="text-emph font-bold">{stats.totalVisits}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sub uppercase tracking-tight">Actions "Acheter"</span>
-                                            <span className="text-emph font-bold text-emerald-600">{stats.buyActions}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sub uppercase tracking-tight">Actions "Revisiter"</span>
-                                            <span className="text-emph font-bold text-orange-500">{stats.revisitActions}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sub uppercase tracking-tight">Nb. Transactions</span>
-                                            <span className="text-emph font-bold">{stats.buyActions}</span>
+                    {/* Column 2: Interaction History Timeline */}
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 h-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                        <ClockIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-slate-900 dark:text-white">Historique des Interactions</h2>
+                                        <p className="text-xs text-slate-500">Chronologie des échanges et activités</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="relative border-l-2 border-slate-100 dark:border-slate-700 ml-3 space-y-8">
+                                {history.map((h, i) => (
+                                    <div key={i} className="relative pl-8">
+                                        <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${h['Action Client'] === 'Acheter' ? 'bg-emerald-500' : h['Action Client'] === 'Revisiter' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{h['Action Client'] || 'Visite'}</h4>
+                                                <p className="text-xs text-slate-500 mt-0.5">Par {h.USER?.split('@')[0]} • {h.created_at ? new Date(h.created_at).toLocaleString('fr-FR') : h.Date}</p>
+                                            </div>
                                         </div>
                                         
-                                        <div className="pt-2 space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sub uppercase tracking-tight text-[10px]">Contacté Téléphone</span>
-                                                <span className="text-emph font-bold text-xs">{stats.phoneContacts}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sub uppercase tracking-tight text-[10px]">Contacté WhatsApp</span>
-                                                <span className="text-emph font-bold text-xs">{stats.whatsappContacts}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sub uppercase tracking-tight text-[10px]">Contacté Email</span>
-                                                <span className="text-emph font-bold text-xs">{stats.emailContacts}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-between items-center border-t border-slate-50 dark:border-slate-700 pt-4">
-                                            <span className="text-sub uppercase tracking-tight font-black text-blue-600">TOTALE BRUTE</span>
-                                            <span className="text-emph font-black text-blue-600">{stats.totalValue.toLocaleString()} DH</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sub uppercase tracking-tight font-black">QUANTITÉ TOTALE</span>
-                                            <span className="text-emph font-black">{stats.totalQuantity}</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
-
-                            {/* Dates des Visites & Contacts (Collapsible) */}
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-                                <button 
-                                    onClick={() => setIsVisitDatesOpen(!isVisitDatesOpen)}
-                                    className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group"
-                                >
-                                    <h3 className="text-heading text-sm uppercase tracking-wider">Dates des Visites & Contacts</h3>
-                                    <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isVisitDatesOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {isVisitDatesOpen && (
-                                    <div className="p-6 pt-0 space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-300">
-                                        {history.length > 0 ? history.map((h, idx) => {
-                                            const action = h['Action Client']?.toLowerCase();
-                                            const method = h['Contacté']?.toLowerCase();
-                                            const isCall = method?.includes('téléphone') || method?.includes('whatsapp');
-                                            const isVisit = action?.includes('visite') || method?.includes('physique') || action?.includes('acheter') || action?.includes('revisiter');
-
-                                            return (
-                                                <div key={idx} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-blue-200 transition-colors">
-                                                    <div className={`p-2 rounded-lg shadow-sm ${isCall ? 'bg-blue-50 text-blue-500' : isVisit ? 'bg-emerald-50 text-emerald-500' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
-                                                        {isCall ? <PhoneCallIcon className="w-4 h-4" /> : isVisit ? <LocationMarkerIcon className="w-4 h-4" /> : <ClockIcon className="w-4 h-4" />}
+                                        {(h['Contacté'] || h['Discuté']) && (
+                                            <div className="mt-3 flex flex-col gap-2">
+                                                {h['Contacté'] && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Contacté via:</span>
+                                                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">{h['Contacté']}</span>
                                                     </div>
-                                                    <div className="overflow-hidden flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <p className="text-emph font-bold text-xs">
-                                                                {h.created_at ? new Date(h.created_at).toLocaleDateString('fr-FR') : h.Date}
-                                                            </p>
-                                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${isCall ? 'bg-blue-100 text-blue-700' : isVisit ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                                {isCall ? 'Appel' : isVisit ? 'Visite' : 'Autre'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between items-center mt-1">
-                                                            <p className="text-[10px] font-black text-slate-400 uppercase truncate">
-                                                                Par {h.USER?.split('@')[0] || 'Inconnu'}
-                                                            </p>
-                                                            <p className="text-[9px] font-bold text-slate-500 italic">
-                                                                {h['Contacté'] || h['Action Client'] || 'N/A'}
-                                                            </p>
-                                                        </div>
+                                                )}
+                                                {h['Discuté'] && (
+                                                    <div className="bg-slate-50/50 dark:bg-slate-900/40 p-3 rounded-lg border-l-2 border-indigo-400">
+                                                        <span className="text-[10px] font-black text-indigo-500 uppercase block mb-1">Discuté:</span>
+                                                        <p className="text-sm text-slate-700 dark:text-slate-200">{h['Discuté']}</p>
                                                     </div>
-                                                </div>
-                                            );
-                                        }) : (
-                                            <div className="text-center py-4 text-sub italic">Aucune interaction</div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {h.Note && (
+                                            <div className="mt-2">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Note:</span>
+                                                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg italic">"{h.Note}"</p>
+                                            </div>
                                         )}
                                     </div>
+                                ))}
+                                {history.length === 0 && (
+                                    <div className="pl-8 text-slate-400 italic text-sm">Aucune interaction enregistrée</div>
                                 )}
-                            </section>
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* Coordonnées & Actions (Static Container) */}
-                            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
-                                <h3 className="text-heading text-sm uppercase tracking-wider mb-6">Coordonnées & Actions</h3>
-                                <div className="space-y-4">
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-700">
-                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-slate-400">
-                                            <CalendarDaysIcon className="w-5 h-5" />
+                    {/* Column 3: Stats & Classification */}
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                    <TagIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-900 dark:text-white">Classification du Lead</h2>
+                                    <p className="text-xs text-slate-500">Catégorisation</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Niveau Client</label>
+                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 dark:text-white px-3 py-2 font-medium" type="text" value={store.Gamme || 'Non défini'} name="Gamme" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Aperçu Rapide - القائمة المنسدلة */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
+                            <button 
+                                onClick={() => setIsApercuOpen(!isApercuOpen)}
+                                className="w-full flex items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-900/10 hover:bg-slate-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                                        <SparklesIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">Aperçu Rapide</h3>
+                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-tight">Performances clés</p>
+                                    </div>
+                                </div>
+                                <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isApercuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isApercuOpen && (
+                                <div className="p-5 space-y-3 text-sm animate-in slide-in-from-top-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Priorité (Calc.)</span>
+                                        <span className={`font-medium px-2 py-0.5 rounded text-xs ${stats.buyCount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-green-100 text-green-700'}`}>
+                                            {stats.buyCount > 0 ? 'Élevée' : 'Faible'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Niveau Client</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{store.Gamme || 'N/A'}</span>
+                                    </div>
+                                    <div className="border-t border-slate-100 dark:border-slate-700 my-2"></div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Email</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{stats.emailCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">WhatsApp</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{stats.whatsappCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Téléphone</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{stats.phoneCount}</span>
+                                    </div>
+                                    <div className="border-t border-slate-100 dark:border-slate-700 my-2"></div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Visites Totales</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{stats.totalVisits}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Actions "Acheter"</span>
+                                        <span className="font-medium text-green-600">{stats.buyCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Nb. Transactions</span>
+                                        <span className="font-medium text-slate-800 dark:text-white">{stats.buyCount}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Journal des Contacts - القائمة المنسدلة */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
+                            <button 
+                                onClick={() => setIsContactsOpen(!isContactsOpen)}
+                                className="w-full flex items-center justify-between p-5 bg-indigo-50/50 dark:bg-indigo-900/10 hover:bg-indigo-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                        <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">Journal des Contacts</h3>
+                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-tight">Sujets et types d'appels</p>
+                                    </div>
+                                </div>
+                                <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isContactsOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isContactsOpen && (
+                                <div className="p-4 bg-white dark:bg-slate-800 animate-in slide-in-from-top-2">
+                                    {stats.contactHistory.length > 0 ? (
+                                        <div className="space-y-3">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead>
+                                                        <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 font-bold uppercase tracking-tighter">
+                                                            <th className="pb-2 font-black">Type</th>
+                                                            <th className="pb-2 text-right font-black">Date</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                                                        {stats.contactHistory.map((item, idx) => (
+                                                            <tr key={idx} className="text-slate-700 dark:text-slate-300">
+                                                                <td className="py-2.5">
+                                                                    <span className="font-bold text-blue-600 dark:text-blue-400">{item.method}</span>
+                                                                    <p className="text-[9px] text-slate-400 font-medium">Par {item.user}</p>
+                                                                </td>
+                                                                <td className="py-2.5 text-right font-medium text-slate-500">{item.date}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
+                                    ) : (
+                                        <div className="py-8 text-center text-slate-400 italic text-xs">Aucun contact enregistré</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* سجل الشراء - مطوي افتراضياً */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
+                            <button 
+                                onClick={() => setIsPurchaseHistoryOpen(!isPurchaseHistoryOpen)}
+                                className="w-full flex items-center justify-between p-5 bg-emerald-50/50 dark:bg-emerald-900/10 hover:bg-emerald-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                                        <CurrencyDollarIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">Historique des Achats</h3>
+                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-tight">Détails des commandes</p>
+                                    </div>
+                                </div>
+                                <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isPurchaseHistoryOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isPurchaseHistoryOpen && (
+                                <div className="p-4 bg-white dark:bg-slate-800 animate-in slide-in-from-top-2 duration-300">
+                                    {stats.buyActions.length > 0 ? (
+                                        <div className="space-y-4">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead>
+                                                        <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 font-bold uppercase tracking-tighter">
+                                                            <th className="pb-2 font-black">Date</th>
+                                                            <th className="pb-2 text-right font-black">Montant</th>
+                                                            <th className="pb-2 text-right font-black">Qté</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                                                        {stats.buyActions.map((item, idx) => (
+                                                            <tr key={idx} className="text-slate-700 dark:text-slate-300">
+                                                                <td className="py-2.5 font-medium">{item.Date}</td>
+                                                                <td className="py-2.5 text-right font-bold text-slate-900 dark:text-white">{Number(item.Prix).toLocaleString()} DH</td>
+                                                                <td className="py-2.5 text-right"><span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded font-bold">{item.Quantité}</span></td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <div className="pt-3 border-t-2 border-dashed border-slate-100 dark:border-slate-700 space-y-2">
+                                                <div className="flex justify-between items-center text-sm font-black">
+                                                    <span className="text-slate-500 uppercase tracking-tighter text-xs">Total Montant</span>
+                                                    <span className="text-emerald-600 dark:text-emerald-400">{stats.totalValue.toLocaleString()} DH</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm font-black">
+                                                    <span className="text-slate-500 uppercase tracking-tighter text-xs">Total Quantité</span>
+                                                    <span className="text-blue-600 dark:text-blue-400">{stats.totalQuantity} Pièces</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-8 text-center">
+                                            <CurrencyDollarIcon className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                                            <p className="text-xs text-slate-400 font-medium italic">Aucun achat enregistré</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Coordonnées & Actions - القائمة المنسدلة الجديدة */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700 transition-all duration-300">
+                            <button 
+                                onClick={() => setIsCoordonneesOpen(!isCoordonneesOpen)}
+                                className="w-full flex items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-900/10 hover:bg-slate-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-slate-100 dark:bg-slate-900/30 rounded-lg text-slate-600 dark:text-slate-400">
+                                        <LocationMarkerIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">Coordonnées & Actions</h3>
+                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-tight">Contact et planning</p>
+                                    </div>
+                                </div>
+                                <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isCoordonneesOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isCoordonneesOpen && (
+                                <div className="p-5 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-lg flex items-start gap-3 justify-between group">
+                                        <div className="flex items-start gap-3">
+                                            <CalendarDaysIcon className="w-4 h-4 text-slate-400 mt-0.5" />
+                                            <div>
+                                                <span className="block font-medium text-slate-700 dark:text-slate-200">Prochain RDV</span>
+                                                <span className="text-xs text-slate-500">{stats.nextAppt}</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setIsNewAppointmentModalOpen(true)} className="text-blue-600 hover:text-blue-800 opacity-0 group-hover:opacity-100 transition-opacity" title="Voir les rendez-vous">
+                                            <CalendarDaysIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-lg flex items-start gap-3">
+                                        <PhoneCallIcon className="w-4 h-4 text-slate-400 mt-0.5" />
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prochain RDV</p>
-                                            <p className="text-emph text-xs">{stats.nextAppt}</p>
+                                            <span className="block font-medium text-slate-700 dark:text-slate-200">Téléphone / Mobile</span>
+                                            <span className="text-xs text-slate-500 block">{store.GSM1 || 'N/A'}</span>
                                         </div>
                                     </div>
-
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-700">
-                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-slate-400">
-                                            <PhoneCallIcon className="w-5 h-5" />
-                                        </div>
+                                    <div className="w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-lg flex items-start gap-3">
+                                        <EnvelopeIcon className="w-4 h-4 text-slate-400 mt-0.5" />
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Téléphone / Mobile</p>
-                                            <a href={`tel:${store.GSM1}`} className="text-emph text-xs hover:text-blue-600 hover:underline">{store.GSM1 || 'N/A'}</a>
+                                            <span className="block font-medium text-slate-700 dark:text-slate-200">Email</span>
+                                            <span className="text-xs text-slate-500">{leadEmail || 'Non renseigné'}</span>
                                         </div>
                                     </div>
-
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-700">
-                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-slate-400">
-                                            <EnvelopeIcon className="w-5 h-5" />
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</p>
-                                            {leadEmail ? (
-                                                <a href={`mailto:${leadEmail}`} className="text-emph text-xs truncate block hover:text-blue-600 hover:underline">
-                                                    {leadEmail}
-                                                </a>
-                                            ) : (
-                                                <p className="text-emph text-xs">Non renseigné</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-700">
-                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-slate-400">
-                                            <LocationMarkerIcon className="w-5 h-5" />
-                                        </div>
+                                    <div className="w-full px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-lg flex items-start gap-3">
+                                        <LocationMarkerIcon className="w-4 h-4 text-slate-400 mt-0.5" />
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Localisation</p>
-                                            <a href={`https://www.google.com/maps?q=${store.Localisation || store.Ville}`} target="_blank" className="text-emph text-xs hover:text-blue-600 hover:underline">{store.Ville}</a>
+                                            <span className="block font-medium text-slate-700 dark:text-slate-200">Localisation</span>
+                                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline truncate block max-w-[180px]">
+                                                {store.Ville}
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
-                            </section>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
 
             <NewAppointmentModal 
                 isOpen={isNewAppointmentModalOpen} 

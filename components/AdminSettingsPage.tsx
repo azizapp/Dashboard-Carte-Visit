@@ -75,16 +75,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                    <h3 className="text-heading text-lg">Modifier l'utilisateur</h3>
+                    <h3 className="text-section-title">Modifier l'utilisateur</h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"><XMarkIcon className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div>
-                        <label className="text-sub uppercase mb-1 block">Email</label>
+                        <label className="text-sub uppercase mb-1 block font-bold">Email</label>
                         <p className="text-emph font-bold">{user.email}</p>
                     </div>
                     <div>
-                        <label className="text-sub uppercase mb-2 block">Code d'accès</label>
+                        <label className="text-sub uppercase mb-2 block font-bold">Code d'accès</label>
                         <input
                             type="text"
                             value={code}
@@ -93,7 +93,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
                         />
                     </div>
                     <div>
-                        <label className="text-sub uppercase mb-2 block">Rôle</label>
+                        <label className="text-sub uppercase mb-2 block font-bold">Rôle</label>
                         <div className="grid grid-cols-2 gap-2">
                             {['user', 'admin'].map(r => (
                                 <button
@@ -190,8 +190,8 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         <ArrowLeftIcon className="w-6 h-6" />
                     </button>
                     <div>
-                        <h1 className="text-heading text-xl leading-none">Panneau de Contrôle</h1>
-                        <p className="text-sub mt-1">Administration du Système</p>
+                        <h1 className="text-heading">Panneau de Contrôle</h1>
+                        <p className="text-sub mt-1 font-bold uppercase tracking-wider">Administration du Système</p>
                     </div>
                 </div>
                 <button
@@ -210,7 +210,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         <div className="p-6 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600"><UsersIcon className="w-5 h-5" /></div>
-                                <h2 className="text-heading text-sm uppercase tracking-tight">Utilisateurs Autorisés</h2>
+                                <h2 className="text-section-title uppercase tracking-tight">Utilisateurs Autorisés</h2>
                             </div>
                             <button onClick={() => setIsAddUserModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors">
                                 <UserPlusIcon className="w-4 h-4" /> Nouveau
@@ -218,7 +218,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-700/30 text-sub tracking-widest border-b border-slate-100 dark:border-slate-700">
+                                <thead className="bg-slate-50 dark:bg-slate-700/30 text-sub tracking-widest border-b border-slate-100 dark:border-slate-700 font-bold uppercase">
                                     <tr><th className="px-6 py-4">Utilisateur</th><th className="px-6 py-4 text-center">Rôle</th><th className="px-6 py-4 text-right">Actions</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
@@ -231,7 +231,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-300">{user.email.charAt(0).toUpperCase()}</div>
-                                                    <div><p className="text-emph font-bold">{user.email}</p><p className="text-sub text-[10px]">Code: {user.code}</p></div>
+                                                    <div><p className="text-emph font-bold">{user.email}</p><p className="text-sub text-[10px] font-bold">Code: {user.code}</p></div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
@@ -253,31 +253,12 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600"><MapIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm uppercase tracking-tight">Paramètres de Connexion</h2>
+                            <h2 className="text-section-title uppercase tracking-tight">Paramètres de Connexion</h2>
                         </div>
                         <div className="space-y-4">
-                            <div><label className="text-sub tracking-widest block mb-2">Supabase URL</label><input type="text" value={sbUrl} onChange={(e) => setSbUrl(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
-                            <div><label className="text-sub tracking-widest block mb-2">Supabase Anon Key</label><input type="password" value={sbKey} onChange={(e) => setSbKey(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-medium dark:text-white" /></div>
+                            <div><label className="text-sub tracking-widest block mb-2 font-bold uppercase">Supabase URL</label><input type="text" value={sbUrl} onChange={(e) => setSbUrl(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-bold dark:text-white" /></div>
+                            <div><label className="text-sub tracking-widest block mb-2 font-bold uppercase">Supabase Anon Key</label><input type="password" value={sbKey} onChange={(e) => setSbKey(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm font-bold dark:text-white" /></div>
                             <button onClick={handleSaveConnection} disabled={isSavingConn} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">{isSavingConn ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <CheckIcon className="w-4 h-4" />} Enregistrer les paramètres</button>
-                        </div>
-                    </section>
-
-                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg text-amber-600"><ArrowPathIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm uppercase tracking-tight">Configuration Système</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-                                <p className="text-emph text-sm mb-1 font-bold">Mode de Fonctionnement</p>
-                                <p className="text-[11px] text-slate-500 mb-4 text-std">Le mode Test n'affectه pas la base principale.</p>
-                                <ModeToggle mode={mode} setMode={setMode} />
-                            </div>
-                            <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-                                <p className="text-emph text-sm mb-1 font-bold">Maintenance</p>
-                                <p className="text-[11px] text-slate-500 mb-4 text-std">Réinitialiser les styles et préférences locales.</p>
-                                <button onClick={() => setIsResetModalOpen(true)} className="text-xs font-black text-red-500 uppercase tracking-widest hover:underline">Réinitialiser tout</button>
-                            </div>
                         </div>
                     </section>
                 </div>
@@ -286,11 +267,11 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600"><CheckIcon className="w-5 h-5" /></div>
-                            <h2 className="text-heading text-sm uppercase tracking-tight">Design Global</h2>
+                            <h2 className="text-section-title uppercase tracking-tight">Design Global</h2>
                         </div>
                         <div className="space-y-8">
                             <div>
-                                <label className="text-sub tracking-widest block mb-4">Couleur Principale</label>
+                                <label className="text-sub tracking-widest block mb-4 font-bold uppercase">Couleur Principale</label>
                                 <div className="grid grid-cols-5 gap-2">
                                     {accentColors.map(color => (
                                         <button key={color.name} type="button" onClick={() => setAccentColor(color.value)} className={`aspect-square rounded-xl flex items-center justify-center transition-all ${accentColor === color.value ? 'ring-4 ring-offset-2 ring-slate-200 scale-110' : ''}`} style={{ backgroundColor: color.value } as any}>
@@ -300,7 +281,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                                 </div>
                             </div>
                             <div>
-                                <label className="text-sub tracking-widest block mb-4">Typographie Système</label>
+                                <label className="text-sub tracking-widest block mb-4 font-bold uppercase">Typographie Système</label>
                                 <div className="space-y-2">
                                     {['Inter', 'Roboto', 'Lato'].map(f => (
                                         <button key={f} onClick={() => setFont(f)} className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all ${font === f ? 'border-blue-500 bg-blue-50/30 text-blue-700' : 'border-slate-100 text-slate-600'}`} style={{ fontFamily: f }}>
@@ -309,9 +290,6 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({
                                         </button>
                                     ))}
                                 </div>
-                            </div>
-                            <div className="pt-6 border-t border-slate-50 dark:border-slate-700">
-                                <div className="flex items-center justify-between"><span className="text-emph font-bold text-sm">Mode Sombre</span><ThemeToggle theme={theme} setTheme={setTheme} /></div>
                             </div>
                         </div>
                     </section>
