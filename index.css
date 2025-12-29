@@ -1,0 +1,30 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent-color: #4f46e5;
+  --app-font: 'Inter';
+  --app-font-size: 16px;
+  --app-font-weight: 400;
+}
+
+html, body {
+  font-family: var(--app-font), sans-serif;
+  font-size: var(--app-font-size);
+  font-weight: var(--app-font-weight);
+  margin: 0;
+  padding: 0;
+}
+
+/* إصلاح جذري لمشكلة الأيقونات الكبيرة */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }

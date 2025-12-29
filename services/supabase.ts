@@ -1,8 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// استخدام متغيرات البيئة التي سيتم إدخالها عبر Railway
-// في حالة عدم وجودها، سيتم استخدام القيم الافتراضية للتطوير
+// استخدام متغيرات البيئة الخاصة بـ Vite
+// ملاحظة: يجب أن تبدأ المتغيرات بـ VITE_ في ملف .env
+// FIX: Replaced import.meta.env with process.env to resolve TypeScript error and maintain consistency with other environment variable usage defined in vite.config.ts.
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://isvhmsatlnwykmwukurh.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
 
@@ -23,7 +24,6 @@ export const updateSupabaseConfig = (url: string, key: string) => {
   supabase = createClient(url, key);
 };
 
-// وظيفة مساعدة لتحويل Base64 إلى Blob لرفعه
 export const uploadImageToStorage = async (base64Data: string): Promise<string> => {
     try {
         const response = await fetch(base64Data);

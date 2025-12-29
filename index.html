@@ -10,68 +10,44 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@100..900&family=Montserrat:wght@100..900&family=Open+Sans:wght@300..800&family=Poppins:wght@100..900&family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+  <!-- إضافة Tailwind CDN لضمان عمل التنسيقات فوراً وإصلاح مشكلة الأيقونات -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: 'var(--accent-color, #4f46e5)',
+          }
+        }
+      }
+    }
+  </script>
   <style>
+    /* منع ظهور الأيقونات بشكل ضخم قبل تحميل Tailwind */
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
     :root {
       --accent-color: #4f46e5;
       --app-font: 'Inter';
-      --app-font-size: 16px;
-      --app-font-weight: 400;
     }
-    
-    html, body {
+    body {
       font-family: var(--app-font), sans-serif;
-      font-size: var(--app-font-size);
-      font-weight: var(--app-font-weight);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-      font-feature-settings: "cv11", "ss01", "ss03", "cv05";
-      line-height: 1.5;
-      -webkit-text-size-adjust: 100%;
     }
-
-    .text-heading {
-      font-weight: 800;
-      letter-spacing: -0.022em;
-      color: #0f172a;
-    }
-    .dark .text-heading { color: #f8fafc; }
-
-    .text-sub {
-      font-weight: 600;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #94a3b8;
-    }
-
-    .text-emph {
-      font-weight: 600;
-      color: #1e293b;
-    }
-    .dark .text-emph { color: #e2e8f0; }
-
-    .text-std {
-      font-weight: 450;
-      color: #475569;
-    }
-    .dark .text-std { color: #94a3b8; }
-
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
   </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
