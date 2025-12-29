@@ -1,30 +1,15 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carte Visite</title>
+  <title>Apollo Eyewear - Dashboard</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4f46e5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Load Inter, Roboto, Poppins, Lato, Montserrat, Open Sans -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@100..900&family=Montserrat:wght@100..900&family=Open+Sans:wght@300..800&family=Poppins:wght@100..900&family=Roboto:wght@100..900&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            // استخدام متغير CSS للخط الديناميكي
-            sans: ['var(--app-font)', '"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-          },
-        }
-      }
-    }
-  </script>
   <style>
     :root {
       --accent-color: #4f46e5;
@@ -33,23 +18,18 @@
       --app-font-weight: 400;
     }
     
-    /* تطبيق الخط على كامل مستند التطبيق */
     html, body {
-      font-family: var(--app-font);
+      font-family: var(--app-font), sans-serif;
       font-size: var(--app-font-size);
       font-weight: var(--app-font-weight);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      /* تحسينات خط Inter */
       font-feature-settings: "cv11", "ss01", "ss03", "cv05";
       line-height: 1.5;
       -webkit-text-size-adjust: 100%;
     }
 
-    /* كلاسات مساعدة للخطوط بناءً على تحليل الصورة */
-
-    /* العناوين الرئيسية العريضة جداً (مثل Détails du Lead) */
     .text-heading {
       font-weight: 800;
       letter-spacing: -0.022em;
@@ -57,7 +37,6 @@
     }
     .dark .text-heading { color: #f8fafc; }
 
-    /* العناوين الفرعية الصغيرة الملونة بالأعلى (مثل GESTION DES LEADS) */
     .text-sub {
       font-weight: 600;
       font-size: 0.7rem;
@@ -66,21 +45,18 @@
       color: #94a3b8;
     }
 
-    /* نصوص الحقول والقيم المميزة */
     .text-emph {
       font-weight: 600;
       color: #1e293b;
     }
     .dark .text-emph { color: #e2e8f0; }
 
-    /* النصوص العادية */
     .text-std {
       font-weight: 450;
       color: #475569;
     }
     .dark .text-std { color: #94a3b8; }
 
-    /* تحسين مظهر Scrollbar */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -89,17 +65,16 @@
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
-    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.0"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-[#F7F8FA] dark:bg-slate-900 text-slate-900 dark:text-slate-50 transition-colors duration-300">
   <div id="root"></div>
