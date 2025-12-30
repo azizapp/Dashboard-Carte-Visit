@@ -45,9 +45,40 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null);
 
-    const stats = useMemo(() => ({
-        totalVisits: history.length,
-    }), [history]);
+    const stats = useMemo(() => {
+        const totalVisits = history.length;
+        
+        const now = new Date();
+        const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+
+        const orders = history.filter(i => i['Action Client']?.toLowerCase() === 'acheter');
+        const latestOrder = orders.length > 0 ? orders.sort((a, b) => new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime())[0] : null;
+        const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.Date) : null;
+        
+        const ordersLast180Days = orders.filter(i => new Date(i['Date Heure'] || i.Date) >= hundredEightyDaysAgo);
+        const totalRevenueYear = orders
+            .filter(i => new Date(i['Date Heure'] || i.Date) >= oneYearAgo)
+            .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
+
+        let type = 'Lead';
+        if (store.is_blocked) {
+            type = 'Client Bloqué';
+        } else if (totalRevenueYear >= 40000) {
+            type = 'Client Stratégique';
+        } else if (ordersLast180Days.length >= 2) {
+            type = 'Client Actif';
+        } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
+            type = 'Client Perdu';
+        } else if (orders.length === 1) {
+            type = 'Nouveau Client';
+        }
+
+        return { 
+            totalVisits, 
+            clientType: type 
+        };
+    }, [history, store.is_blocked]);
 
     const galleryImages = useMemo(() => {
         return history
@@ -88,6 +119,27 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                         <span className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 px-3 py-1.5 rounded text-[11px] font-bold border border-slate-100 dark:border-slate-700 flex items-center gap-1.5">
                             <TagIcon className="w-3.5 h-3.5" /> {store.Gamme || 'Haute et Moyenne'}
                         </span>
+                        
+                        {/* Statut Client Badge */}
+                        <span className={`px-3 py-1.5 rounded text-[11px] font-bold border flex items-center gap-1.5 ${
+                            stats.clientType === 'Client Bloqué' ? 'bg-red-50 text-red-600 border-red-100' :
+                            stats.clientType === 'Client Stratégique' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                            stats.clientType === 'Client Actif' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                            stats.clientType === 'Client Perdu' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                            stats.clientType === 'Nouveau Client' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                            'bg-slate-50 text-slate-600 border-slate-100'
+                        }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${
+                                stats.clientType === 'Client Bloqué' ? 'bg-red-500' :
+                                stats.clientType === 'Client Stratégique' ? 'bg-purple-500' :
+                                stats.clientType === 'Client Actif' ? 'bg-emerald-500' :
+                                stats.clientType === 'Client Perdu' ? 'bg-orange-500' :
+                                stats.clientType === 'Nouveau Client' ? 'bg-blue-500' :
+                                'bg-slate-400'
+                            }`}></div>
+                            {stats.clientType}
+                        </span>
+
                         <span className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 px-3 py-1.5 rounded text-[11px] font-bold border border-slate-100 dark:border-slate-700 flex items-center gap-1.5">
                             <ClipboardDocumentListIcon className="w-3.5 h-3.5" /> {stats.totalVisits} visites
                         </span>

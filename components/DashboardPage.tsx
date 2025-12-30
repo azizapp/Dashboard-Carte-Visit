@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Store } from '../types.ts';
 import SearchIcon from './icons/SearchIcon.tsx';
@@ -97,7 +96,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
     }, [accessibleStores, searchQuery, selectedVille, selectedGamme, selectedUser, selectedActionClient]);
 
     const uniqueDisplayStores = useMemo(() => {
-        const map = new Map<string, Store>();
+        const map = new Map<string, Store & { clientType?: string }>();
+        const now = new Date();
+        const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+
+        const storeGroups = new Map<string, Store[]>();
+        accessibleStores.forEach(s => {
+            const key = s.Magazin.trim().toLowerCase();
+            if (!storeGroups.has(key)) storeGroups.set(key, []);
+            storeGroups.get(key)!.push(s);
+        });
 
         filteredStores.forEach(store => {
             if (!store.Magazin) return;
@@ -107,8 +116,32 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
             const currentPrix = Number(store.Prix) || 0;
             const currentQty = Number(store.Quantité) || 0;
 
+            const allInteractions = storeGroups.get(key) || [];
+            const orders = allInteractions.filter(i => i['Action Client']?.toLowerCase() === 'acheter');
+            const latestOrder = orders.length > 0 ? orders.sort((a, b) => new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime())[0] : null;
+            const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.Date) : null;
+            
+            const ordersLast180Days = orders.filter(i => new Date(i['Date Heure'] || i.Date) >= hundredEightyDaysAgo);
+            const totalRevenueYear = orders
+                .filter(i => new Date(i['Date Heure'] || i.Date) >= oneYearAgo)
+                .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
+
+            let type = 'Lead';
+            // التحقق أولاً من خاصية الحظر الدائمة
+            if (store.is_blocked) {
+                type = 'Client Bloqué';
+            } else if (totalRevenueYear >= 40000) {
+                type = 'Client Stratégique';
+            } else if (ordersLast180Days.length >= 2) {
+                type = 'Client Actif';
+            } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
+                type = 'Client Perdu';
+            } else if (orders.length === 1) {
+                type = 'Nouveau Client';
+            }
+
             if (!existing) {
-                map.set(key, { ...store, Prix: currentPrix, Quantité: currentQty });
+                map.set(key, { ...store, Prix: currentPrix, Quantité: currentQty, clientType: type });
             } else {
                 const dateA = new Date(store['Date Heure'] || store.Date).getTime();
                 const dateB = new Date(existing['Date Heure'] || existing.Date).getTime();
@@ -118,15 +151,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                 const totalQty = existing.Quantité + currentQty;
 
                 if (isNewer) {
-                    map.set(key, { ...store, Prix: totalPrix, Quantité: totalQty });
+                    map.set(key, { ...store, Prix: totalPrix, Quantité: totalQty, clientType: type });
                 } else {
-                    map.set(key, { ...existing, Prix: totalPrix, Quantité: totalQty });
+                    map.set(key, { ...existing, Prix: totalPrix, Quantité: totalQty, clientType: type });
                 }
             }
         });
 
         return Array.from(map.values());
-    }, [filteredStores]);
+    }, [filteredStores, accessibleStores]);
 
     const stats = useMemo(() => {
         const uniqueMagazins = new Set(accessibleStores.map(s => s.Magazin.trim().toLowerCase())).size;

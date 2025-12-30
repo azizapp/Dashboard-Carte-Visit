@@ -75,6 +75,32 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
         });
 
         const now = new Date();
+        const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+
+        // حساب نوع الزبون
+        const orders = history.filter(i => i['Action Client']?.toLowerCase() === 'acheter');
+        const latestOrder = orders.length > 0 ? orders.sort((a, b) => new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime())[0] : null;
+        const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.Date) : null;
+        
+        const ordersLast180Days = orders.filter(i => new Date(i['Date Heure'] || i.Date) >= hundredEightyDaysAgo);
+        const totalRevenueYear = orders
+            .filter(i => new Date(i['Date Heure'] || i.Date) >= oneYearAgo)
+            .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
+
+        let type = 'Lead';
+        if (store.is_blocked) {
+            type = 'Client Bloqué';
+        } else if (totalRevenueYear >= 40000) {
+            type = 'Client Stratégique';
+        } else if (ordersLast180Days.length >= 2) {
+            type = 'Client Actif';
+        } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
+            type = 'Client Perdu';
+        } else if (orders.length === 1) {
+            type = 'Nouveau Client';
+        }
+
         const nextAppt = history
             .filter(h => h['Rendez-Vous'])
             .map(h => new Date(h['Rendez-Vous']!))
@@ -93,9 +119,10 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
             phoneCount,
             physicsCount,
             contactHistory,
+            clientType: type,
             nextAppt: nextAppt ? nextAppt.toLocaleString('fr-FR') : 'Aucun'
         };
-    }, [history]);
+    }, [history, store.is_blocked]);
 
     const handleSaveAppointment = (customer: Customer, date: string, note: string, userEmail: string, action: string) => {
         const newStore: Store = {
@@ -175,7 +202,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                     <div>
                         <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
                             <button onClick={onClose} className="hover:text-blue-600 flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
                                 </svg> 
                                 Gestion des Leads
@@ -212,25 +239,23 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <UserCircleIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                 </div>
+                                hide-scrollbar
                                 <div>
                                     <h2 className="font-bold text-slate-900 dark:text-white">Informations de Contact</h2>
                                     <p className="text-xs text-slate-500">Détails du prospect et de l'entreprise</p>
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                {/* 1. Nom de l'Entreprise First */}
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Nom de l'Entreprise <span className="text-red-500">*</span></label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2 font-bold" type="text" value={store.Magazin} name="Magazin" />
                                 </div>
                                 
-                                {/* 2. Le Gérant */}
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Le Gérant <span className="text-red-500">*</span></label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store['Le Gérant'] || ''} name="Gérant" />
                                 </div>
                                 
-                                {/* 3. GSM 1 & GSM 2 */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">GSM 1 <span className="text-red-500">*</span></label>
@@ -242,7 +267,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     </div>
                                 </div>
 
-                                {/* 4. Phone & Email */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Phone (Fixe)</label>
@@ -254,18 +278,15 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     </div>
                                 </div>
 
-                                {/* 5. Localisation & Adresse Header */}
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-3 border-b border-slate-50 dark:border-slate-700 pb-1">Localisation & Adresse</p>
                                 </div>
 
-                                {/* 6. Adresse */}
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Adresse</label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Adresse || ''} name="Adresse" />
                                 </div>
 
-                                {/* 7. Ville & Région */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Ville <span className="text-red-500">*</span></label>
@@ -277,7 +298,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     </div>
                                 </div>
 
-                                {/* Actions Group at bottom of card */}
                                 <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 
@@ -303,11 +323,11 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                             <PhoneCallIcon className="w-5 h-5 mb-1" />
                                             <span className="text-[10px] font-bold uppercase">Appeler</span>
                                         </a>
-                                        <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                        <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-blue-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
                                             <WhatsAppIcon className="w-5 h-5 mb-1" />
                                             <span className="text-[10px] font-bold uppercase">WhatsApp</span>
                                         </a>
-                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-purple-50 dark:bg-blue-900/20 text-purple-600 dark:text-blue-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
                                             <LocationMarkerIcon className="w-5 h-5 mb-1" />
                                             <span className="text-[10px] font-bold uppercase">GPS</span>
                                         </a>
@@ -391,6 +411,19 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Niveau Client</label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 dark:text-white px-3 py-2 font-medium" type="text" value={store.Gamme || 'Non défini'} name="Gamme" />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Statut Client</label>
+                                    <div className={`w-full text-sm border border-slate-200 dark:border-slate-600 rounded-md px-3 py-2 font-bold ${
+                                        stats.clientType === 'Client Bloqué' ? 'bg-red-50 text-red-600' :
+                                        stats.clientType === 'Client Stratégique' ? 'bg-purple-50 text-purple-600' :
+                                        stats.clientType === 'Client Actif' ? 'bg-emerald-50 text-emerald-600' :
+                                        stats.clientType === 'Client Perdu' ? 'bg-orange-50 text-orange-600' :
+                                        stats.clientType === 'Nouveau Client' ? 'bg-blue-50 text-blue-600' :
+                                        'bg-slate-50 text-slate-600'
+                                    }`}>
+                                        {stats.clientType}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -458,7 +491,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
                             <button 
                                 onClick={() => setIsContactsOpen(!isContactsOpen)}
-                                className="w-full flex items-center justify-between p-5 bg-indigo-50/50 dark:bg-indigo-900/10 hover:bg-indigo-50 transition-colors"
+                                className="w-full flex items-center justify-between p-5 bg-indigo-50/50 dark:bg-indigo-900/10 hover:bg-slate-50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">

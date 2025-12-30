@@ -33,7 +33,7 @@ const ArrowsUpDownIcon = () => (
 
 
 interface StoreTableProps {
-  stores: Store[];
+  stores: (Store & { clientType?: string })[];
   onViewDetails: (store: Store) => void;
   onEdit?: (store: Store) => void;
   isLoading: boolean;
@@ -114,6 +114,23 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
   const isAllSelected = currentStores.length > 0 && currentStores.every(store => selectedIds.has(store.ID));
   const isIndeterminate = currentStores.some(store => selectedIds.has(store.ID)) && !isAllSelected;
 
+  const getClientTypeBadge = (type?: string) => {
+    switch (type) {
+      case 'Client Stratégique':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200">Stratégique</span>;
+      case 'Client Actif':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200">Actif</span>;
+      case 'Nouveau Client':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200">Nouveau</span>;
+      case 'Client Perdu':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200">Perdu</span>;
+      case 'Client Bloqué':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200">Bloqué</span>;
+      default:
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 border border-slate-200">Lead</span>;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -137,9 +154,9 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
   const columns = [
     { label: 'Magazin', key: 'Magazin' },
     { label: 'Ville', key: 'Ville' },
+    { label: 'Statut Client', key: 'clientType' },
     { label: 'Gamme', key: 'Gamme' },
-    { label: 'Prix', key: 'Prix' },
-    { label: 'Quantité', key: 'Quantité' },
+    { label: 'Prix (DH)', key: 'Prix' },
     { label: 'Actions', key: null },
   ];
 
@@ -198,11 +215,15 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
                     />
                   </div>
                 </td>
-                <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">{store.Magazin}</td>
-                <td className="px-6 py-4">{store.Ville}</td>
+                <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                    {store.Magazin}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">{store.Ville}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                    {getClientTypeBadge(store.clientType)}
+                </td>
                 <td className="px-6 py-4">{store.Gamme}</td>
-                <td className="px-6 py-4">{Number(store.Prix).toLocaleString()}</td>
-                <td className="px-6 py-4">{store.Quantité}</td>
+                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{Number(store.Prix).toLocaleString()}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
                     <button 
@@ -232,14 +253,12 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
         <tfoot className="bg-slate-50 dark:bg-slate-700/50 font-semibold text-slate-900 dark:text-white">
           <tr>
             <td className="p-4"></td>
-            <td className="px-6 py-3">Total</td>
+            <td className="px-6 py-3">Total (Filtres)</td>
+            <td className="px-6 py-3"></td>
             <td className="px-6 py-3"></td>
             <td className="px-6 py-3"></td>
             <td className="px-6 py-3">
-                {stores.reduce((acc, s) => acc + (Number(s.Prix) || 0), 0).toLocaleString()}
-            </td>
-            <td className="px-6 py-3">
-                {stores.reduce((acc, s) => acc + (Number(s.Quantité) || 0), 0).toLocaleString()}
+                {stores.reduce((acc, s) => acc + (Number(s.Prix) || 0), 0).toLocaleString()} DH
             </td>
             <td className="px-6 py-3"></td>
           </tr>

@@ -1,4 +1,3 @@
-
 export enum Mode {
   Test = 'test',
   Production = 'production',
@@ -19,6 +18,7 @@ export interface Customer {
   location?: string; // Localisation
   user_email?: string; // USER
   created_at?: string; // Date + Date Heure
+  is_blocked?: boolean; // خاصية الحظر
 }
 
 export interface Visit {
@@ -28,8 +28,8 @@ export interface Visit {
   action: string; // Action Client
   appointment_date?: string; // Rendez-Vous
   note?: string;
-  contacted: string; // تم التغيير إلى string (Contacté)
-  discussed: string; // تم التغيير إلى string (Discuté)
+  contacted: string; 
+  discussed: string; 
   price: number; // Prix
   quantity: number; // Quantité
   image?: string;
@@ -55,8 +55,8 @@ export interface Store extends Customer {
   'Action Client': string;
   'Rendez-Vous'?: string;
   Note?: string;
-  'Contacté'?: string; // تم التغيير إلى string
-  'Discuté'?: string; // تم التغيير إلى string
+  'Contacté'?: string;
+  'Discuté'?: string;
   Prix: number;
   Quantité: number;
   Image?: string;
