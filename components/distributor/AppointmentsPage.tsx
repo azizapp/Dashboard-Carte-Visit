@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Store, Mode, Customer } from '../../types.ts';
 import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
@@ -298,14 +297,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                     <button onClick={onClose} className="p-1 mr-2"><ArrowLeftIcon className="w-6 h-6 text-slate-600 dark:text-slate-300"/></button>
                     <h1 className="text-lg font-bold text-slate-800 dark:text-white">Mes Rendez-vous</h1>
                   </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={() => setIsQuickLogModalOpen(true)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Contact">
-                          <ClipboardDocumentCheckIcon className="w-5 h-5" />
-                      </button>
-                      <button onClick={() => setIsNewAppointmentModalOpen(true)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" title="Nouveau RDV">
-                          <PlusIcon className="w-5 h-5" />
-                      </button>
-                  </div>
+                  {/* أزرار الحذف تمت هنا */}
                 </div>
             </header>
             <main className="p-4 space-y-4 pb-24">
@@ -384,7 +376,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
       <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
               <button className="hover:text-blue-600 flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18"></path>
                   </svg> 
                   Calendrier
@@ -576,24 +568,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                     </div>
                 )}
             </div>
-
-            <div className="flex gap-3 mt-6">
-                <button 
-                    onClick={() => setIsQuickLogModalOpen(true)}
-                    style={{ backgroundColor: 'rgb(220, 252, 231)' }}
-                    className="flex-1 py-3 text-green-800 font-bold rounded-xl shadow-sm border border-green-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                >
-                    <ClipboardDocumentCheckIcon className="w-5 h-5 text-green-600" />
-                    Contact
-                </button>
-                <button 
-                    onClick={() => setIsNewAppointmentModalOpen(true)}
-                    className="flex-[1.5] py-3 bg-[#4ade80] hover:bg-[#42ce77] text-white font-bold rounded-xl shadow-lg shadow-green-200 dark:shadow-none flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
-                >
-                    <PlusIcon className="w-5 h-5 stroke-[3px]" />
-                    New RDV
-                </button>
-            </div>
+            {/* أزرار الحذف تمت هنا أيضاً لضمان إزالتها من عرض المسؤول إذا تم استخدامه كموزع */}
         </div>
       </div>
 

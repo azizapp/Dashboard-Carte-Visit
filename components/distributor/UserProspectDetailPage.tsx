@@ -231,7 +231,7 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                         <div className="p-2 bg-pink-50 dark:bg-pink-900/30 rounded text-pink-600">
                             <PhotoPlaceholderIcon className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-[15px] text-slate-800 dark:text-white">Galerية Photos</h3>
+                        <h3 className="font-bold text-[15px] text-slate-800 dark:text-white">Galerie Photos</h3>
                     </div>
                     <div className="px-6 grid grid-cols-2 gap-4">
                         {galleryImages.length > 0 ? (

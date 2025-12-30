@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Store, Customer } from '../types.ts';
 import SearchIcon from './icons/SearchIcon.tsx';
@@ -20,7 +19,7 @@ interface QuickLogModalProps {
 const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose, onSave, initialCustomer }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [contacted, setContacted] = useState('Téléphone');
+  const [contacted, setContacted] = useState('Phone');
   const [discussed, setDiscussed] = useState('');
   const [note, setNote] = useState('');
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
@@ -145,16 +144,15 @@ const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose, onSave, 
                     onChange={(e) => setContacted(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm dark:text-white appearance-none"
                   >
-                    <option value="Téléphone">Téléphone</option>
+                    <option value="Phone">Phone</option>
                     <option value="WhatsApp">WhatsApp</option>
-                    <option value="Visite Physique">Visite Physique</option>
                     <option value="Email">Email</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Sujet de discussion :</label>
+                <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Sujet de discussion (Discuté) :</label>
                 <div className="relative">
                   <MessageIcon className="absolute left-3 top-4 w-5 h-5 text-slate-300" />
                   <textarea

@@ -147,7 +147,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
       fetchCust();
   }, []);
 
-  // حساب المدن الفريدة من العملاء الحاليين ومن السجل الممرر عبر الـ props
+  // حساب المدن الفريدة
   const uniqueCities = useMemo(() => {
       const cities = new Set<string>();
       existingCustomers.forEach(c => { if (c.city) cities.add(c.city.trim()); });
@@ -238,7 +238,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
             <div className="w-8"></div>
         </header>
 
-        <main className="p-4 max-w-xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <main className="p-4 max-w-xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden">
             <div className="text-center py-4 space-y-2">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800 mb-2">
                     <UserCircleIcon className="w-7 h-7 text-[#4407EB]" />
@@ -247,7 +247,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 <p className="text-[13px] text-slate-400">Capturez les informations de votre nouveau prospect optique</p>
             </div>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={UserCircleIcon} title="Informations Prospect" />
                 <div className="space-y-5">
                     <div className="relative">
@@ -295,7 +295,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={MapIcon} title="Localisation GPS" />
                 <div className="space-y-4">
                     <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${formData.Localisation ? 'bg-green-50 border-green-100 dark:bg-green-900/10 dark:border-green-800/30' : 'bg-slate-50 border-slate-100 dark:bg-slate-700/30 dark:border-slate-700'}`}>
@@ -317,7 +317,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CameraIcon} title="Photos (Optionnel)" />
                 <p className="text-[12px] text-slate-400 mb-4">Capturez des photos de cartes de visite ou de la devanture du magasin</p>
                 <div className="space-y-4">
@@ -351,7 +351,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Adresse & Contact" />
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-4">
@@ -372,7 +372,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                                     className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" 
                                 />
                             </div>
-                            {/* قائمة المدن المنسدلة الذكية */}
                             {showCitySuggestions && (
                                 <div className="absolute z-30 w-full mt-2 bg-white dark:bg-slate-800 border rounded-2xl shadow-2xl max-h-48 overflow-y-auto border-slate-100 dark:border-slate-700">
                                     {uniqueCities
@@ -424,7 +423,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                             <PhoneCallIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                             <input type="text" name="GSM1" value={formData.GSM1} onChange={handleChange} placeholder="06 XX XX XX XX" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold" />
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1.5 ml-1">Format: 06 12 34 56 78</p>
                     </div>
                     <div>
                         <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">GSM 2 (Optionnel)</label>
@@ -439,7 +437,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                             <PhoneCallIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                             <input type="text" name="Phone" value={formData.Phone} onChange={handleChange} placeholder="05 XX XX XX XX" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold" />
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1.5 ml-1">Format: 05 12 34 56 78</p>
                     </div>
                     <div>
                         <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Adresse e-mail</label>
@@ -451,10 +448,9 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={TagIcon} title="Catégorisation du Lead" />
                 <div className="space-y-3">
-                    <p className="text-[12px] font-bold text-slate-500 mb-3 ml-1">Niveau Client</p>
                     {[
                         { id: 'Haute', sub: 'Clients premium' },
                         { id: 'Haute et Moyenne', sub: 'Clients mixtes' },
@@ -481,7 +477,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Commerciaux" />
                 <div className="space-y-4">
                     <div>
@@ -554,7 +550,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CalendarDaysIcon} title="Suivi" />
                 <div className="space-y-4">
                     <div>
@@ -564,7 +560,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                             value={formData.Note}
                             onChange={handleChange}
                             placeholder="Ajoutez des notes sur ce prospect..."
-                            className="w-full p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white h-32 resize-none"
+                            className="w-full block max-w-full p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white h-32 resize-none box-border"
                         />
                     </div>
                     <p className="text-[10px] text-slate-400 italic">Conseils: Notez les détails importants, les préférences du client, et les prochaines étapes.</p>
