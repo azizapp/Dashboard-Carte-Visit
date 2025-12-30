@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Store, StoreFormData, Customer } from '../../types.ts';
 import LocationMarkerIcon from '../icons/LocationMarkerIcon.tsx';
 import UserCircleIcon from '../icons/UserCircleIcon.tsx';
@@ -97,7 +96,7 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
         <button onClick={handleCapture} className="w-20 h-20 bg-white rounded-full border-4 border-slate-300 flex items-center justify-center shadow-2xl active:scale-95 transition-transform">
           <div className="w-16 h-16 bg-white rounded-full border-2 border-slate-900"></div>
         </button>
-        <div className="w-14"></div> {/* Spacer for symmetry */}
+        <div className="w-14"></div>
       </div>
     </div>
   );
@@ -127,13 +126,14 @@ interface StoreFormPageProps {
     stores: Store[];
 }
 
-const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
+const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores }) => {
   const [formData, setFormData] = useState<StoreFormData>({
       Magazin: '', Ville: '', GSM1: '', GSM2: '', 'Le Gérant': '', Gamme: 'Haute', 'Action Client': '', Note: '', Image: '', Région: '', Adresse: '', Phone: '', Email: '', Prix: 0, Quantité: 0, 'Rendez-Vous': ''
   });
   const [existingCustomers, setExistingCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -146,6 +146,14 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
       };
       fetchCust();
   }, []);
+
+  // حساب المدن الفريدة من العملاء الحاليين ومن السجل الممرر عبر الـ props
+  const uniqueCities = useMemo(() => {
+      const cities = new Set<string>();
+      existingCustomers.forEach(c => { if (c.city) cities.add(c.city.trim()); });
+      stores.forEach(s => { if (s.Ville) cities.add(s.Ville.trim()); });
+      return Array.from(cities).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [existingCustomers, stores]);
 
   const handleSelectCustomer = (c: Customer) => {
       setFormData({
@@ -222,7 +230,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
     <div className="bg-[#F7F8FA] dark:bg-slate-900 min-h-screen pb-10 font-sans">
         <CameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
         
-        {/* Header */}
         <header className="sticky top-0 z-50 bg-[#F7F8FA] dark:bg-slate-900 px-4 py-4 flex items-center justify-between">
             <button onClick={onClose} className="p-1 text-slate-600 dark:text-slate-300">
                 <ArrowLeftIcon className="w-6 h-6" />
@@ -232,7 +239,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
         </header>
 
         <main className="p-4 max-w-xl mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Hero Section */}
             <div className="text-center py-4 space-y-2">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-800 mb-2">
                     <UserCircleIcon className="w-7 h-7 text-[#4407EB]" />
@@ -241,7 +247,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 <p className="text-[13px] text-slate-400">Capturez les informations de votre nouveau prospect optique</p>
             </div>
 
-            {/* Informations Prospect */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={UserCircleIcon} title="Informations Prospect" />
                 <div className="space-y-5">
@@ -254,6 +259,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                                 placeholder="Nom du magasin d'optique"
                                 className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-medium placeholder:text-slate-300"
                                 value={searchQuery}
+                                onFocus={() => setShowSuggestions(true)}
                                 onChange={(e) => {
                                     setSearchQuery(e.target.value);
                                     setShowSuggestions(true);
@@ -289,7 +295,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Localisation GPS */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={MapIcon} title="Localisation GPS" />
                 <div className="space-y-4">
@@ -312,7 +317,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Photos Section */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CameraIcon} title="Photos (Optionnel)" />
                 <p className="text-[12px] text-slate-400 mb-4">Capturez des photos de cartes de visite ou de la devanture du magasin</p>
@@ -347,17 +351,57 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Adresse & Contact */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Adresse & Contact" />
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-4">
-                        <div>
+                        <div className="relative">
                             <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Ville *</label>
                             <div className="relative">
                                 <StoreIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                                <input type="text" name="Ville" value={formData.Ville} onChange={handleChange} placeholder="Entrez ou sélectionnez la ville" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" />
+                                <input 
+                                    type="text" 
+                                    name="Ville" 
+                                    value={formData.Ville} 
+                                    onFocus={() => setShowCitySuggestions(true)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setShowCitySuggestions(true);
+                                    }} 
+                                    placeholder="Entrez ou sélectionnez la ville" 
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" 
+                                />
                             </div>
+                            {/* قائمة المدن المنسدلة الذكية */}
+                            {showCitySuggestions && (
+                                <div className="absolute z-30 w-full mt-2 bg-white dark:bg-slate-800 border rounded-2xl shadow-2xl max-h-48 overflow-y-auto border-slate-100 dark:border-slate-700">
+                                    {uniqueCities
+                                        .filter(city => city.toLowerCase().includes(formData.Ville.toLowerCase()))
+                                        .map(city => (
+                                            <button 
+                                                key={city} 
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData(p => ({...p, Ville: city}));
+                                                    setShowCitySuggestions(false);
+                                                }} 
+                                                className="w-full p-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b last:border-0 border-slate-50 dark:border-slate-700"
+                                            >
+                                                <span className="text-sm text-slate-700 dark:text-slate-200 font-medium">{city}</span>
+                                            </button>
+                                        ))
+                                    }
+                                    {formData.Ville && !uniqueCities.some(c => c.toLowerCase() === formData.Ville.toLowerCase()) && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowCitySuggestions(false)}
+                                            className="w-full p-3 text-left bg-blue-50 dark:bg-blue-900/20"
+                                        >
+                                            <span className="text-xs text-blue-600 font-bold italic">Ajouter "{formData.Ville}" comme nouvelle ville</span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Région</label>
@@ -407,7 +451,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Catégorisation du Lead */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={TagIcon} title="Catégorisation du Lead" />
                 <div className="space-y-3">
@@ -438,7 +481,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Détails Commerciaux */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Commerciaux" />
                 <div className="space-y-4">
@@ -453,6 +495,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                                 className="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white appearance-none"
                             >
                                 <option value="">Sélectionnez une action</option>
+                                <option value="Visiter">Visiter</option>
                                 <option value="Revisiter">Revisiter</option>
                                 <option value="Acheter">Acheter</option>
                             </select>
@@ -460,7 +503,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                         </div>
                     </div>
 
-                    {/* Conditional Fields based on Action Client */}
                     {formData['Action Client'] === 'Revisiter' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                             <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Date de Rendez-vous</label>
@@ -512,7 +554,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Suivi */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CalendarDaysIcon} title="Suivi" />
                 <div className="space-y-4">
@@ -530,7 +571,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit }) => {
                 </div>
             </section>
 
-            {/* Submit Button */}
             <button 
                 onClick={handleFormSubmit}
                 disabled={isSubmitting}

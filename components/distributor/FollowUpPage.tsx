@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Store, StoreFormData } from '../../types.ts';
 import LocationMarkerIcon from '../icons/LocationMarkerIcon.tsx';
@@ -174,7 +173,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
     <div className="bg-[#F7F8FA] dark:bg-slate-900 min-h-screen pb-10 font-sans max-w-xl mx-auto border-x border-slate-100 dark:border-slate-800">
         <CameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
         
-        {/* Header */}
         <header className="sticky top-0 z-50 bg-[#F7F8FA] dark:bg-slate-900 px-4 py-4 flex items-center justify-between">
             <button onClick={onClose} className="p-1 text-slate-600 dark:text-slate-300">
                 <ArrowLeftIcon className="w-6 h-6" />
@@ -184,7 +182,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
         </header>
 
         <main className="p-4 space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Prospect Summary */}
             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-[#4407EB]">
@@ -197,7 +194,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
                 </div>
             </div>
 
-            {/* Action Details */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Détails de l'Action" />
                 <div className="space-y-4">
@@ -211,6 +207,7 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
                                 onChange={handleChange}
                                 className="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white appearance-none"
                             >
+                                <option value="Visiter">Visiter</option>
                                 <option value="Revisiter">Revisiter (Moad)</option>
                                 <option value="Acheter">Acheter (Commande)</option>
                             </select>
@@ -269,7 +266,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
                 </div>
             </section>
 
-            {/* Photos Section */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CameraIcon} title="Preuve Photo (Optionnel)" />
                 <div className="space-y-4">
@@ -303,7 +299,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
                 </div>
             </section>
 
-            {/* Suivi */}
             <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CalendarDaysIcon} title="Suivi" />
                 <div>
@@ -318,7 +313,6 @@ const FollowUpPage: React.FC<FollowUpPageProps> = ({ prospect, onClose, onSubmit
                 </div>
             </section>
 
-            {/* Submit Button */}
             <button 
                 onClick={handleFormSubmit}
                 disabled={isSubmitting}

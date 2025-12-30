@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Store } from '../../types.ts';
 import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
@@ -50,7 +49,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
         totalVisits: history.length,
     }), [history]);
 
-    // استخراج جميع الصور من سجل الزيارات
     const galleryImages = useMemo(() => {
         return history
             .map(h => h.Image)
@@ -68,7 +66,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
     return (
         <div className="flex flex-col h-full bg-[#F7F8FA] dark:bg-slate-900 font-sans max-w-xl mx-auto border-x border-slate-100 dark:border-slate-800 overflow-hidden relative">
             
-            {/* White Sticky Header */}
             <header className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 px-4 py-4 flex justify-between items-center h-[64px] flex-shrink-0">
                 <button onClick={onClose} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-full transition-colors">
                     <ArrowLeftIcon className="w-6 h-6" />
@@ -84,7 +81,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
 
             <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
                 
-                {/* Main Card with Badges */}
                 <section className="bg-white dark:bg-slate-800 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 relative">
                     <div className="absolute top-8 right-8 w-3 h-3 rounded-full bg-slate-400 border-2 border-white dark:border-slate-800"></div>
                     <h2 className="text-[24px] font-black text-slate-900 dark:text-white mb-4 pr-10 leading-tight">{store.Magazin}</h2>
@@ -98,7 +94,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                     </div>
                 </section>
 
-                {/* Section: Informations de Contact */}
                 <section className="bg-white dark:bg-slate-800 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                     <div className="p-6 flex items-center gap-3">
                         <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded text-blue-600">
@@ -160,7 +155,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                     </div>
                 </section>
 
-                {/* Section: Adresse & Localisation */}
                 <section className="bg-white dark:bg-slate-800 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                     <div className="p-6 flex items-center gap-3">
                         <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded text-purple-600">
@@ -186,7 +180,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                     </div>
                 </section>
 
-                {/* Section: Historique */}
                 <section className="bg-white dark:bg-slate-800 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                     <button 
                         onClick={() => setIsHistoryOpen(!isHistoryOpen)}
@@ -207,9 +200,24 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                                     <div key={idx} className="relative">
                                         <div className="absolute -left-[23.5px] top-1.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-white dark:border-slate-800"></div>
                                         <div className="space-y-1">
-                                            <p className="text-[13px] font-bold text-slate-800 dark:text-white">{visit['Action Client'] || 'Visite'}</p>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="text-[13px] font-bold text-slate-800 dark:text-white">
+                                                    {visit['Action Client'] === 'Contact' && visit['Contacté'] 
+                                                        ? visit['Contacté'] 
+                                                        : (visit['Action Client'] || 'Visite')}
+                                                </p>
+                                                {visit['Action Client'] === 'Contact' && visit['Discuté'] && (
+                                                    <span className="text-[11px] text-indigo-500 font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/40 rounded border border-indigo-100 dark:border-indigo-800">
+                                                        {visit['Discuté']}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-[10px] text-slate-400 font-bold uppercase">{visit.Date}</p>
-                                            {visit.Note && <p className="text-[12px] text-slate-500 font-normal italic mt-2 bg-slate-50 dark:bg-slate-700/30 p-3 rounded">"{visit.Note}"</p>}
+                                            {visit.Note && (
+                                                <div className="mt-2 bg-slate-50 dark:bg-slate-700/30 p-3 rounded border-l-2 border-slate-200 dark:border-slate-600">
+                                                    <p className="text-[12px] text-slate-500 dark:text-slate-300 font-normal italic">"{visit.Note}"</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -218,13 +226,12 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                     )}
                 </section>
 
-                {/* Section: Galerie Photos */}
                 <section className="bg-white dark:bg-slate-800 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden pb-8">
                     <div className="p-6 flex items-center gap-3">
                         <div className="p-2 bg-pink-50 dark:bg-pink-900/30 rounded text-pink-600">
                             <PhotoPlaceholderIcon className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-[15px] text-slate-800 dark:text-white">Galerie Photos</h3>
+                        <h3 className="font-bold text-[15px] text-slate-800 dark:text-white">Galerية Photos</h3>
                     </div>
                     <div className="px-6 grid grid-cols-2 gap-4">
                         {galleryImages.length > 0 ? (
@@ -247,7 +254,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                 </section>
             </main>
 
-            {/* Photo Preview Modal */}
             {selectedPreviewImage && (
                 <div 
                     className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-300"
@@ -264,7 +270,6 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                 </div>
             )}
 
-            {/* Bottom Floating Action Dock */}
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-2xl border border-slate-100 dark:border-slate-700 p-2 flex items-center justify-around z-50">
                 <button 
                     onClick={() => onAddVisit?.(store)}

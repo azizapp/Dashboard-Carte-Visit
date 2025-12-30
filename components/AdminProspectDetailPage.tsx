@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Store, Mode, Customer } from '../types.ts';
 import XMarkIcon from './icons/XMarkIcon.tsx';
@@ -13,6 +12,7 @@ import TagIcon from './icons/TagIcon.tsx';
 import EnvelopeIcon from './icons/EnvelopeIcon.tsx';
 import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
+import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
 import NewAppointmentModal from './NewAppointmentModal.tsx';
 import QuickLogModal from './QuickLogModal.tsx';
 import storeService from '../services/storeService.ts';
@@ -42,7 +42,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
     const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
     const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
     
-    // حالات القوائم المنسدلة (كلها مطوية افتراضياً)
     const [isApercuOpen, setIsApercuOpen] = useState(false);
     const [isContactsOpen, setIsContactsOpen] = useState(false);
     const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
@@ -56,7 +55,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
         const totalValue = history.reduce((sum, h) => sum + (Number(h.Prix) || 0), 0);
         const totalQuantity = history.reduce((sum, h) => sum + (Number(h.Quantité) || 0), 0);
         
-        // إحصائيات وسائل الاتصال
         let emailCount = 0;
         let whatsappCount = 0;
         let phoneCount = 0;
@@ -199,17 +197,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                             <SparklesIcon className="w-5 h-5 text-yellow-300" />
                             Stratégie IA
                         </button>
-                        <button 
-                            onClick={() => setIsNewAppointmentModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-600"
-                        >
-                            <CalendarDaysIcon className="w-5 h-5" />
-                            Planifier RDV
-                        </button>
-                        <a href={`tel:${store.GSM1 || ''}`} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-                            <PhoneCallIcon className="w-5 h-5" />
-                            Appeler
-                        </a>
                     </div>
                 </div>
             </header>
@@ -218,7 +205,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
             <main className="p-6 overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
-                    {/* Column 1: Contact Info Form */}
+                    {/* Column 1: Contact Info Card */}
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-6">
@@ -231,31 +218,54 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                 </div>
                             </div>
                             <div className="space-y-4">
+                                {/* 1. Nom de l'Entreprise First */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Nom de l'Entreprise <span className="text-red-500">*</span></label>
+                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2 font-bold" type="text" value={store.Magazin} name="Magazin" />
+                                </div>
+                                
+                                {/* 2. Le Gérant */}
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Le Gérant <span className="text-red-500">*</span></label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store['Le Gérant'] || ''} name="Gérant" />
                                 </div>
+                                
+                                {/* 3. GSM 1 & GSM 2 */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Téléphone <span className="text-red-500">*</span></label>
-                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.GSM1 || ''} name="GSM" />
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">GSM 1 <span className="text-red-500">*</span></label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2 font-bold" type="text" value={store.GSM1 || ''} name="GSM1" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">GSM 2</label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2 font-bold" type="text" value={store.GSM2 || ''} name="GSM2" />
+                                    </div>
+                                </div>
+
+                                {/* 4. Phone & Email */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Phone (Fixe)</label>
+                                        <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Phone || ''} name="Phone" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Email</label>
                                         <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="email" value={leadEmail || ''} name="Email" />
                                     </div>
                                 </div>
+
+                                {/* 5. Localisation & Adresse Header */}
                                 <div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-3">Informations de l'Entreprise</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-3 border-b border-slate-50 dark:border-slate-700 pb-1">Localisation & Adresse</p>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Nom de l'Entreprise <span className="text-red-500">*</span></label>
-                                    <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Magazin} name="Magazin" />
-                                </div>
+
+                                {/* 6. Adresse */}
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Adresse</label>
                                     <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Adresse || ''} name="Adresse" />
                                 </div>
+
+                                {/* 7. Ville & Région */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Ville <span className="text-red-500">*</span></label>
@@ -266,19 +276,42 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                         <input readOnly className="w-full text-sm border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700 dark:text-white px-3 py-2" type="text" value={store.Région || ''} name="Région" />
                                     </div>
                                 </div>
-                                <div className="pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-2">
-                                    <a href={`tel:${store.GSM1}`} className="flex flex-col items-center justify-center p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                                        <PhoneCallIcon className="w-5 h-5 mb-1" />
-                                        <span className="text-xs font-medium">Appeler</span>
-                                    </a>
-                                    <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-                                        <WhatsAppIcon className="w-5 h-5 mb-1" />
-                                        <span className="text-xs font-medium">WhatsApp</span>
-                                    </a>
-                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                                        <LocationMarkerIcon className="w-5 h-5 mb-1" />
-                                        <span className="text-xs font-medium">Localisation</span>
-                                    </a>
+
+                                {/* Actions Group at bottom of card */}
+                                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setIsQuickLogModalOpen(true)}
+                                            style={{ backgroundColor: 'rgb(220, 252, 231)' }}
+                                            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-green-800 font-bold text-sm shadow-sm transition-all active:scale-95"
+                                        >
+                                            <ClipboardDocumentListIcon className="w-5 h-5 text-green-600" />
+                                            Contact
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsNewAppointmentModalOpen(true)}
+                                            style={{ backgroundColor: 'rgb(74, 222, 128)' }}
+                                            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-green-200 dark:shadow-none transition-all active:scale-95"
+                                        >
+                                            <CalendarDaysIcon className="w-5 h-5" />
+                                            RDV
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <a href={`tel:${store.GSM1}`} className="flex flex-col items-center justify-center p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                            <PhoneCallIcon className="w-5 h-5 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">Appeler</span>
+                                        </a>
+                                        <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                            <WhatsAppIcon className="w-5 h-5 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">WhatsApp</span>
+                                        </a>
+                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.Magazin + ' ' + store.Ville)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                                            <LocationMarkerIcon className="w-5 h-5 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">GPS</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
