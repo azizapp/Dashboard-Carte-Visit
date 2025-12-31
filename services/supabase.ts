@@ -1,9 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Standard Vite environment variable access
-// FIX: Replaced import.meta.env with process.env to resolve Property 'env' does not exist on type 'ImportMeta' error, as process.env is defined in vite.config.ts
+// Accessing environment variables defined in vite.config.ts
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://isvhmsatlnwykmwukurh.supabase.co';
-// FIX: Replaced import.meta.env with process.env to resolve Property 'env' does not exist on type 'ImportMeta' error, as process.env is defined in vite.config.ts
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
 
 const getStoredConfig = () => {
