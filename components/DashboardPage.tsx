@@ -9,6 +9,7 @@ import UsersIcon from './icons/UsersIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
 import LeadPrioritizationModal from './LeadPrioritizationModal.tsx';
 import SparklesIcon from './icons/SparklesIcon.tsx';
+import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 
 const StatCard: React.FC<{ title: string, count: number, icon: React.ReactNode, iconBgClass: string }> = ({ title, count, icon, iconBgClass }) => (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex items-center">
