@@ -42,13 +42,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
     };
 
     // مكوّن الشعار الديناميكي بخلفية شفافة
-    // تم التحديث لاستخدام icon_192_url (Icône PWA) بدلاً من favicon بناءً على طلب المستخدم لضمان استخدام الشعار بدقة عالية
     const AppLogo = ({ size = "w-10 h-10" }: { size?: string }) => (
         <div className={`${size} bg-transparent flex items-center justify-center overflow-hidden`}>
             {appSettings?.icon_192_url ? (
                 <img src={appSettings.icon_192_url} alt="Logo" className="w-full h-full object-contain" />
             ) : (
-                <div className="w-4/5 h-4/5 bg-accent rounded-xl shadow-lg shadow-accent/20"></div>
+                <div className="w-4/5 h-4/5 bg-accent rounded-xl shadow-lg shadow-accent/20 flex items-center justify-center text-white font-bold text-xl">
+                    {appSettings?.short_name?.charAt(0) || 'A'}
+                </div>
             )}
         </div>
     );
