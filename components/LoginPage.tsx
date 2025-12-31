@@ -41,25 +41,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
         }
     };
 
-    // مكوّن الشعار الديناميكي
+    // مكوّن الشعار الديناميكي بخلفية شفافة
+    // تم التحديث لاستخدام icon_192_url (Icône PWA) بدلاً من favicon بناءً على طلب المستخدم لضمان استخدام الشعار بدقة عالية
     const AppLogo = ({ size = "w-10 h-10" }: { size?: string }) => (
-        <div className={`${size} bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm`}>
-            {appSettings?.favicon_url ? (
-                <img src={appSettings.favicon_url} alt="Logo" className="w-full h-full object-cover" />
+        <div className={`${size} bg-transparent flex items-center justify-center overflow-hidden`}>
+            {appSettings?.icon_192_url ? (
+                <img src={appSettings.icon_192_url} alt="Logo" className="w-full h-full object-contain" />
             ) : (
-                <div className="w-3/5 h-3/5 bg-accent rounded-full"></div>
+                <div className="w-4/5 h-4/5 bg-accent rounded-xl shadow-lg shadow-accent/20"></div>
             )}
         </div>
     );
 
     return (
         <div className="flex min-h-screen flex-col md:flex-row font-sans overflow-hidden relative bg-slate-50 dark:bg-slate-900">
+            {/* Desktop View */}
             <div className="hidden md:flex md:w-1/2 relative bg-accent items-center justify-center p-12 text-white overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/40"></div>
                 <div className="relative z-10 w-full max-w-lg">
-                    <div className="flex items-center gap-4 mb-16">
-                        <AppLogo size="w-14 h-14" />
-                        <div className="font-bold text-2xl uppercase tracking-tighter leading-tight">
+                    <div className="flex items-center gap-5 mb-16">
+                        <AppLogo size="w-16 h-16" />
+                        <div className="font-black text-3xl uppercase tracking-tighter leading-tight drop-shadow-sm">
                             {appSettings?.app_name || 'APOLLO EYEWEAR'}
                         </div>
                     </div>
@@ -68,13 +70,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
                 </div>
             </div>
 
+            {/* Form Section */}
             <div className="w-full md:w-1/2 flex items-center justify-center p-8">
                 <div className="w-full max-w-sm">
                     <div className="md:hidden flex flex-col items-center mb-12">
-                        <div className="w-20 h-20 bg-accent rounded-2xl flex items-center justify-center shadow-xl mb-4 p-1">
-                             <AppLogo size="w-full h-full" />
-                        </div>
-                        <h1 className="text-2xl font-black text-slate-800 dark:text-white text-center">
+                        <AppLogo size="w-24 h-24" />
+                        <h1 className="text-2xl font-black text-slate-800 dark:text-white text-center mt-4">
                             {appSettings?.app_name || 'Apollo Eyewear'}
                         </h1>
                     </div>

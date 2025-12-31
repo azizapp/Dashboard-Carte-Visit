@@ -14,7 +14,7 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
   isAdmin: boolean;
   appName?: string;
-  appIcon?: string; // إضافة خاصية الأيقونة
+  appIcon?: string; 
 }
 
 const NavLink: React.FC<{
@@ -65,11 +65,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
     { id: 'settings', label: 'Réglages', icon: SettingsIcon },
   ];
 
-  // مكون Logo المشترك
   const Logo = () => (
     <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-accent/20 overflow-hidden">
       {appIcon ? (
-        <img src={appIcon} alt="Logo" className="w-full h-full object-cover" />
+        <img src={appIcon} alt="Logo" className="w-full h-full object-contain" />
       ) : (
         appName.charAt(0)
       )}

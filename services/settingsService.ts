@@ -27,13 +27,14 @@ const settingsService = {
   },
 
   getDefaultSettings(): AppSettings {
+    const defaultLogo = 'https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg';
     return {
       app_name: 'Apollo Eyewear',
       short_name: 'Apollo',
       accent_color: '#4f46e5',
-      favicon_url: '',
-      icon_192_url: '',
-      icon_512_url: ''
+      favicon_url: defaultLogo,
+      icon_192_url: defaultLogo,
+      icon_512_url: defaultLogo
     };
   },
 

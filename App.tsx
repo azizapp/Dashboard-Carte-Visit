@@ -190,7 +190,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         isAdmin={userRole === 'admin'}
         appName={appSettings?.short_name || 'Apollo'}
-        appIcon={appSettings?.favicon_url}
+        appIcon={appSettings?.icon_192_url}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings') && (
