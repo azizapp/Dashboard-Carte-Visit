@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { Store, Mode, StoreFormData, Customer } from './types.ts';
+import { Store, Mode, StoreFormData, Customer, AppSettings, UserSession } from './types.ts';
 import storeService from './services/storeService.ts';
+import settingsService from './services/settingsService.ts';
 import LoginPage from './components/LoginPage.tsx';
 import DashboardPage from './components/DashboardPage.tsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.tsx';
@@ -14,8 +14,6 @@ import DistributorSettingsPage from './components/distributor/DistributorSetting
 import SpinnerIcon from './components/icons/SpinnerIcon.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import CustomerEditModal from './components/CustomerEditModal.tsx';
-import { UserSession } from './services/authService.ts';
-import EllipsisVerticalIcon from './components/icons/EllipsisVerticalIcon.tsx';
 
 import UserDashboard from './components/distributor/UserDashboard.tsx';
 import StoreFormPage from './components/distributor/StoreFormPage.tsx';
@@ -25,7 +23,7 @@ import FollowUpPage from './components/distributor/FollowUpPage.tsx';
 const App: React.FC = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [currentView, setCurrentView] = useState('dashboard');
@@ -43,41 +41,50 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
-    const savedFont = localStorage.getItem('font') || 'Inter';
-    const savedFontSize = localStorage.getItem('fontSize') || '16';
-    const savedFontWeight = localStorage.getItem('fontWeight') || '400';
-    const savedAccent = localStorage.getItem('accentColor') || '#4f46e5';
-    const sessionUser = localStorage.getItem('authenticatedUser');
-    const sessionRole = localStorage.getItem('userRole') as 'admin' | 'user';
-
-    setTheme(savedTheme);
-    setFont(savedFont);
-    setFontSize(savedFontSize);
-    setFontWeight(savedFontWeight);
-    setAccentColor(savedAccent);
-
-    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
-
-    document.documentElement.style.setProperty('--accent-color', savedAccent);
-    document.documentElement.style.setProperty('--app-font', savedFont);
-    document.documentElement.style.setProperty('--app-font-size', `${savedFontSize}px`);
-    document.documentElement.style.setProperty('--app-font-weight', savedFontWeight);
-
-    if (sessionUser) {
-      setAuthenticatedUser(sessionUser);
-      const role = sessionRole || 'user';
-      setUserRole(role);
-      if (role === 'user' && currentView === 'dashboard') {
-        setCurrentView('user_home');
+    const initApp = async () => {
+      // تحميل إعدادات التخصيص أولاً
+      const settings = await settingsService.getSettings();
+      if (settings) {
+        setAppSettings(settings);
+        settingsService.applySettings(settings);
+        setAccentColor(settings.accent_color);
       }
-    }
+
+      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
+      const savedFont = localStorage.getItem('font') || 'Inter';
+      const savedFontSize = localStorage.getItem('fontSize') || '16';
+      const savedFontWeight = localStorage.getItem('fontWeight') || '400';
+      const sessionUser = localStorage.getItem('authenticatedUser');
+      const sessionRole = localStorage.getItem('userRole') as 'admin' | 'user';
+
+      setTheme(savedTheme);
+      setFont(savedFont);
+      setFontSize(savedFontSize);
+      setFontWeight(savedFontWeight);
+
+      if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+
+      document.documentElement.style.setProperty('--app-font', savedFont);
+      document.documentElement.style.setProperty('--app-font-size', `${savedFontSize}px`);
+      document.documentElement.style.setProperty('--app-font-weight', savedFontWeight);
+
+      if (sessionUser) {
+        setAuthenticatedUser(sessionUser);
+        const role = sessionRole || 'user';
+        setUserRole(role);
+        if (role === 'user' && currentView === 'dashboard') {
+          setCurrentView('user_home');
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    initApp();
 
     const handleStatusChange = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', handleStatusChange);
     window.addEventListener('offline', handleStatusChange);
-
-    setIsLoading(false);
 
     return () => {
       window.removeEventListener('online', handleStatusChange);
@@ -88,18 +95,14 @@ const App: React.FC = () => {
   const syncData = async () => {
     if (!authenticatedUser) return;
     setIsLoading(true);
-    setError(null);
-
-    if (!navigator.onLine) {
-      setError("Vous êtes hors ligne.");
-      setStores(storeService.getStoredStores());
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const freshStores = await storeService.syncStores(Mode.Production);
       setStores(freshStores);
+      const settings = await settingsService.getSettings();
+      if (settings) {
+        setAppSettings(settings);
+        settingsService.applySettings(settings);
+      }
     } catch (e: any) {
       console.error(e);
       setStores(storeService.getStoredStores());
@@ -109,7 +112,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    syncData();
+    if (authenticatedUser) syncData();
   }, [authenticatedUser]);
 
   const handleLoginSuccess = (session: UserSession) => {
@@ -134,15 +137,11 @@ const App: React.FC = () => {
   const handleAddStore = async (newStoreData: StoreFormData) => {
     try {
       await storeService.addStore(Mode.Production, newStoreData, undefined, authenticatedUser || undefined);
-      // إظهار رسالة النجاح
       alert("Enregistré avec succès !");
-      // العودة إلى الصفحة الأولى بناءً على الرتبة
       setCurrentView(userRole === 'admin' ? 'dashboard' : 'user_home');
-      // تحديث البيانات في الخلفية
       await syncData();
     } catch (err: any) {
-      setError(`Echec: ${err.message}`);
-      alert(`Erreur lors de l'enregistrement: ${err.message}`);
+      alert(`Erreur: ${err.message}`);
     }
   };
 
@@ -180,7 +179,7 @@ const App: React.FC = () => {
   }
 
   if (!authenticatedUser) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return <LoginPage onLoginSuccess={handleLoginSuccess} appSettings={appSettings} />;
   }
 
   return (
@@ -190,13 +189,15 @@ const App: React.FC = () => {
         onViewChange={setCurrentView}
         onLogout={handleLogout}
         isAdmin={userRole === 'admin'}
+        appName={appSettings?.short_name || 'Apollo'}
+        appIcon={appSettings?.icon_192_url}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings') && (
           <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center h-[73px] flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter">Apollo Ayoware</h2>
+              <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
@@ -307,6 +308,7 @@ const App: React.FC = () => {
                 isLoading={isLoading}
                 onClose={() => setCurrentView('dashboard')}
                 onResetSettings={resetSettings}
+                appSettings={appSettings}
               />
             ) : (
               <DistributorSettingsPage

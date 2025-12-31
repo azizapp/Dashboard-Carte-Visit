@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import HomeIcon from './icons/HomeIcon.tsx';
 import UsersIcon from './icons/UsersIcon.tsx';
@@ -14,6 +13,8 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   isAdmin: boolean;
+  appName?: string;
+  appIcon?: string; // إضافة خاصية الأيقونة
 }
 
 const NavLink: React.FC<{
@@ -28,7 +29,7 @@ const NavLink: React.FC<{
       href="#" 
       onClick={(e) => { e.preventDefault(); onClick(); }} 
       className={`flex items-center py-3 rounded-lg transition-all duration-200 text-sm font-medium relative group
-        ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'}
+        ${active ? 'bg-accent text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'}
         ${isCollapsed ? 'justify-center px-2' : 'px-4'}
       `}
     >
@@ -47,10 +48,9 @@ const NavLink: React.FC<{
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, isAdmin }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, isAdmin, appName = 'Apollo', appIcon }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  // تخصيص القائمة حسب الرتبة
   const navItems = isAdmin ? [
     { id: 'dashboard', label: 'Tableau de Bord', icon: HomeIcon },
     { id: 'appointments', label: 'Rendez-Vous', icon: CalendarDaysIcon },
@@ -65,20 +65,30 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
     { id: 'settings', label: 'Réglages', icon: SettingsIcon },
   ];
 
+  // مكون Logo المشترك
+  const Logo = () => (
+    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-accent/20 overflow-hidden">
+      {appIcon ? (
+        <img src={appIcon} alt="Logo" className="w-full h-full object-cover" />
+      ) : (
+        appName.charAt(0)
+      )}
+    </div>
+  );
+
   return (
     <aside 
       className={`${isCollapsed ? 'w-20' : 'w-[260px]'} bg-white dark:bg-slate-800 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-700 lg:flex hidden transition-all duration-300 ease-in-out relative`}
     >
-      {/* Header */}
       <div className={`p-4 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} border-b border-slate-200 dark:border-slate-700 h-[73px]`}>
         <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100'}`}>
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">A</div>
-          <h1 className="text-lg font-bold text-slate-800 dark:text-white whitespace-nowrap">Apollo</h1>
+          <Logo />
+          <h1 className="text-lg font-bold text-slate-800 dark:text-white whitespace-nowrap">{appName}</h1>
         </div>
 
         {isCollapsed && (
            <div className="cursor-pointer p-1" onClick={() => setIsCollapsed(false)}>
-             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">A</div>
+             <Logo />
            </div>
         )}
 
@@ -92,7 +102,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 overflow-y-auto overflow-x-hidden">
         <ul className="space-y-2">
           {navItems.map(item => (
@@ -108,7 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
         </ul>
       </nav>
 
-      {/* Footer / Logout */}
       <div className="p-3 mt-auto border-t border-slate-200 dark:border-slate-700">
         <button 
           onClick={onLogout} 

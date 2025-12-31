@@ -1,17 +1,5 @@
-
 import { supabase } from './supabase.ts';
-
-export interface UserSession {
-    email: string;
-    role: 'admin' | 'user';
-}
-
-export interface UserProfile {
-    email: string;
-    role: 'admin' | 'user';
-    code?: string;
-    created_at?: string;
-}
+import { UserSession, UserProfile } from '../types.ts';
 
 const login = async (email: string, code: string): Promise<UserSession> => {
     if (!email || !code) {

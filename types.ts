@@ -3,6 +3,30 @@ export enum Mode {
   Production = 'production',
 }
 
+export interface AppSettings {
+  id?: string;
+  app_name: string;
+  short_name: string;
+  accent_color: string;
+  favicon_url: string;
+  icon_192_url: string;
+  icon_512_url: string;
+  updated_at?: string;
+}
+
+// Added UserSession and UserProfile to fix import error in AdminSettingsPage.tsx
+export interface UserSession {
+  email: string;
+  role: 'admin' | 'user';
+}
+
+export interface UserProfile {
+  email: string;
+  role: 'admin' | 'user';
+  code?: string;
+  created_at?: string;
+}
+
 export interface Customer {
   id: string;
   name: string; // Magazin

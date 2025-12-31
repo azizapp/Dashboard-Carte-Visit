@@ -1,16 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Apollo Eyewear - Dashboard</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <link rel="manifest" id="dynamic-manifest" href="/manifest.json">
+  <meta name="theme-color" id="meta-theme-color" content="#4f46e5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@100..900&family=Montserrat:wght@100..900&family=Open+Sans:wght@300..800&family=Poppins:wght@100..900&family=Roboto:wght@100..900&display=swap" rel="stylesheet">
-  <!-- إضافة Tailwind CDN لضمان عمل التنسيقات فوراً وإصلاح مشكلة الأيقونات -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,25 +16,30 @@
       theme: {
         extend: {
           colors: {
-            accent: 'var(--accent-color, #4f46e5)',
+            accent: {
+              DEFAULT: 'var(--accent-color, #4f46e5)',
+              hover: 'var(--accent-color-hover, #4338ca)',
+            }
           }
         }
       }
     }
   </script>
   <style>
-    /* منع ظهور الأيقونات بشكل ضخم قبل تحميل Tailwind */
-    svg {
-      max-width: 100%;
-      height: auto;
-    }
+    svg { max-width: 100%; height: auto; }
     :root {
       --accent-color: #4f46e5;
+      --accent-color-hover: #4338ca;
       --app-font: 'Inter';
     }
     body {
       font-family: var(--app-font), sans-serif;
+      accent-color: var(--accent-color);
     }
+    /* تحسين شكل الأزرار والعناصر التي تستخدم اللون الأساسي */
+    .bg-accent { background-color: var(--accent-color) !important; }
+    .text-accent { color: var(--accent-color) !important; }
+    .border-accent { border-color: var(--accent-color) !important; }
   </style>
 <script type="importmap">
 {
