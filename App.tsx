@@ -44,19 +44,14 @@ const App: React.FC = () => {
 
   const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
 
-  // دالة لتحديث الإعدادات في واجهة التطبيق فوراً
-  const refreshSettings = async () => {
-    const settings = await settingsService.getSettings();
-    if (settings) {
-      setAppSettings(settings);
-      settingsService.applySettings(settings);
-      setAccentColor(settings.accent_color);
-    }
-  };
-
   useEffect(() => {
     const initApp = async () => {
-      await refreshSettings();
+      const settings = await settingsService.getSettings();
+      if (settings) {
+        setAppSettings(settings);
+        settingsService.applySettings(settings);
+        setAccentColor(settings.accent_color);
+      }
 
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
       const savedFont = localStorage.getItem('font') || 'Inter';
@@ -83,13 +78,14 @@ const App: React.FC = () => {
         if (sessionRole === 'user') {
           setCurrentView('user_home');
         } else if (sessionRole === 'manager') {
+          // المندير يذهب مباشرة لصفحة الإعدادات التي تحوي branding و supabase
           setCurrentView('white_label');
         } else {
           setCurrentView('dashboard');
         }
       }
 
-      setTimeout(() => setIsLoading(false), 1200);
+      setIsLoading(false);
     };
 
     initApp();
@@ -110,7 +106,11 @@ const App: React.FC = () => {
     try {
       const freshStores = await storeService.syncStores(Mode.Production);
       setStores(freshStores);
-      await refreshSettings();
+      const settings = await settingsService.getSettings();
+      if (settings) {
+        setAppSettings(settings);
+        settingsService.applySettings(settings);
+      }
     } catch (e: any) {
       console.error(e);
       setStores(storeService.getStoredStores());
@@ -191,22 +191,8 @@ const App: React.FC = () => {
     updateTheme('light');
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen bg-[#0f172a] transition-all duration-700">
-        <div className="relative w-32 h-32 mb-8 animate-in fade-in zoom-in duration-1000">
-          {appSettings?.splash_url ? (
-            <img src={appSettings.splash_url} alt="Splash" className="w-full h-full object-contain drop-shadow-2xl" />
-          ) : (
-            <div className="w-full h-full bg-accent rounded-3xl animate-pulse shadow-2xl"></div>
-          )}
-          <div className="absolute -bottom-2 -right-2">
-            <SpinnerIcon className="animate-spin h-8 w-8 text-accent" />
-          </div>
-        </div>
-        <h1 className="text-xl font-bold text-white tracking-[0.2em] uppercase opacity-80">{appSettings?.short_name || 'Apollo'}</h1>
-      </div>
-    );
+  if (isLoading && !authenticatedUser) {
+    return <div className="flex justify-center items-center h-screen bg-slate-50 dark:bg-slate-900"><SpinnerIcon className="animate-spin h-10 w-10 text-blue-600" /></div>;
   }
 
   if (!authenticatedUser) {
@@ -374,7 +360,6 @@ const App: React.FC = () => {
               appSettings={appSettings}
               onClose={() => setCurrentView('dashboard')}
               setAccentColor={setAccentColor}
-              onSettingsUpdate={refreshSettings}
             />
           )}
         </main>

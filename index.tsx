@@ -15,11 +15,10 @@ root.render(
   </React.StrictMode>
 );
 
-// PWA Service Worker Registration
+// تسجيل Service Worker لتمكين ميزة التثبيت PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Use relative path for service worker
-    navigator.serviceWorker.register('sw.js').then(registration => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
       console.log('SW registered: ', registration);
     }).catch(registrationError => {
       console.log('SW registration failed: ', registrationError);

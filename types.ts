@@ -1,4 +1,3 @@
-
 export enum Mode {
   Test = 'test',
   Production = 'production',
@@ -12,20 +11,18 @@ export interface AppSettings {
   favicon_url: string;
   icon_192_url: string;
   icon_512_url: string;
-  splash_url: string; // تم جعله حقلاً أساسياً لمطابقة الجدول
   updated_at?: string;
 }
 
-// FIX: Added 'manager' to the role type to ensure compatibility with session handling in App.tsx.
+// Added UserSession and UserProfile to fix import error in AdminSettingsPage.tsx
 export interface UserSession {
   email: string;
-  role: 'manager' | 'admin' | 'user';
+  role: 'admin' | 'user';
 }
 
-// FIX: Added 'manager' to the role type to allow for proper rendering and conditional logic in AdminSettingsPage.tsx.
 export interface UserProfile {
   email: string;
-  role: 'manager' | 'admin' | 'user';
+  role: 'admin' | 'user';
   code?: string;
   created_at?: string;
 }
@@ -74,7 +71,7 @@ export interface Store extends Customer {
   Région?: string;
   Adresse?: string;
   GSM1: string;
-  GSM2: string;
+  GSM2?: string;
   Phone?: string;
   Email?: string;
   Gamme: string;
