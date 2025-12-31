@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { authService } from '../services/authService.ts';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
@@ -28,18 +27,12 @@ interface SignupModalProps {
 const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
-    const [role, setRole] = useState<'admin' | 'user'>('user');
+    const [role, setRole] = useState<'manager' | 'admin' | 'user'>('user');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<{message: string, code?: string} | null>(null);
     const [success, setSuccess] = useState(false);
-    const [copied, setCopied] = useState(false);
 
     if (!isOpen) return null;
-
-    const sqlFix = `ALTER TABLE allowed_users ADD COLUMN role TEXT DEFAULT 'user';
-ALTER TABLE allowed_users ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public insert" ON allowed_users FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,12 +59,6 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
         }
     };
 
-    const copySql = () => {
-        navigator.clipboard.writeText(sqlFix);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative" onClick={e => e.stopPropagation()}>
@@ -84,8 +71,8 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
                             <ShieldCheckIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة عضو للفريق</h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">حدد صلاحيات العضو الجديد في النظام</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Nouveau Membre</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Définissez les droits d'accès</p>
                     </div>
 
                     {success ? (
@@ -93,13 +80,13 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <h3 className="text-lg font-bold text-emerald-600 mb-1">تمت العملية بنجاح!</h3>
-                            <p className="text-slate-500 dark:text-slate-400">تم تسجيل المستخدم بصفة ({role === 'admin' ? 'مسؤول' : 'مستخدم'})</p>
+                            <h3 className="text-lg font-bold text-emerald-600 mb-1">Succès!</h3>
+                            <p className="text-slate-500 dark:text-slate-400">Enregistré en tant que {role}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSignup} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">البريد الإلكتروني</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">Email</label>
                                 <div className="relative border border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-blue-500 transition-colors">
                                     <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                     <input
@@ -107,14 +94,14 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm"
+                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white focus:outline-none sm:text-sm"
                                         placeholder="user@example.com"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">رمز الدخول (Code)</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">Code</label>
                                 <div className="relative border border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-blue-500 transition-colors">
                                     <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                     <input
@@ -122,55 +109,40 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                         required
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
-                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm"
+                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white focus:outline-none sm:text-sm"
                                         placeholder="••••••••"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">صلاحية المستخدم</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setRole('user')}
-                                        className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${role === 'user' ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                                    >
-                                        مستخدم (User)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setRole('admin')}
-                                        className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${role === 'admin' ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                                    >
-                                        مسؤول (Admin)
-                                    </button>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">Rôle</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['user', 'admin', 'manager'].map((r) => (
+                                        <button
+                                            key={r}
+                                            type="button"
+                                            onClick={() => setRole(r as any)}
+                                            className={`py-2 rounded-xl border text-[10px] font-black uppercase transition-all ${role === r ? 'bg-accent text-white border-accent shadow-md' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50'}`}
+                                        >
+                                            {r}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl text-right">
-                                    <p className="text-xs text-red-700 dark:text-red-400 font-bold mb-1">خطأ في النظام ({error.code})</p>
-                                    <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">{error.message}</p>
-                                    
-                                    {error.code === '42703' && (
-                                        <button 
-                                            type="button"
-                                            onClick={copySql}
-                                            className="mt-3 w-full py-2 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold rounded-lg transition-colors shadow-sm"
-                                        >
-                                            {copied ? '✅ تم النسخ' : '📋 نسخ كود إضافة عمود Role لـ Supabase'}
-                                        </button>
-                                    )}
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 p-3 rounded-xl text-xs text-red-600">
+                                    {error.message}
                                 </div>
                             )}
 
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-3.5 bg-slate-900 dark:bg-blue-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center"
+                                className="w-full py-3.5 bg-slate-900 dark:bg-blue-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center"
                             >
-                                {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : 'تأكيد الإضافة'}
+                                {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : 'Confirmer'}
                             </button>
                         </form>
                     )}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Store, Mode, StoreFormData, Customer, AppSettings, UserSession } from './types.ts';
 import storeService from './services/storeService.ts';
@@ -15,7 +14,6 @@ import DistributorSettingsPage from './components/distributor/DistributorSetting
 import SpinnerIcon from './components/icons/SpinnerIcon.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import CustomerEditModal from './components/CustomerEditModal.tsx';
-import WhiteLabelPage from './components/WhiteLabelPage.tsx';
 
 import UserDashboard from './components/distributor/UserDashboard.tsx';
 import StoreFormPage from './components/distributor/StoreFormPage.tsx';
@@ -71,21 +69,20 @@ const App: React.FC = () => {
       document.documentElement.style.setProperty('--app-font-size', `${savedFontSize}px`);
       document.documentElement.style.setProperty('--app-font-weight', savedFontWeight);
 
-      if (sessionUser && sessionRole) {
+      if (sessionUser) {
         setAuthenticatedUser(sessionUser);
-        setUserRole(sessionRole);
+        const role = sessionRole || 'user';
+        setUserRole(role);
         
-        if (sessionRole === 'user') {
+        // توجيه تلقائي: المدير والأدمن للداشبورد، الموزع لصفحته
+        if (role === 'user') {
           setCurrentView('user_home');
-        } else if (sessionRole === 'manager') {
-          setCurrentView('white_label');
         } else {
           setCurrentView('dashboard');
         }
       }
 
-      // إبقاء الـ Splash Screen ظاهرة لثانية إضافية لإعطاء شعور احترافي
-      setTimeout(() => setIsLoading(false), 1200);
+      setIsLoading(false);
     };
 
     initApp();
@@ -129,10 +126,9 @@ const App: React.FC = () => {
     localStorage.setItem('authenticatedUser', session.email);
     localStorage.setItem('userRole', session.role);
     
+    // التوجيه الفوري عند تسجيل الدخول
     if (session.role === 'user') {
       setCurrentView('user_home');
-    } else if (session.role === 'manager') {
-      setCurrentView('white_label');
     } else {
       setCurrentView('dashboard');
     }
@@ -142,8 +138,6 @@ const App: React.FC = () => {
     localStorage.removeItem('authenticatedUser');
     localStorage.removeItem('userRole');
     setAuthenticatedUser(null);
-    setUserRole('user');
-    setCurrentView('dashboard');
   };
 
   const handleOptimisticUpdate = (newStore: Store) => {
@@ -191,22 +185,8 @@ const App: React.FC = () => {
     updateTheme('light');
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen bg-[#0f172a] transition-all duration-700">
-        <div className="relative w-32 h-32 mb-8 animate-in fade-in zoom-in duration-1000">
-          {appSettings?.splash_url ? (
-            <img src={appSettings.splash_url} alt="Splash" className="w-full h-full object-contain drop-shadow-2xl" />
-          ) : (
-            <div className="w-full h-full bg-accent rounded-3xl animate-pulse shadow-2xl"></div>
-          )}
-          <div className="absolute -bottom-2 -right-2">
-            <SpinnerIcon className="animate-spin h-8 w-8 text-accent" />
-          </div>
-        </div>
-        <h1 className="text-xl font-bold text-white tracking-[0.2em] uppercase opacity-80">{appSettings?.short_name || 'Apollo'}</h1>
-      </div>
-    );
+  if (isLoading && !authenticatedUser) {
+    return <div className="flex justify-center items-center h-screen bg-slate-50 dark:bg-slate-900"><SpinnerIcon className="animate-spin h-10 w-10 text-blue-600" /></div>;
   }
 
   if (!authenticatedUser) {
@@ -220,12 +200,11 @@ const App: React.FC = () => {
         onViewChange={setCurrentView}
         onLogout={handleLogout}
         isAdmin={isAdminOrManager}
-        userRole={userRole}
         appName={appSettings?.short_name || 'Apollo'}
         appIcon={appSettings?.icon_192_url}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings' || currentView === 'white_label') && (
+        {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings') && (
           <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center h-[73px] flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
@@ -253,7 +232,8 @@ const App: React.FC = () => {
             />
           )}
 
-          {(currentView === 'dashboard' || (currentView === 'user_home' && isAdminOrManager)) && isAdminOrManager && (
+          {/* لوحة التحكم الرئيسية للمدير والأدمن */}
+          {(currentView === 'dashboard' || (currentView === 'user_home' && userRole !== 'user')) && isAdminOrManager && (
             <div className="p-4 md:p-6"><HomePage stores={stores} authenticatedUser={authenticatedUser} /></div>
           )}
 
@@ -273,7 +253,7 @@ const App: React.FC = () => {
             />
           )}
 
-          {currentView === 'leads' && isAdminOrManager && (
+          {currentView === 'leads' && (
             <div className="p-4 md:p-6">
               <DashboardPage
                 stores={stores}
@@ -320,8 +300,8 @@ const App: React.FC = () => {
             />
           )}
 
-          {currentView === 'analytics' && isAdminOrManager && <div className="p-4 md:p-6"><AnalyticsDashboard stores={stores} /></div>}
-          {currentView === 'commissions' && isAdminOrManager && <div className="p-4 md:p-6"><CommissionsPage stores={stores} /></div>}
+          {currentView === 'analytics' && <div className="p-4 md:p-6"><AnalyticsDashboard stores={stores} /></div>}
+          {currentView === 'commissions' && <div className="p-4 md:p-6"><CommissionsPage stores={stores} /></div>}
 
           {currentView === 'settings' && (
             isAdminOrManager ? (
@@ -367,14 +347,6 @@ const App: React.FC = () => {
                 onResetSettings={resetSettings}
               />
             )
-          )}
-
-          {currentView === 'white_label' && userRole === 'manager' && (
-            <WhiteLabelPage
-              appSettings={appSettings}
-              onClose={() => setCurrentView('dashboard')}
-              setAccentColor={setAccentColor}
-            />
           )}
         </main>
       </div>

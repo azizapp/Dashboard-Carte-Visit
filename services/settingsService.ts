@@ -1,4 +1,3 @@
-
 import { supabase, uploadImageToStorage } from './supabase.ts';
 import { AppSettings } from '../types.ts';
 
@@ -35,8 +34,7 @@ const settingsService = {
       accent_color: '#4f46e5',
       favicon_url: defaultLogo,
       icon_192_url: defaultLogo,
-      icon_512_url: defaultLogo,
-      splash_url: defaultLogo
+      icon_512_url: defaultLogo
     };
   },
 
@@ -44,13 +42,14 @@ const settingsService = {
     const updated = { ...settings };
     
     // رفع الصور إذا كانت جديدة (Base64)
-    const imageFields: (keyof AppSettings)[] = ['favicon_url', 'icon_192_url', 'icon_512_url', 'splash_url'];
-    
-    for (const field of imageFields) {
-      const value = updated[field];
-      if (typeof value === 'string' && value.startsWith('data:image')) {
-        updated[field] = await uploadImageToStorage(value);
-      }
+    if (updated.favicon_url?.startsWith('data:image')) {
+      updated.favicon_url = await uploadImageToStorage(updated.favicon_url);
+    }
+    if (updated.icon_192_url?.startsWith('data:image')) {
+      updated.icon_192_url = await uploadImageToStorage(updated.icon_192_url);
+    }
+    if (updated.icon_512_url?.startsWith('data:image')) {
+      updated.icon_512_url = await uploadImageToStorage(updated.icon_512_url);
     }
 
     const { error } = await supabase
@@ -73,8 +72,10 @@ const settingsService = {
 
     // 2. تحديث الألوان في CSS
     document.documentElement.style.setProperty('--accent-color', settings.accent_color);
+    // توليد لون أغمق قليلاً للـ hover (بسيط)
     document.documentElement.style.setProperty('--accent-color-hover', settings.accent_color + 'dd');
     
+    // تحديث لون الميتا (شريط الهاتف)
     const metaTheme = document.getElementById('meta-theme-color');
     if (metaTheme) metaTheme.setAttribute('content', settings.accent_color);
 
@@ -89,23 +90,23 @@ const settingsService = {
       link.href = settings.favicon_url;
     }
 
-    // 4. تحديث Manifest ديناميكي (لـ PWA)
+    // 4. تحديث Manifest ديناميكي
     const manifest = {
       name: settings.app_name,
       short_name: settings.short_name,
       start_url: "/",
       display: "standalone",
-      background_color: "#0f172a",
+      background_color: "#ffffff",
       theme_color: settings.accent_color,
       icons: [
         {
-          src: settings.icon_192_url || settings.favicon_url,
+          src: settings.icon_192_url || "/icon-192.png",
           sizes: "192x192",
           type: "image/png",
           purpose: "any maskable"
         },
         {
-          src: settings.icon_512_url || settings.favicon_url,
+          src: settings.icon_512_url || "/icon-512.png",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable"
