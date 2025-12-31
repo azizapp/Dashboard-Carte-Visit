@@ -25,7 +25,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<'manager' | 'admin' | 'user'>('user');
+  const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -40,11 +40,9 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<Mode>(Mode.Production);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Manager and Admin both access the dashboard
-  const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
-
   useEffect(() => {
     const initApp = async () => {
+      // تحميل إعدادات التخصيص أولاً
       const settings = await settingsService.getSettings();
       if (settings) {
         setAppSettings(settings);
@@ -57,7 +55,7 @@ const App: React.FC = () => {
       const savedFontSize = localStorage.getItem('fontSize') || '16';
       const savedFontWeight = localStorage.getItem('fontWeight') || '400';
       const sessionUser = localStorage.getItem('authenticatedUser');
-      const sessionRole = localStorage.getItem('userRole') as 'manager' | 'admin' | 'user';
+      const sessionRole = localStorage.getItem('userRole') as 'admin' | 'user';
 
       setTheme(savedTheme);
       setFont(savedFont);
@@ -74,12 +72,8 @@ const App: React.FC = () => {
         setAuthenticatedUser(sessionUser);
         const role = sessionRole || 'user';
         setUserRole(role);
-        
-        // Logical view routing based on role
         if (role === 'user' && currentView === 'dashboard') {
           setCurrentView('user_home');
-        } else if ((role === 'admin' || role === 'manager') && currentView === 'user_home') {
-          setCurrentView('dashboard');
         }
       }
 
@@ -126,7 +120,7 @@ const App: React.FC = () => {
     setUserRole(session.role);
     localStorage.setItem('authenticatedUser', session.email);
     localStorage.setItem('userRole', session.role);
-    setCurrentView(session.role === 'user' ? 'user_home' : 'dashboard');
+    setCurrentView(session.role === 'admin' ? 'dashboard' : 'user_home');
   };
 
   const handleLogout = () => {
@@ -144,7 +138,7 @@ const App: React.FC = () => {
     try {
       await storeService.addStore(Mode.Production, newStoreData, undefined, authenticatedUser || undefined);
       alert("Enregistré avec succès !");
-      setCurrentView(isAdminOrManager ? 'dashboard' : 'user_home');
+      setCurrentView(userRole === 'admin' ? 'dashboard' : 'user_home');
       await syncData();
     } catch (err: any) {
       alert(`Erreur: ${err.message}`);
@@ -194,9 +188,9 @@ const App: React.FC = () => {
         currentView={currentView}
         onViewChange={setCurrentView}
         onLogout={handleLogout}
-        isAdmin={isAdminOrManager}
+        isAdmin={userRole === 'admin'}
         appName={appSettings?.short_name || 'Apollo'}
-        appIcon={appSettings?.icon_192_url}
+        appIcon={appSettings?.favicon_url}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings') && (
@@ -229,7 +223,7 @@ const App: React.FC = () => {
 
           {currentView === 'add_lead' && (
             <StoreFormPage
-              onClose={() => setCurrentView(isAdminOrManager ? 'dashboard' : 'user_home')}
+              onClose={() => setCurrentView(userRole === 'admin' ? 'dashboard' : 'user_home')}
               onSubmit={handleAddStore}
               stores={stores}
             />
@@ -253,13 +247,13 @@ const App: React.FC = () => {
                 isLoading={isLoading}
                 onViewDetails={(s) => { setSelectedStore(s); setCurrentView('details'); }}
                 onEdit={handleEditStore}
-                isAdmin={isAdminOrManager}
+                isAdmin={userRole === 'admin'}
               />
             </div>
           )}
 
           {currentView === 'details' && selectedStore && (
-            isAdminOrManager ? (
+            userRole === 'admin' ? (
               <AdminProspectDetailPage
                 store={selectedStore}
                 history={stores.filter(s => s.Magazin.trim().toLowerCase() === selectedStore.Magazin.trim().toLowerCase())}
@@ -282,9 +276,9 @@ const App: React.FC = () => {
           {currentView === 'appointments' && (
             <AppointmentsPage
               stores={stores}
-              isAdmin={isAdminOrManager}
+              isAdmin={userRole === 'admin'}
               authenticatedUser={authenticatedUser || ''}
-              onClose={() => setCurrentView(isAdminOrManager ? 'dashboard' : 'user_home')}
+              onClose={() => setCurrentView(userRole === 'admin' ? 'dashboard' : 'user_home')}
               onViewDetails={(s) => { setSelectedStore(s); setCurrentView('details'); }}
               onOptimisticUpdate={handleOptimisticUpdate}
               onEditStore={handleEditStore}
@@ -296,9 +290,8 @@ const App: React.FC = () => {
           {currentView === 'commissions' && <div className="p-4 md:p-6"><CommissionsPage stores={stores} /></div>}
 
           {currentView === 'settings' && (
-            isAdminOrManager ? (
+            userRole === 'admin' ? (
               <AdminSettingsPage
-                userRole={userRole}
                 theme={theme}
                 setTheme={updateTheme}
                 font={font}

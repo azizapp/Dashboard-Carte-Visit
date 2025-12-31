@@ -14,14 +14,15 @@ export interface AppSettings {
   updated_at?: string;
 }
 
+// Added UserSession and UserProfile to fix import error in AdminSettingsPage.tsx
 export interface UserSession {
   email: string;
-  role: 'manager' | 'admin' | 'user';
+  role: 'admin' | 'user';
 }
 
 export interface UserProfile {
   email: string;
-  role: 'manager' | 'admin' | 'user';
+  role: 'admin' | 'user';
   code?: string;
   created_at?: string;
 }

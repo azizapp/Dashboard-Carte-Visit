@@ -1,23 +1,21 @@
 {
-  "name": "Apollo Eyewear CRM",
-  "short_name": "Apollo",
-  "description": "Système de gestion optimisé pour Apollo Eyewear",
+  "name": "Carte Visit 6.1.4",
+  "short_name": "Carte Visit",
+  "description": "لقد قمت بتحديث التطبيق لتضمين عناوين URL الخاصة بالاتصال مباشرةً في الإعدادات، مما يلغي الحاجة إلى ملف config.json الخارجي.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f1f5f9",
-  "theme_color": "#4407EB",
+  "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg",
-      "type": "image/jpeg",
-      "sizes": "192x192",
-      "purpose": "any maskable"
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
-      "src": "https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg",
-      "type": "image/jpeg",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }
