@@ -8,11 +8,12 @@ import CheckIcon from './icons/CheckIcon.tsx';
 import GlobeAltIcon from './icons/GlobeAltIcon.tsx'; 
 import KeyIcon from './icons/KeyIcon.tsx'; 
 import PaintBrushIcon from './icons/PaintBrushIcon.tsx';
+import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 
-// Specific icons for the UI
+// Icons
 const InfoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836c-.149.598.013 1.146.467 1.442a.75.75 0 01-.813 1.26c-1.146.573-2.437-.463-2.126-1.706l.709-2.836c.149-.598-.013-1.146-.467-1.442a.75.75 0 01.813-1.26zM12 7a1 1 0 110 2 1 1 0 010-2z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836c-.149.598.013 1.146.467 1.442a.75.75 0 0 1-.813 1.26c-1.146.573-2.437-.463-2.126-1.706l.709-2.836c.149-.598-.013-1.146-.467-1.442a.75.75 0 0 1 1.813-1.26zM12 7a1 1 0 110 2 1 1 0 010-2z" clipRule="evenodd" />
   </svg>
 );
 
@@ -47,20 +48,31 @@ const UploadIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const ShieldExclamationIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Zm0 13.036h.008v.008H12v-.008Z" />
+    </svg>
+);
+
 interface WhiteLabelPageProps {
     appSettings: AppSettings | null;
     onClose: () => void;
     setAccentColor: (color: string) => void;
+    onSettingsUpdate?: () => Promise<void>; // أضفنا Callback للتحديث
 }
 
-const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, setAccentColor }) => {
+const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, setAccentColor, onSettingsUpdate }) => {
     const [customSettings, setCustomSettings] = useState<AppSettings>(appSettings || settingsService.getDefaultSettings());
     const [isSaving, setIsSaving] = useState(false);
+    const [copiedSql, setCopiedSql] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const fileInputRef = useRef<Record<string, HTMLInputElement | null>>({});
 
     const [sbUrl, setSbUrl] = useState(localStorage.getItem('supabase_url') || '');
     const [sbKey, setSbKey] = useState(localStorage.getItem('supabase_key') || '');
     const [showKey, setShowKey] = useState(false);
+
+    const missingColumnSql = `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS splash_url TEXT;`;
 
     const handleAppSettChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -84,28 +96,45 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
 
     const handleSaveAll = async () => {
         setIsSaving(true);
+        setSaveSuccess(false);
         try {
-            // Update Supabase if changed
             if (sbUrl !== localStorage.getItem('supabase_url') || sbKey !== localStorage.getItem('supabase_key')) {
               updateSupabaseConfig(sbUrl, sbKey);
             }
             
-            // Save Branding
             await settingsService.updateSettings(customSettings);
-            settingsService.applySettings(customSettings);
-            setAccentColor(customSettings.accent_color);
             
-            alert("Configuration enregistrée avec succès. L'application va s'actualiser.");
-            window.location.reload();
-        } catch (e) {
-            alert("Erreur lors de l'enregistrement");
+            // تحديث الواجهة الرئيسية فوراً
+            if (onSettingsUpdate) {
+                await onSettingsUpdate();
+            } else {
+                settingsService.applySettings(customSettings);
+                setAccentColor(customSettings.accent_color);
+            }
+            
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+            
+        } catch (e: any) {
+            console.error(e);
+            if (e.message?.includes('splash_url')) {
+                alert("Erreur: La colonne 'splash_url' semble manquer. Utilisez le bouton en bas.");
+            } else {
+                alert("Erreur lors de l'enregistrement. Vérifiez votre console.");
+            }
         } finally {
             setIsSaving(false);
         }
     };
 
+    const copySql = () => {
+        navigator.clipboard.writeText(missingColumnSql);
+        setCopiedSql(true);
+        setTimeout(() => setCopiedSql(false), 3000);
+    };
+
     return (
-        <div className="bg-[#0f172a] min-h-screen text-slate-300 font-sans pb-20">
+        <div className="bg-[#0f172a] min-h-screen text-slate-300 font-sans pb-32">
             {/* Header */}
             <header className="px-8 py-6 flex items-center justify-between border-b border-slate-800 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-30">
                 <div className="flex flex-col">
@@ -120,19 +149,24 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    {saveSuccess && (
+                        <span className="text-emerald-400 text-xs font-bold animate-fade-in mr-2 flex items-center gap-1">
+                            <CheckIcon className="w-4 h-4" /> Enregistré avec succès
+                        </span>
+                    )}
                     <button 
                         onClick={onClose}
                         className="px-5 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors border border-slate-800 rounded-lg hover:bg-slate-800"
                     >
-                        Discard
+                        Close
                     </button>
                     <button 
                         onClick={handleSaveAll}
                         disabled={isSaving}
-                        className="px-5 py-2 text-sm font-bold text-white bg-sky-500 hover:bg-sky-400 rounded-lg shadow-lg shadow-sky-500/20 flex items-center gap-2 transition-all disabled:opacity-50"
+                        className={`px-5 py-2 text-sm font-bold text-white rounded-lg shadow-lg flex items-center gap-2 transition-all disabled:opacity-50 ${saveSuccess ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-sky-500 hover:bg-sky-400 shadow-sky-500/20'}`}
                     >
                         {isSaving ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <CheckIcon className="w-4 h-4" />}
-                        Save Changes
+                        {saveSuccess ? 'Settings Updated' : 'Save Changes'}
                     </button>
                 </div>
             </header>
@@ -146,7 +180,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                         <h2 className="text-lg font-bold text-white">Application Details</h2>
                     </div>
                     
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 space-y-8">
+                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 space-y-8 shadow-xl">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             <div className="space-y-2 lg:col-span-1">
                                 <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1">Application Name</label>
@@ -220,7 +254,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                         <h2 className="text-lg font-bold text-white">Branding & Theme</h2>
                     </div>
                     
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8">
+                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
                         <div className="space-y-4">
                             <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 ml-1">Main Theme Color</label>
                             <div className="flex items-center gap-4 max-w-sm">
@@ -252,7 +286,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                         <h2 className="text-lg font-bold text-white">Site Assets & Icons</h2>
                     </div>
                     
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8">
+                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 shadow-xl">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
                                 { label: 'Favicon', key: 'favicon_url', size: '32×32' },
@@ -268,20 +302,20 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                                     
                                     <div 
                                         onClick={() => fileInputRef.current[asset.key]?.click()}
-                                        className="group relative aspect-square rounded-2xl bg-slate-900/50 border-2 border-dashed border-slate-700 hover:border-sky-500/50 hover:bg-slate-800 transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden"
+                                        className="group relative aspect-square rounded-2xl bg-slate-900/50 border-2 border-dashed border-slate-700 hover:border-sky-500/50 hover:bg-slate-800 transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden shadow-inner"
                                     >
                                         {(customSettings as any)[asset.key] ? (
                                             <>
-                                              <img src={(customSettings as any)[asset.key]} className="w-full h-full object-contain p-6" />
+                                              <img src={(customSettings as any)[asset.key]} className="w-full h-full object-contain p-6" alt={asset.label} />
                                               <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity backdrop-blur-[2px]">
                                                   <UploadIcon className="w-6 h-6 text-white" />
                                                   <span className="text-[10px] font-bold text-white uppercase tracking-widest">Change</span>
                                               </div>
                                             </>
                                         ) : (
-                                            <div className="flex flex-col items-center gap-3 text-slate-600 group-hover:text-slate-400 transition-colors">
+                                            <div className="flex flex-col items-center gap-3 text-slate-600 group-hover:text-slate-400 transition-colors text-center px-4">
                                                 <UploadIcon className="w-8 h-8" />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Click to upload</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Click to upload<br/>{asset.size}</span>
                                             </div>
                                         )}
                                         <input 
@@ -295,6 +329,28 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                {/* Section: DB Maintenance Help */}
+                <section>
+                    <div className="bg-amber-900/20 border border-amber-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6 shadow-lg">
+                        <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                            <ShieldExclamationIcon className="w-8 h-8 text-amber-500" />
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h3 className="text-lg font-bold text-amber-400 mb-1">Database Sync Check</h3>
+                            <p className="text-sm text-amber-200/70 leading-relaxed">
+                                If you receive an error about <b>"splash_url"</b> when saving, run this SQL command in your Supabase SQL Editor to add the missing column.
+                            </p>
+                        </div>
+                        <button 
+                            onClick={copySql}
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 flex-shrink-0 ${copiedSql ? 'bg-emerald-600 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-900/20'}`}
+                        >
+                            {copiedSql ? <CheckIcon className="w-4 h-4" /> : <ArrowPathIcon className="w-4 h-4" />}
+                            {copiedSql ? "Command Copied!" : "Fix Missing Column SQL"}
+                        </button>
                     </div>
                 </section>
             </main>

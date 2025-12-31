@@ -44,14 +44,19 @@ const App: React.FC = () => {
 
   const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
 
+  // دالة لتحديث الإعدادات في واجهة التطبيق فوراً
+  const refreshSettings = async () => {
+    const settings = await settingsService.getSettings();
+    if (settings) {
+      setAppSettings(settings);
+      settingsService.applySettings(settings);
+      setAccentColor(settings.accent_color);
+    }
+  };
+
   useEffect(() => {
     const initApp = async () => {
-      const settings = await settingsService.getSettings();
-      if (settings) {
-        setAppSettings(settings);
-        settingsService.applySettings(settings);
-        setAccentColor(settings.accent_color);
-      }
+      await refreshSettings();
 
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
       const savedFont = localStorage.getItem('font') || 'Inter';
@@ -84,7 +89,6 @@ const App: React.FC = () => {
         }
       }
 
-      // إبقاء الـ Splash Screen ظاهرة لثانية إضافية لإعطاء شعور احترافي
       setTimeout(() => setIsLoading(false), 1200);
     };
 
@@ -106,11 +110,7 @@ const App: React.FC = () => {
     try {
       const freshStores = await storeService.syncStores(Mode.Production);
       setStores(freshStores);
-      const settings = await settingsService.getSettings();
-      if (settings) {
-        setAppSettings(settings);
-        settingsService.applySettings(settings);
-      }
+      await refreshSettings();
     } catch (e: any) {
       console.error(e);
       setStores(storeService.getStoredStores());
@@ -374,6 +374,7 @@ const App: React.FC = () => {
               appSettings={appSettings}
               onClose={() => setCurrentView('dashboard')}
               setAccentColor={setAccentColor}
+              onSettingsUpdate={refreshSettings}
             />
           )}
         </main>

@@ -70,13 +70,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
   ];
 
   // إضافة زر "Configuration" فقط لصفة Manager للوصول لصفحة الـ WhiteLabel و Supabase
-  // تم إزالة شرط "admin" هنا بناءً على طلبك
   if (userRole === 'manager') {
     navItems.push({ id: 'white_label', label: 'Configuration', icon: PaintBrushIcon });
   }
 
   const Logo = () => (
-    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-accent/20 overflow-hidden">
+    <div className={`w-10 h-10 flex items-center justify-center rounded-xl overflow-hidden transition-all duration-300 ${!appIcon ? 'bg-accent text-white font-bold text-xl shadow-lg shadow-accent/20' : 'bg-transparent'}`}>
       {appIcon ? (
         <img src={appIcon} alt="Logo" className="w-full h-full object-contain" />
       ) : (

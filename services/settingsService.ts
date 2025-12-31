@@ -95,7 +95,7 @@ const settingsService = {
       short_name: settings.short_name,
       start_url: "/",
       display: "standalone",
-      background_color: "#0f172a", // Dark background for splash
+      background_color: "#0f172a",
       theme_color: settings.accent_color,
       icons: [
         {

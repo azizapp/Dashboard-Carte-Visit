@@ -12,7 +12,7 @@ export interface AppSettings {
   favicon_url: string;
   icon_192_url: string;
   icon_512_url: string;
-  splash_url?: string; // أضفنا هذا الحقل لمطابقة الجدول
+  splash_url: string; // تم جعله حقلاً أساسياً لمطابقة الجدول
   updated_at?: string;
 }
 
