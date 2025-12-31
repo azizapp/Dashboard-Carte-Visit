@@ -26,13 +26,11 @@ const login = async (email: string, code: string): Promise<UserSession> => {
     
     return {
         email: data.email,
-        // FIX: Updated type casting to include 'manager' role.
-        role: (data.role || 'user') as 'admin' | 'user' | 'manager'
+        role: (data.role || 'user') as 'manager' | 'admin' | 'user'
     };
 };
 
-// FIX: Updated signup function signature to include 'manager' as a possible role.
-const signup = async (email: string, code: string, role: 'admin' | 'user' | 'manager' = 'user'): Promise<void> => {
+const signup = async (email: string, code: string, role: 'manager' | 'admin' | 'user' = 'user'): Promise<void> => {
     if (!email || !code) {
         throw new Error("الرجاء إدخال البريد الإلكتروني والرمز المطلوب");
     }

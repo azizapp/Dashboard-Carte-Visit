@@ -14,17 +14,14 @@ export interface AppSettings {
   updated_at?: string;
 }
 
-// Added UserSession and UserProfile to fix import error in AdminSettingsPage.tsx
-// FIX: Added 'manager' to the role union to resolve TypeScript errors when comparing user roles.
 export interface UserSession {
   email: string;
-  role: 'admin' | 'user' | 'manager';
+  role: 'manager' | 'admin' | 'user';
 }
 
-// FIX: Added 'manager' to the role union to resolve TypeScript errors when comparing user roles.
 export interface UserProfile {
   email: string;
-  role: 'admin' | 'user' | 'manager';
+  role: 'manager' | 'admin' | 'user';
   code?: string;
   created_at?: string;
 }

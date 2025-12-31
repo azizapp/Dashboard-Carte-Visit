@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Store, Mode, StoreFormData, Customer, AppSettings, UserSession } from './types.ts';
 import storeService from './services/storeService.ts';
@@ -15,7 +14,6 @@ import DistributorSettingsPage from './components/distributor/DistributorSetting
 import SpinnerIcon from './components/icons/SpinnerIcon.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import CustomerEditModal from './components/CustomerEditModal.tsx';
-import WhiteLabelPage from './components/WhiteLabelPage.tsx';
 
 import UserDashboard from './components/distributor/UserDashboard.tsx';
 import StoreFormPage from './components/distributor/StoreFormPage.tsx';
@@ -42,6 +40,7 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<Mode>(Mode.Production);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // Manager and Admin both access the dashboard
   const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
 
   useEffect(() => {
@@ -71,16 +70,15 @@ const App: React.FC = () => {
       document.documentElement.style.setProperty('--app-font-size', `${savedFontSize}px`);
       document.documentElement.style.setProperty('--app-font-weight', savedFontWeight);
 
-      if (sessionUser && sessionRole) {
+      if (sessionUser) {
         setAuthenticatedUser(sessionUser);
-        setUserRole(sessionRole);
+        const role = sessionRole || 'user';
+        setUserRole(role);
         
-        if (sessionRole === 'user') {
+        // Logical view routing based on role
+        if (role === 'user' && currentView === 'dashboard') {
           setCurrentView('user_home');
-        } else if (sessionRole === 'manager') {
-          // المندير يذهب مباشرة لصفحة الإعدادات التي تحوي branding و supabase
-          setCurrentView('white_label');
-        } else {
+        } else if ((role === 'admin' || role === 'manager') && currentView === 'user_home') {
           setCurrentView('dashboard');
         }
       }
@@ -128,22 +126,13 @@ const App: React.FC = () => {
     setUserRole(session.role);
     localStorage.setItem('authenticatedUser', session.email);
     localStorage.setItem('userRole', session.role);
-    
-    if (session.role === 'user') {
-      setCurrentView('user_home');
-    } else if (session.role === 'manager') {
-      setCurrentView('white_label');
-    } else {
-      setCurrentView('dashboard');
-    }
+    setCurrentView(session.role === 'user' ? 'user_home' : 'dashboard');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authenticatedUser');
     localStorage.removeItem('userRole');
     setAuthenticatedUser(null);
-    setUserRole('user');
-    setCurrentView('dashboard');
   };
 
   const handleOptimisticUpdate = (newStore: Store) => {
@@ -206,12 +195,11 @@ const App: React.FC = () => {
         onViewChange={setCurrentView}
         onLogout={handleLogout}
         isAdmin={isAdminOrManager}
-        userRole={userRole}
         appName={appSettings?.short_name || 'Apollo'}
         appIcon={appSettings?.icon_192_url}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings' || currentView === 'white_label') && (
+        {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings') && (
           <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center h-[73px] flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
@@ -219,7 +207,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{userRole}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase">{userRole}</p>
                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{authenticatedUser}</p>
               </div>
               <img src={`https://ui-avatars.com/api/?name=${authenticatedUser}&background=random&color=fff`} className="w-9 h-9 rounded-full border-2 border-white dark:border-slate-700 shadow-sm mr-2" />
@@ -228,7 +216,7 @@ const App: React.FC = () => {
         )}
 
         <main className="flex-1 overflow-y-auto bg-[#F7F8FA] dark:bg-slate-900/50">
-          {currentView === 'user_home' && userRole === 'user' && (
+          {currentView === 'user_home' && (
             <UserDashboard
               stores={stores}
               authenticatedUser={authenticatedUser}
@@ -237,10 +225,6 @@ const App: React.FC = () => {
               onViewAppointments={() => setCurrentView('appointments')}
               onViewSettings={() => setCurrentView('settings')}
             />
-          )}
-
-          {(currentView === 'dashboard' || (currentView === 'user_home' && isAdminOrManager)) && isAdminOrManager && (
-            <div className="p-4 md:p-6"><HomePage stores={stores} authenticatedUser={authenticatedUser} /></div>
           )}
 
           {currentView === 'add_lead' && (
@@ -259,7 +243,9 @@ const App: React.FC = () => {
             />
           )}
 
-          {currentView === 'leads' && isAdminOrManager && (
+          {currentView === 'dashboard' && <div className="p-4 md:p-6"><HomePage stores={stores} authenticatedUser={authenticatedUser} /></div>}
+
+          {currentView === 'leads' && (
             <div className="p-4 md:p-6">
               <DashboardPage
                 stores={stores}
@@ -306,8 +292,8 @@ const App: React.FC = () => {
             />
           )}
 
-          {currentView === 'analytics' && isAdminOrManager && <div className="p-4 md:p-6"><AnalyticsDashboard stores={stores} /></div>}
-          {currentView === 'commissions' && isAdminOrManager && <div className="p-4 md:p-6"><CommissionsPage stores={stores} /></div>}
+          {currentView === 'analytics' && <div className="p-4 md:p-6"><AnalyticsDashboard stores={stores} /></div>}
+          {currentView === 'commissions' && <div className="p-4 md:p-6"><CommissionsPage stores={stores} /></div>}
 
           {currentView === 'settings' && (
             isAdminOrManager ? (
@@ -353,14 +339,6 @@ const App: React.FC = () => {
                 onResetSettings={resetSettings}
               />
             )
-          )}
-
-          {currentView === 'white_label' && userRole === 'manager' && (
-            <WhiteLabelPage
-              appSettings={appSettings}
-              onClose={() => setCurrentView('dashboard')}
-              setAccentColor={setAccentColor}
-            />
           )}
         </main>
       </div>
