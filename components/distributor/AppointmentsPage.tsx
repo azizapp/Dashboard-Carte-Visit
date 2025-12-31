@@ -10,6 +10,7 @@ import ChevronLeftIcon from '../icons/ChevronLeftIcon.tsx';
 import ChevronRightIcon from '../icons/ChevronRightIcon.tsx';
 import EllipsisVerticalIcon from '../icons/EllipsisVerticalIcon.tsx';
 import SpinnerIcon from '../icons/SpinnerIcon.tsx';
+import ArrowPathIcon from '../icons/ArrowPathIcon.tsx';
 import NewAppointmentModal from '../NewAppointmentModal.tsx';
 import QuickLogModal from '../QuickLogModal.tsx';
 import EditVisitModal from '../EditVisitModal.tsx';
@@ -297,7 +298,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                     <button onClick={onClose} className="p-1 mr-2"><ArrowLeftIcon className="w-6 h-6 text-slate-600 dark:text-slate-300"/></button>
                     <h1 className="text-lg font-bold text-slate-800 dark:text-white">Mes Rendez-vous</h1>
                   </div>
-                  {/* أزرار الحذف تمت هنا */}
                 </div>
             </header>
             <main className="p-4 space-y-4 pb-24">
@@ -568,7 +568,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({ stores, onClose, on
                     </div>
                 )}
             </div>
-            {/* أزرار الحذف تمت هنا أيضاً لضمان إزالتها من عرض المسؤول إذا تم استخدامه كموزع */}
         </div>
       </div>
 
