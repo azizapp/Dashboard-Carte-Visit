@@ -41,19 +41,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
         }
     };
 
-    // مكوّن الشعار الديناميكي بخلفية شفافة واستخدام الرابط المحدد
+    // مكوّن الشعار الديناميكي بخلفية شفافة
+    // تم التحديث لاستخدام icon_192_url (Icône PWA) بدلاً من favicon بناءً على طلب المستخدم لضمان استخدام الشعار بدقة عالية
     const AppLogo = ({ size = "w-10 h-10" }: { size?: string }) => (
         <div className={`${size} bg-transparent flex items-center justify-center overflow-hidden`}>
-            <img 
-                src={appSettings?.favicon_url || "https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg"} 
-                alt="Logo" 
-                className="w-full h-full object-cover" 
-            />
+            {appSettings?.icon_192_url ? (
+                <img src={appSettings.icon_192_url} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+                <div className="w-4/5 h-4/5 bg-accent rounded-xl shadow-lg shadow-accent/20"></div>
+            )}
         </div>
     );
 
     return (
         <div className="flex min-h-screen flex-col md:flex-row font-sans overflow-hidden relative bg-slate-50 dark:bg-slate-900">
+            {/* Desktop View */}
             <div className="hidden md:flex md:w-1/2 relative bg-accent items-center justify-center p-12 text-white overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/40"></div>
                 <div className="relative z-10 w-full max-w-lg">
@@ -68,6 +70,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
                 </div>
             </div>
 
+            {/* Form Section */}
             <div className="w-full md:w-1/2 flex items-center justify-center p-8">
                 <div className="w-full max-w-sm">
                     <div className="md:hidden flex flex-col items-center mb-12">

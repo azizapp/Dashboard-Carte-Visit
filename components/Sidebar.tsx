@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import HomeIcon from './icons/HomeIcon.tsx';
 import UsersIcon from './icons/UsersIcon.tsx';
@@ -7,12 +8,14 @@ import LogoutIcon from './icons/LogoutIcon.tsx';
 import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
 import ChevronLeftIcon from './icons/ChevronLeftIcon.tsx';
 import SettingsIcon from './icons/SettingsIcon.tsx';
+import PaintBrushIcon from './icons/PaintBrushIcon.tsx';
 
 interface SidebarProps {
   onLogout: () => void;
   currentView: string;
   onViewChange: (view: string) => void;
   isAdmin: boolean;
+  userRole?: string;
   appName?: string;
   appIcon?: string; 
 }
@@ -48,9 +51,10 @@ const NavLink: React.FC<{
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, isAdmin, appName = 'Apollo', appIcon }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, isAdmin, userRole, appName = 'Apollo', appIcon }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
+  // تعريف العناصر الأساسية بناءً على الدور
   const navItems = isAdmin ? [
     { id: 'dashboard', label: 'Tableau de Bord', icon: HomeIcon },
     { id: 'appointments', label: 'Rendez-Vous', icon: CalendarDaysIcon },
@@ -64,6 +68,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
     { id: 'leads', label: 'Mes Prospects', icon: UsersIcon },
     { id: 'settings', label: 'Réglages', icon: SettingsIcon },
   ];
+
+  // إضافة زر "Configuration" فقط لصفة Manager للوصول لصفحة الـ WhiteLabel و Supabase
+  // تم إزالة شرط "admin" هنا بناءً على طلبك
+  if (userRole === 'manager') {
+    navItems.push({ id: 'white_label', label: 'Configuration', icon: PaintBrushIcon });
+  }
 
   const Logo = () => (
     <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-accent/20 overflow-hidden">
