@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { AppSettings } from '../types.ts';
 import settingsService from '../services/settingsService.ts';
@@ -8,7 +7,6 @@ import StoreIcon from './icons/StoreIcon.tsx';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
 import CheckIcon from './icons/CheckIcon.tsx';
 import MapIcon from './icons/MapIcon.tsx';
-// FIX: Imported missing ArrowPathIcon component to resolve compilation error on line 201.
 import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 
 const ArrowLeftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

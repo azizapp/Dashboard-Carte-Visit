@@ -1,4 +1,3 @@
-
 export enum Mode {
   Test = 'test',
   Production = 'production',
@@ -16,13 +15,13 @@ export interface AppSettings {
 }
 
 // Added UserSession and UserProfile to fix import error in AdminSettingsPage.tsx
-// FIX: Added 'manager' to the role type to ensure overlap with 'manager' checks in App.tsx.
+// FIX: Added 'manager' to the role union to resolve TypeScript errors when comparing user roles.
 export interface UserSession {
   email: string;
   role: 'admin' | 'user' | 'manager';
 }
 
-// FIX: Added 'manager' to the role type for consistency across user profiles.
+// FIX: Added 'manager' to the role union to resolve TypeScript errors when comparing user roles.
 export interface UserProfile {
   email: string;
   role: 'admin' | 'user' | 'manager';

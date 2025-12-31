@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { authService } from '../services/authService.ts';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
@@ -28,7 +27,8 @@ interface SignupModalProps {
 const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
-    const [role, setRole] = useState<'admin' | 'user'>('user');
+    // FIX: Updated role state type to include 'manager'.
+    const [role, setRole] = useState<'admin' | 'user' | 'manager'>('user');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<{message: string, code?: string} | null>(null);
     const [success, setSuccess] = useState(false);
@@ -94,7 +94,7 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                 <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <h3 className="text-lg font-bold text-emerald-600 mb-1">تمت العملية بنجاح!</h3>
-                            <p className="text-slate-500 dark:text-slate-400">تم تسجيل المستخدم بصفة ({role === 'admin' ? 'مسؤول' : 'مستخدم'})</p>
+                            <p className="text-slate-500 dark:text-slate-400">تم تسجيل المستخدم بصفة ({role === 'admin' ? 'مسؤول' : role === 'manager' ? 'مدير' : 'مستخدم'})</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSignup} className="space-y-5">

@@ -1,4 +1,3 @@
-
 import { supabase } from './supabase.ts';
 import { UserSession, UserProfile } from '../types.ts';
 
@@ -25,14 +24,14 @@ const login = async (email: string, code: string): Promise<UserSession> => {
         throw new Error('البريد الإلكتروني أو الرمز غير صحيح.');
     }
     
-    // FIX: Updated cast to include 'manager' role to match updated UserSession type.
     return {
         email: data.email,
+        // FIX: Updated type casting to include 'manager' role.
         role: (data.role || 'user') as 'admin' | 'user' | 'manager'
     };
 };
 
-// FIX: Updated role parameter type to include 'manager' for administrative consistency.
+// FIX: Updated signup function signature to include 'manager' as a possible role.
 const signup = async (email: string, code: string, role: 'admin' | 'user' | 'manager' = 'user'): Promise<void> => {
     if (!email || !code) {
         throw new Error("الرجاء إدخال البريد الإلكتروني والرمز المطلوب");
