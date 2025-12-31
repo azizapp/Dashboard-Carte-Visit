@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { authService } from '../services/authService.ts';
 import { UserSession, AppSettings } from '../types.ts';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
-import CogIcon from './icons/CogIcon.tsx';
-import XMarkIcon from './icons/XMarkIcon.tsx';
-import { updateSupabaseConfig } from '../services/supabase.ts';
 
 const EnvelopeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6" {...props}>
@@ -28,10 +25,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
     const [code, setCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isConfigOpen, setIsConfigOpen] = useState(false);
-
-    const [tempUrl, setTempUrl] = useState(localStorage.getItem('supabase_url') || 'https://isvhmsatlnwykmwukurh.supabase.co');
-    const [tempKey, setTempKey] = useState(localStorage.getItem('supabase_key') || '');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,17 +41,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
         }
     };
 
-    const handleSaveConfig = () => {
-        updateSupabaseConfig(tempUrl, tempKey);
-        setIsConfigOpen(false);
-        alert("Paramètres mis à jour.");
-    };
-
     // مكوّن الشعار الديناميكي
     const AppLogo = ({ size = "w-10 h-10" }: { size?: string }) => (
         <div className={`${size} bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm`}>
-            {appSettings?.icon_192_url ? (
-                <img src={appSettings.icon_192_url} alt="Logo" className="w-full h-full object-cover" />
+            {appSettings?.favicon_url ? (
+                <img src={appSettings.favicon_url} alt="Logo" className="w-full h-full object-cover" />
             ) : (
                 <div className="w-3/5 h-3/5 bg-accent rounded-full"></div>
             )}
@@ -67,35 +54,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
 
     return (
         <div className="flex min-h-screen flex-col md:flex-row font-sans overflow-hidden relative bg-slate-50 dark:bg-slate-900">
-            <button 
-                onClick={() => setIsConfigOpen(true)}
-                className="absolute top-6 right-6 z-20 p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-all shadow-lg md:text-accent md:bg-white md:hover:bg-slate-50"
-            >
-                <CogIcon className="w-6 h-6" />
-            </button>
-
-            {isConfigOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black text-slate-800 dark:text-white">Connexion Supabase</h3>
-                            <button onClick={() => setIsConfigOpen(false)} className="p-1 hover:bg-slate-100 rounded-full"><XMarkIcon className="w-5 h-5 text-slate-400" /></button>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">URL du Projet</label>
-                                <input type="text" value={tempUrl} onChange={(e) => setTempUrl(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm dark:text-white" />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Clé Publique</label>
-                                <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 outline-none text-sm dark:text-white" />
-                            </div>
-                        </div>
-                        <button onClick={handleSaveConfig} className="w-full py-3 bg-accent text-white rounded-xl font-bold text-sm">Appliquer</button>
-                    </div>
-                </div>
-            )}
-
             <div className="hidden md:flex md:w-1/2 relative bg-accent items-center justify-center p-12 text-white overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/40"></div>
                 <div className="relative z-10 w-full max-w-lg">
