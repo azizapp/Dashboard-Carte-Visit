@@ -7,7 +7,6 @@ import CheckIcon from './icons/CheckIcon.tsx';
 import GlobeAltIcon from './icons/GlobeAltIcon.tsx'; 
 import KeyIcon from './icons/KeyIcon.tsx'; 
 import PaintBrushIcon from './icons/PaintBrushIcon.tsx';
-// FIX: Added missing import for ArrowPathIcon used in the DB Maintenance section.
 import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 
 // Icons
@@ -19,26 +18,26 @@ const InfoIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const PhotoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 12.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0z" clipRule="evenodd" />
   </svg>
 );
 
 const EyeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
   </svg>
 );
 
 const BriefcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M7.5 6v.75H4.125a3 3 0 00-3 3v7.5a3 3 0 003 3h15.75a3 3 0 003-3v-7.5a3 3 0 00-3-3H16.5V6a3.75 3.75 0 10-7.5 0zM15 6.75V6a2.25 2.25 0 00-4.5 0v.75h4.5zM3.75 10.5h16.5a1.5 1.5 0 011.5 1.5v2.625M3.75 10.5A1.5 1.5 0 002.25 12v2.625m1.5-4.125h16.5V14.25m-16.5 0h16.5v3.75a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5v-3.75h16.5z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M7.5 6v.75H4.125a3 3 0 0 0-3 3v7.5a3 3 0 0 0 3 3h15.75a3 3 0 0 0 3-3v-7.5a3 3 0 0 0-3-3H16.5V6a3.75 3.75 0 1 1-7.5 0zM15 6.75V6a2.25 2.25 0 0 0-4.5 0v.75h4.5zM3.75 10.5h16.5a1.5 1.5 0 0 1 1.5 1.5v2.625M3.75 10.5A1.5 1.5 0 0 0 2.25 12v2.625m1.5-4.125h16.5V14.25m-16.5 0h16.5v3.75a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5v-3.75h16.5z" clipRule="evenodd" />
   </svg>
 );
 
 const LinkIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
   </svg>
 );
 

@@ -74,11 +74,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
   }
 
   const Logo = () => (
-    <div className="w-10 h-10 flex items-center justify-center text-accent font-bold text-xl overflow-hidden">
+    <div className="w-10 h-10 flex items-center justify-center bg-transparent overflow-hidden">
       {appIcon ? (
         <img src={appIcon} alt="Logo" className="w-full h-full object-contain" />
       ) : (
-        <div className="w-full h-full bg-accent rounded-xl flex items-center justify-center text-white">
+        <div className="w-full h-full bg-accent rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-accent/20">
            {appName.charAt(0)}
         </div>
       )}
