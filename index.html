@@ -2,10 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Apollo Eyewear - Dashboard</title>
+  
+  <!-- PWA Configuration -->
   <link rel="manifest" id="dynamic-manifest" href="./manifest.json">
   <meta name="theme-color" id="meta-theme-color" content="#4f46e5">
+  
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Apollo Eyewear">
+  <link rel="apple-touch-icon" href="https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg">
+  
+  <!-- Android PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- Application Description -->
+  <meta name="description" content="Système de gestion optimisé pour Apollo Eyewear">
+  <meta name="application-name" content="Apollo Eyewear CRM">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@100..900&family=Montserrat:wght@100..900&family=Open+Sans:wght@300..800&family=Poppins:wght@100..900&family=Roboto:wght@100..900&display=swap" rel="stylesheet">
@@ -50,16 +65,18 @@
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0",
     "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "express": "https://esm.sh/express@^5.2.1",
     "path": "https://esm.sh/path@^0.12.7",
-    "url": "https://esm.sh/url@^0.11.4",
-    "express": "https://esm.sh/express@^5.2.1"
+    "url": "https://esm.sh/url@^0.11.4"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-[#F7F8FA] dark:bg-slate-900 text-slate-900 dark:text-slate-50 transition-colors duration-300">
   <div id="root"></div>
   <!-- Use explicit relative path to avoid host-prefixed resolution -->
   <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -2,10 +2,12 @@
   "name": "Apollo Eyewear CRM",
   "short_name": "Apollo",
   "description": "Système de gestion optimisé pour Apollo Eyewear",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f1f5f9",
-  "theme_color": "#4407EB",
+  "theme_color": "#4f46e5",
   "icons": [
     {
       "src": "https://isvhmsatlnwykmwukurh.supabase.co/storage/v1/object/public/visit-images/visits/1767178656033-q9mjf.jpg",
