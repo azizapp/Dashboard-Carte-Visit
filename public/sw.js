@@ -1,8 +1,8 @@
-const CACHE_NAME = 'carte-visit-v1.0.6';
+const CACHE_NAME = 'carte-visit-v1.1.0';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/index.css'
+    './',
+    './index.html',
+    './index.css'
 ];
 
 // Install event - cache essential files
@@ -26,8 +26,7 @@ self.addEventListener('fetch', (event) => {
                     return response;
                 }
                 return fetch(event.request);
-            }
-            )
+            })
     );
 });
 

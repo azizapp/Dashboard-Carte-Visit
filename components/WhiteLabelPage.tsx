@@ -18,7 +18,7 @@ const InfoIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const PhotoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 12.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0z" clipRule="evenodd" />
   </svg>
 );
 
@@ -65,8 +65,8 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
     const [copiedSql, setCopiedSql] = useState(false);
     const fileInputRef = useRef<Record<string, HTMLInputElement | null>>({});
 
-    const [sbUrl, setSbUrl] = useState(localStorage.getItem('supabase_url') || '');
-    const [sbKey, setSbKey] = useState(localStorage.getItem('supabase_key') || '');
+    const [sbUrl, setSbUrl] = useState('');
+    const [sbKey, setSbKey] = useState('');
     const [showKey, setShowKey] = useState(false);
 
     const missingColumnSql = `ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS splash_url TEXT;`;
@@ -94,7 +94,8 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
     const handleSaveAll = async () => {
         setIsSaving(true);
         try {
-            if (sbUrl !== localStorage.getItem('supabase_url') || sbKey !== localStorage.getItem('supabase_key')) {
+            // Only update if not empty and different from current storage
+            if (sbUrl && sbKey && (sbUrl !== localStorage.getItem('supabase_url') || sbKey !== localStorage.getItem('supabase_key'))) {
               updateSupabaseConfig(sbUrl, sbKey);
             }
             
@@ -102,8 +103,14 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
             settingsService.applySettings(customSettings);
             setAccentColor(customSettings.accent_color);
             
-            alert("Configuration enregistrée avec succès. L'application va s'actualiser.");
-            window.location.reload();
+            // FIX: Inform user and return to home page immediately
+            alert("Configuration enregistrée avec succès. Retour à la page d'accueil...");
+            onClose(); // Switches currentView back to 'dashboard'
+            
+            // Give time for state to update before reload
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         } catch (e: any) {
             console.error(e);
             if (e.message?.includes('splash_url')) {

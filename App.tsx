@@ -77,9 +77,8 @@ const App: React.FC = () => {
         
         if (sessionRole === 'user') {
           setCurrentView('user_home');
-        } else if (sessionRole === 'manager') {
-          setCurrentView('white_label');
         } else {
+          // FIX: Both managers and admins default to dashboard on initialization
           setCurrentView('dashboard');
         }
       }
@@ -131,9 +130,8 @@ const App: React.FC = () => {
     
     if (session.role === 'user') {
       setCurrentView('user_home');
-    } else if (session.role === 'manager') {
-      setCurrentView('white_label');
     } else {
+      // FIX: Managers and admins land on dashboard after login
       setCurrentView('dashboard');
     }
   };
@@ -228,7 +226,7 @@ const App: React.FC = () => {
         {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings' || currentView === 'white_label') && (
           <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center h-[73px] flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-50 animate-pulse' : 'bg-red-500'}`}></div>
               <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
             </div>
             <div className="flex items-center gap-3">
