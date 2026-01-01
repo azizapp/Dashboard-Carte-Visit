@@ -13,6 +13,7 @@ import EnvelopeIcon from './icons/EnvelopeIcon.tsx';
 import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
 import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
+import EditIcon from './icons/EditIcon.tsx';
 import NewAppointmentModal from './NewAppointmentModal.tsx';
 import QuickLogModal from './QuickLogModal.tsx';
 import storeService from '../services/storeService.ts';
@@ -220,6 +221,13 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => onEdit(store)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all shadow-sm"
+                        >
+                            <EditIcon className="w-4 h-4 text-amber-500" />
+                            Modifier
+                        </button>
                         <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:shadow-md transition-all">
                             <SparklesIcon className="w-5 h-5 text-yellow-300" />
                             Stratégie IA
@@ -239,7 +247,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <UserCircleIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                 </div>
-                                hide-scrollbar
                                 <div>
                                     <h2 className="font-bold text-slate-900 dark:text-white">Informations de Contact</h2>
                                     <p className="text-xs text-slate-500">Détails du prospect et de l'entreprise</p>
@@ -351,7 +358,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     </div>
                                 </div>
                             </div>
-                            <div className="relative border-l-2 border-slate-100 dark:border-slate-700 ml-3 space-y-8">
+                            <div className="relative border-l-2 border-slate-100 dark:border-slate-700 ml-3 space-y-8 overflow-y-auto max-h-[600px] hide-scrollbar">
                                 {history.map((h, i) => (
                                     <div key={i} className="relative pl-8">
                                         <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${h['Action Client'] === 'Acheter' ? 'bg-emerald-500' : h['Action Client'] === 'Revisiter' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
@@ -401,6 +408,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                 <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                     <TagIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                                 </div>
+                                hide-scrollbar
                                 <div>
                                     <h2 className="font-bold text-slate-900 dark:text-white">Classification du Lead</h2>
                                     <p className="text-xs text-slate-500">Catégorisation</p>

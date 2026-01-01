@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Store, Mode, StoreFormData, Customer, AppSettings, UserSession } from './types.ts';
 import storeService from './services/storeService.ts';
@@ -384,6 +383,7 @@ const App: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)}
         store={editingStore}
         onSave={handleSaveCustomer}
+        isAdmin={isAdminOrManager}
       />
     </div>
   );

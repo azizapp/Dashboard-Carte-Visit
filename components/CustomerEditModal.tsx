@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Store, Customer } from '../types.ts';
 import XMarkIcon from './icons/XMarkIcon.tsx';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
+import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon.tsx';
 
 interface CustomerEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     store: Store | null;
     onSave: (customerId: string, data: Partial<Customer>) => Promise<void>;
+    isAdmin: boolean;
 }
 
-const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, store, onSave }) => {
+const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, store, onSave, isAdmin }) => {
     const [formData, setFormData] = useState<Partial<Customer>>({});
     const [isSaving, setIsSaving] = useState(false);
 
@@ -65,6 +67,33 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-8 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                    
+                    {/* قسم حالة الحساب - يظهر فقط للآدمن */}
+                    {isAdmin && (
+                        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 text-red-700 dark:text-red-400">
+                                <ExclamationTriangleIcon className="w-6 h-6 flex-shrink-0" />
+                                <div>
+                                    <p className="text-sm font-bold">État du compte client</p>
+                                    <p className="text-[11px] opacity-80">Si activé, le client sera marqué comme "Bloqué" dans tous les rapports.</p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    name="is_blocked" 
+                                    className="sr-only peer"
+                                    checked={formData.is_blocked}
+                                    onChange={handleChange}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                <span className="ml-3 text-sm font-bold text-red-600 dark:text-red-400">
+                                    {formData.is_blocked ? 'Bloqué' : 'Actif'}
+                                </span>
+                            </label>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase">Magazin *</label>
