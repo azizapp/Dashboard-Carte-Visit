@@ -73,10 +73,8 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
     const [analysisResult, setAnalysisResult] = useState('');
     const [showAnalysis, setShowAnalysis] = useState(false);
     
-    // Default Sort: Newest Date First
     const [sortConfig, setSortConfig] = useState<{ key: keyof Store | 'Date'; direction: 'asc' | 'desc' } | null>({ key: 'Date', direction: 'desc' });
 
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -84,7 +82,6 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
     const [transactionToEdit, setTransactionToEdit] = useState<Store | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Reset filters helper
     const resetFilters = () => {
         setSearchQuery('');
         setSelectedUser('all');
@@ -93,7 +90,6 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
         setCurrentPage(1);
     };
 
-    // Reset pagination when filters or sort change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, selectedUser, selectedAction, sortConfig]);
@@ -123,7 +119,6 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             let bVal: any;
 
             if (sortConfig.key === 'Date') {
-                // استخدام created_at أو Date Heure للحصول على ترتيب زمني دقيق
                 aVal = new Date(a['Date Heure'] || a.created_at || a.Date).getTime();
                 bVal = new Date(b['Date Heure'] || b.created_at || b.Date).getTime();
             } else {
@@ -131,14 +126,12 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                 bVal = b[sortConfig.key];
             }
 
-            // Numeric comparison
             if (sortConfig.key === 'Prix' || sortConfig.key === 'Quantité') {
                 const aNum = Number(aVal) || 0;
                 const bNum = Number(bVal) || 0;
                 return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum;
             }
 
-            // String comparison
             const aStr = String(aVal || '').toLowerCase();
             const bStr = String(bVal || '').toLowerCase();
             if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -147,7 +140,6 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
         });
     }, [stores, searchQuery, selectedUser, selectedAction, sortConfig]);
 
-    // Pagination Calculations
     const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentTransactions = useMemo(() => {
@@ -225,7 +217,7 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
         
         return (
             <th 
-                className={`px-6 py-4 cursor-pointer select-none group transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/50 ${isActive ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
+                className={`px-6 py-3 cursor-pointer select-none group transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/50 ${isActive ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
                 onClick={() => handleSort(sortKey)}
             >
                 <div className={`flex items-center gap-2 ${alignmentClass}`}>
@@ -263,19 +255,19 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Chiffre d'Affaires</p>
-                    <p className="text-2xl font-black text-emerald-600">{stats.totalSales.toLocaleString()} MAD</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSales.toLocaleString()} DH</h3>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Pièces</p>
-                    <p className="text-2xl font-black text-blue-600">{stats.totalQty.toLocaleString()}</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalQty.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visites / Actions</p>
-                    <p className="text-2xl font-black text-purple-600">{stats.totalVisits.toLocaleString()}</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalVisits.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Taux de Conversion</p>
-                    <p className="text-2xl font-black text-amber-600">{stats.conversionRate.toFixed(1)}% <span className="text-[10px] text-slate-400 font-bold tracking-tighter">({stats.salesTransactions} ventes)</span></p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.conversionRate.toFixed(1)}%</h3>
                 </div>
             </div>
 
@@ -325,7 +317,7 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100 dark:border-slate-700">
+                        <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700">
                             <tr>
                                 <SortableHeader label="Client" sortKey="Magazin" />
                                 <SortableHeader label="Gamme" sortKey="Gamme" />
@@ -334,14 +326,14 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                                 <SortableHeader label="Prix (MAD)" sortKey="Prix" align="right" />
                                 <SortableHeader label="Qté" sortKey="Quantité" align="center" />
                                 <SortableHeader label="Date" sortKey="Date" align="center" />
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
                             {currentTransactions.map((t) => (
                                 <tr key={t.ID} className="hover:bg-slate-50/50 dark:hover:bg-slate-800 transition-colors group">
                                     <td className="px-6 py-4">
-                                        <p className="font-bold text-slate-800 dark:text-white truncate max-w-[150px]">{t.Magazin}</p>
+                                        <p className="font-semibold text-slate-900 dark:text-white truncate max-w-[150px]">{t.Magazin}</p>
                                         <p className="text-[11px] text-slate-400 font-medium">{t.Ville}</p>
                                     </td>
                                     <td className="px-6 py-4">
@@ -360,13 +352,13 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                                             {t['Action Client']}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right font-black text-slate-800 dark:text-white">
+                                    <td className="px-6 py-4 text-right text-xs font-normal text-slate-800 dark:text-slate-200">
                                         {Number(t.Prix).toLocaleString()}
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="font-bold">{t.Quantité}</span>
+                                    <td className="px-6 py-4 text-center text-xs font-normal text-slate-800 dark:text-slate-200">
+                                        {t.Quantité}
                                     </td>
-                                    <td className="px-6 py-4 text-center text-[11px] text-slate-400 font-bold whitespace-nowrap">
+                                    <td className="px-6 py-4 text-center text-xs text-slate-400 font-normal whitespace-nowrap">
                                         {t.Date}
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -394,7 +386,6 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                 {sortedTransactions.length === 0 ? (
                     <div className="py-20 text-center text-slate-400 italic">Aucune transaction correspondante.</div>
                 ) : (
-                    /* Pagination Footer */
                     <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg">
                         <div className="text-sm text-slate-500 dark:text-slate-400">
                             Affichage de <span className="font-semibold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-semibold text-slate-900 dark:text-white">{Math.min(startIndex + itemsPerPage, sortedTransactions.length)}</span> sur <span className="font-semibold text-slate-900 dark:text-white">{sortedTransactions.length}</span> résultats
