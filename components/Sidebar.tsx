@@ -8,6 +8,7 @@ import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
 import ChevronLeftIcon from './icons/ChevronLeftIcon.tsx';
 import SettingsIcon from './icons/SettingsIcon.tsx';
 import PaintBrushIcon from './icons/PaintBrushIcon.tsx';
+import DocumentTextIcon from './icons/DocumentTextIcon.tsx';
 
 interface SidebarProps {
   onLogout: () => void;
@@ -58,6 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, currentView, onViewChange, 
     { id: 'dashboard', label: 'Tableau de Bord', icon: HomeIcon },
     { id: 'appointments', label: 'Rendez-Vous', icon: CalendarDaysIcon },
     { id: 'leads', label: 'Gestion des Leads', icon: UsersIcon },
+    { id: 'transactions', label: 'Transactions', icon: DocumentTextIcon },
     { id: 'analytics', label: 'Analyses', icon: ChartBarIcon },
     { id: 'commissions', label: 'Suivi Commercial', icon: CurrencyDollarIcon },
     { id: 'settings', label: 'Réglages', icon: SettingsIcon }

@@ -15,6 +15,7 @@ import SpinnerIcon from './components/icons/SpinnerIcon.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import CustomerEditModal from './components/CustomerEditModal.tsx';
 import WhiteLabelPage from './components/WhiteLabelPage.tsx';
+import AdminTransactionsPage from './components/AdminTransactionsPage.tsx';
 
 import UserDashboard from './components/distributor/UserDashboard.tsx';
 import StoreFormPage from './components/distributor/StoreFormPage.tsx';
@@ -281,6 +282,15 @@ const App: React.FC = () => {
                 onViewDetails={(s) => { setSelectedStore(s); setCurrentView('details'); }}
                 onEdit={handleEditStore}
                 isAdmin={isAdminOrManager}
+              />
+            </div>
+          )}
+
+          {currentView === 'transactions' && isAdminOrManager && (
+            <div className="p-4 md:p-6">
+              <AdminTransactionsPage 
+                stores={stores} 
+                onRefresh={syncData} 
               />
             </div>
           )}
