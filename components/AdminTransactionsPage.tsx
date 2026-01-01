@@ -12,6 +12,12 @@ import ConfirmationModal from './ConfirmationModal.tsx';
 import EditVisitModal from './EditVisitModal.tsx';
 import { supabase } from '../services/supabase.ts';
 
+// Icons for stats
+import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
+import CubeIcon from './icons/CubeIcon.tsx';
+import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
+import ArrowTrendingUpIcon from './icons/ArrowTrendingUpIcon.tsx';
+
 const ChevronUpIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
@@ -253,21 +259,41 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Chiffre d'Affaires</p>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSales.toLocaleString()} DH</h3>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                        <CurrencyDollarIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Chiffre d'Affaires</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSales.toLocaleString()} DH</h3>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Pièces</p>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalQty.toLocaleString()}</h3>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex-shrink-0">
+                        <CubeIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Pièces</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalQty.toLocaleString()}</h3>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visites / Actions</p>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalVisits.toLocaleString()}</h3>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                        <ClipboardDocumentListIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Visites / Actions</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalVisits.toLocaleString()}</h3>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Taux de Conversion</p>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.conversionRate.toFixed(1)}%</h3>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 flex-shrink-0">
+                        <ArrowTrendingUpIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Taux de Conversion</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.conversionRate.toFixed(1)}%</h3>
+                    </div>
                 </div>
             </div>
 
