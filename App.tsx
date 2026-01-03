@@ -22,6 +22,12 @@ import StoreFormPage from './components/distributor/StoreFormPage.tsx';
 import AppointmentsPage from './components/distributor/AppointmentsPage.tsx';
 import FollowUpPage from './components/distributor/FollowUpPage.tsx';
 
+const MenuIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+  </svg>
+);
+
 const App: React.FC = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +39,7 @@ const App: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [followUpStore, setFollowUpStore] = useState<Store | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [font, setFont] = useState('Inter');
@@ -78,12 +85,10 @@ const App: React.FC = () => {
         if (sessionRole === 'user') {
           setCurrentView('user_home');
         } else {
-          // FIX: Both managers and admins default to dashboard on initialization
           setCurrentView('dashboard');
         }
       }
 
-      // إبقاء الـ Splash Screen ظاهرة لثانية إضافية لإعطاء شعور احترافي
       setTimeout(() => setIsLoading(false), 1200);
     };
 
@@ -131,7 +136,6 @@ const App: React.FC = () => {
     if (session.role === 'user') {
       setCurrentView('user_home');
     } else {
-      // FIX: Managers and admins land on dashboard after login
       setCurrentView('dashboard');
     }
   };
@@ -215,19 +219,34 @@ const App: React.FC = () => {
     <div className="flex h-screen font-sans bg-[#F7F8FA] dark:bg-slate-900 text-slate-900 dark:text-slate-50">
       <Sidebar
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={(view) => {
+          setCurrentView(view);
+          setIsMobileMenuOpen(false);
+        }}
         onLogout={handleLogout}
         isAdmin={isAdminOrManager}
         userRole={userRole}
         appName={appSettings?.short_name || 'Apollo'}
         appIcon={appSettings?.icon_192_url}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         {!(currentView === 'add_lead' || currentView === 'follow_up' || currentView === 'appointments' || currentView === 'details' || currentView === 'settings' || currentView === 'white_label') && (
           <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center h-[73px] flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-50 animate-pulse' : 'bg-red-500'}`}></div>
-              <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
+            <div className="flex items-center gap-3">
+              {isAdminOrManager && (
+                <button 
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <MenuIcon />
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-50 animate-pulse' : 'bg-red-500'}`}></div>
+                <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter text-sm sm:text-base">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
@@ -324,6 +343,7 @@ const App: React.FC = () => {
               onOptimisticUpdate={handleOptimisticUpdate}
               onEditStore={handleEditStore}
               onRefresh={syncData}
+              onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
             />
           )}
 
