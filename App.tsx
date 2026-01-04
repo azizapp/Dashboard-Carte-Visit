@@ -245,7 +245,7 @@ const App: React.FC = () => {
               )}
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-50 animate-pulse' : 'bg-red-500'}`}></div>
-                <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-tighter text-sm sm:text-base">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
+                <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-sm sm:text-base">{appSettings?.app_name || 'Apollo Eyewear'}</h2>
               </div>
             </div>
             <div className="flex items-center gap-3">

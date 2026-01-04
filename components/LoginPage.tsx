@@ -62,7 +62,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
                 <div className="relative z-10 w-full max-w-lg">
                     <div className="flex items-center gap-5 mb-16">
                         <AppLogo size="w-16 h-16" />
-                        <div className="font-black text-3xl uppercase tracking-tighter leading-tight drop-shadow-sm">
+                        <div className="font-black text-3xl uppercase tracking-wide leading-tight drop-shadow-sm">
                             {appSettings?.app_name || 'APOLLO EYEWEAR'}
                         </div>
                     </div>
@@ -76,7 +76,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, appSettings }) =>
                 <div className="w-full max-w-sm">
                     <div className="md:hidden flex flex-col items-center mb-12">
                         <AppLogo size="w-24 h-24" />
-                        <h1 className="text-2xl font-black text-slate-800 dark:text-white text-center mt-4">
+                        <h1 className="text-2xl font-black text-slate-800 dark:text-white text-center mt-4 tracking-wide">
                             {appSettings?.app_name || 'Apollo Eyewear'}
                         </h1>
                     </div>
