@@ -16,6 +16,7 @@ import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
 import ArrowPathIcon from '../icons/ArrowPathIcon.tsx';
 import ChevronDownIcon from '../icons/ChevronDownIcon.tsx';
 import TagIcon from '../icons/TagIcon.tsx';
+import XMarkIcon from '../icons/XMarkIcon.tsx';
 import { supabase } from '../../services/supabase.ts';
 import locationService, { LocationEntry } from '../../services/locationService.ts';
 
@@ -104,12 +105,6 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
   );
 };
 
-const XMarkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-  </svg>
-);
-
 const ArrowLeftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -156,14 +151,12 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
       fetchData();
   }, []);
 
-  // حساب المدن الفريدة من القائمة الديناميكية
   const uniqueCities = useMemo(() => {
       const cities = new Set<string>();
       dynamicLocations.forEach(loc => cities.add(loc.ville));
       return Array.from(cities).sort((a, b) => a.localeCompare(b, 'fr'));
   }, [dynamicLocations]);
 
-  // حساب المناطق التابعة للمدينة المختارة
   const filteredRegions = useMemo(() => {
       if (!formData.Ville) return [];
       return dynamicLocations
@@ -228,6 +221,23 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
           alert("Le nom de l'opticien et la ville sont obligatoires.");
           return;
       }
+
+      // --- التحقق الصارم من وجود المدينة في قاعدة البيانات (moroccan_locations) ---
+      const cityExists = uniqueCities.some(c => c.toLowerCase() === formData.Ville.trim().toLowerCase());
+      if (!cityExists) {
+          alert("ERREUR : La ville saisie n'existe pas dans notre base de données autorisée. Veuillez sélectionner une ville dans la liste suggérée.");
+          return;
+      }
+
+      // --- التحقق الصارم من وجود المنطقة/الحي (في حال إدخالها) ---
+      if (formData.Région) {
+          const regionExists = filteredRegions.some(r => r.toLowerCase() === formData.Région?.trim().toLowerCase());
+          if (!regionExists) {
+              alert("ERREUR : La région saisie n'est pas reconnue pour cette ville dans notre base de données. Veuillez choisir une option dans la liste.");
+              return;
+          }
+      }
+
       setIsSubmitting(true);
       try {
           await onSubmit(formData);
@@ -497,7 +507,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
             </section>
 
             <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Comمركaux" />
+                <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Commerciaux" />
                 <div className="space-y-4">
                     <div>
                         <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Action à entreprendre</label>
