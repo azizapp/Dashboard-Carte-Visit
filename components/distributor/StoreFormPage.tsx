@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Store, StoreFormData, Customer } from '../../types.ts';
 import LocationMarkerIcon from '../icons/LocationMarkerIcon.tsx';
@@ -16,6 +17,7 @@ import ArrowPathIcon from '../icons/ArrowPathIcon.tsx';
 import ChevronDownIcon from '../icons/ChevronDownIcon.tsx';
 import TagIcon from '../icons/TagIcon.tsx';
 import { supabase } from '../../services/supabase.ts';
+import locationService, { LocationEntry } from '../../services/locationService.ts';
 
 // --- مساعدات الصور ---
 const compressImage = (fileOrDataUrl: File | string, quality = 0.7, maxWidth = 1024): Promise<string> => {
@@ -131,29 +133,44 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
       Magazin: '', Ville: '', GSM1: '', GSM2: '', 'Le Gérant': '', Gamme: 'Haute', 'Action Client': '', Note: '', Image: '', Région: '', Adresse: '', Phone: '', Email: '', Prix: 0, Quantité: 0, 'Rendez-Vous': ''
   });
   const [existingCustomers, setExistingCustomers] = useState<Customer[]>([]);
+  const [dynamicLocations, setDynamicLocations] = useState<LocationEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-      const fetchCust = async () => {
-          const { data } = await supabase.from('customers').select('*').order('name');
-          if (data) setExistingCustomers(data);
+      const fetchData = async () => {
+          const { data: cust } = await supabase.from('customers').select('*').order('name');
+          if (cust) setExistingCustomers(cust);
+
+          const locs = await locationService.getAllLocations();
+          setDynamicLocations(locs);
       };
-      fetchCust();
+      fetchData();
   }, []);
 
-  // حساب المدن الفريدة
+  // حساب المدن الفريدة من القائمة الديناميكية
   const uniqueCities = useMemo(() => {
       const cities = new Set<string>();
-      existingCustomers.forEach(c => { if (c.city) cities.add(c.city.trim()); });
-      stores.forEach(s => { if (s.Ville) cities.add(s.Ville.trim()); });
+      dynamicLocations.forEach(loc => cities.add(loc.ville));
       return Array.from(cities).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [existingCustomers, stores]);
+  }, [dynamicLocations]);
+
+  // حساب المناطق التابعة للمدينة المختارة
+  const filteredRegions = useMemo(() => {
+      if (!formData.Ville) return [];
+      return dynamicLocations
+          .filter(loc => loc.ville.toLowerCase() === formData.Ville.toLowerCase())
+          .map(loc => loc.region)
+          .sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [formData.Ville, dynamicLocations]);
 
   const handleSelectCustomer = (c: Customer) => {
       setFormData({
@@ -319,7 +336,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
 
             <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <SectionHeader icon={CameraIcon} title="Photos (Optionnel)" />
-                <p className="text-[12px] text-slate-400 mb-4">Capturez des photos de cartes de visite ou de la devanture du magasin</p>
                 <div className="space-y-4">
                     <div className="w-full aspect-[2/1] border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 bg-slate-50/30 overflow-hidden">
                         {formData.Image ? (
@@ -368,7 +384,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                                         handleChange(e);
                                         setShowCitySuggestions(true);
                                     }} 
-                                    placeholder="Entrez ou sélectionnez la ville" 
+                                    placeholder="Sélectionnez une ville" 
                                     className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" 
                                 />
                             </div>
@@ -381,7 +397,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                                                 key={city} 
                                                 type="button"
                                                 onClick={() => {
-                                                    setFormData(p => ({...p, Ville: city}));
+                                                    setFormData(p => ({...p, Ville: city, Région: ''}));
                                                     setShowCitySuggestions(false);
                                                 }} 
                                                 className="w-full p-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b last:border-0 border-slate-50 dark:border-slate-700"
@@ -390,25 +406,49 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                                             </button>
                                         ))
                                     }
-                                    {formData.Ville && !uniqueCities.some(c => c.toLowerCase() === formData.Ville.toLowerCase()) && (
-                                        <button 
-                                            type="button"
-                                            onClick={() => setShowCitySuggestions(false)}
-                                            className="w-full p-3 text-left bg-blue-50 dark:bg-blue-900/20"
-                                        >
-                                            <span className="text-xs text-blue-600 font-bold italic">Ajouter "{formData.Ville}" comme nouvelle ville</span>
-                                        </button>
-                                    )}
                                 </div>
                             )}
                         </div>
-                        <div>
-                            <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Région</label>
+                        
+                        <div className="relative">
+                            <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Région / Quartier</label>
                             <div className="relative">
                                 <DocumentIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                                <input type="text" name="Région" value={formData.Région} onChange={handleChange} placeholder="Entrez la région" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" />
+                                <input 
+                                    type="text" 
+                                    name="Région" 
+                                    value={formData.Région} 
+                                    onFocus={() => setShowRegionSuggestions(true)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setShowRegionSuggestions(true);
+                                    }}
+                                    placeholder="Sélectionnez une région" 
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" 
+                                />
                             </div>
+                            {showRegionSuggestions && filteredRegions.length > 0 && (
+                                <div className="absolute z-30 w-full mt-2 bg-white dark:bg-slate-800 border rounded-2xl shadow-2xl max-h-48 overflow-y-auto border-slate-100 dark:border-slate-700">
+                                    {filteredRegions
+                                        .filter(reg => reg.toLowerCase().includes(formData.Région?.toLowerCase() || ''))
+                                        .map(reg => (
+                                            <button 
+                                                key={reg} 
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData(p => ({...p, Région: reg}));
+                                                    setShowRegionSuggestions(false);
+                                                }} 
+                                                className="w-full p-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b last:border-0 border-slate-50 dark:border-slate-700"
+                                            >
+                                                <span className="text-sm text-slate-700 dark:text-slate-200 font-medium">{reg}</span>
+                                            </button>
+                                        ))
+                                    }
+                                </div>
+                            )}
                         </div>
+                        
                         <div>
                             <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Adresse</label>
                             <div className="relative">
@@ -422,27 +462,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                         <div className="relative">
                             <PhoneCallIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                             <input type="text" name="GSM1" value={formData.GSM1} onChange={handleChange} placeholder="06 XX XX XX XX" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">GSM 2 (Optionnel)</label>
-                        <div className="relative">
-                            <PhoneCallIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                            <input type="text" name="GSM2" value={formData.GSM2} onChange={handleChange} placeholder="06 XX XX XX XX" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Téléphone (Fixe)</label>
-                        <div className="relative">
-                            <PhoneCallIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                            <input type="text" name="Phone" value={formData.Phone} onChange={handleChange} placeholder="05 XX XX XX XX" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Adresse e-mail</label>
-                        <div className="relative">
-                            <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                            <input type="email" name="Email" value={formData.Email} onChange={handleChange} placeholder="exemple@email.com" className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white" />
                         </div>
                     </div>
                 </div>
@@ -478,7 +497,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
             </section>
 
             <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Commerciaux" />
+                <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Comمركaux" />
                 <div className="space-y-4">
                     <div>
                         <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Action à entreprendre</label>
@@ -514,56 +533,6 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                             </div>
                         </div>
                     )}
-
-                    {formData['Action Client'] === 'Acheter' && (
-                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div>
-                                <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Prix (DH)</label>
-                                <div className="relative">
-                                    <CurrencyDollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                                    <input 
-                                        type="number" 
-                                        name="Prix"
-                                        placeholder="0.00"
-                                        value={formData.Prix || ''}
-                                        onChange={handleChange}
-                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Quantité</label>
-                                <div className="relative">
-                                    <CubeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                                    <input 
-                                        type="number" 
-                                        name="Quantité"
-                                        placeholder="0"
-                                        value={formData.Quantité || ''}
-                                        onChange={handleChange}
-                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <SectionHeader icon={CalendarDaysIcon} title="Suivi" />
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Notes</label>
-                        <textarea 
-                            name="Note"
-                            value={formData.Note}
-                            onChange={handleChange}
-                            placeholder="Ajoutez des notes sur ce prospect..."
-                            className="w-full block max-w-full p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white h-32 resize-none box-border"
-                        />
-                    </div>
-                    <p className="text-[10px] text-slate-400 italic">Conseils: Notez les détails importants, les préférences du client, et les prochaines étapes.</p>
                 </div>
             </section>
 
@@ -575,6 +544,18 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 {isSubmitting ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : 'Enregistrer le Lead'}
             </button>
         </main>
+
+        {/* Click outside detection to close suggestions */}
+        {(showCitySuggestions || showRegionSuggestions || showSuggestions) && (
+            <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => {
+                    setShowCitySuggestions(false);
+                    setShowRegionSuggestions(false);
+                    setShowSuggestions(false);
+                }}
+            />
+        )}
     </div>
   );
 };

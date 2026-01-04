@@ -8,9 +8,10 @@ import { UserProfile } from '../types.ts';
 import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 import UsersIcon from './icons/UsersIcon.tsx';
 import DeleteIcon from './icons/DeleteIcon.tsx';
-import EditIcon from './icons/EditIcon.tsx';
+import MapIcon from './icons/MapIcon.tsx';
 import { authService } from '../services/authService.ts';
 import SignupModal from './SignupModal.tsx';
+import LocationModal from './LocationModal.tsx';
 
 const ArrowLeftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -29,6 +30,7 @@ const AdminSettingsPage: React.FC<any> = ({
 }) => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
     const [fetchingUsers, setFetchingUsers] = useState(false);
 
@@ -115,6 +117,30 @@ const AdminSettingsPage: React.FC<any> = ({
                             </table>
                         </div>
                     </section>
+
+                    {/* قسم إدارة المواقع الجديد */}
+                    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600">
+                                    <MapIcon className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold">Emplacements & Zones</h2>
+                                    <p className="text-xs text-slate-500">Gérez les villes et les régions pour les formulaires</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsLocationModalOpen(true)}
+                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95"
+                            >
+                                Gérer les emplacements
+                            </button>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-dashed border-slate-200 dark:border-slate-700">
+                            <p className="text-xs text-slate-500 text-center">Ajoutez de nouvelles villes ou quartiers pour qu'ils apparaissent automatiquement dans les suggestions de saisie.</p>
+                        </div>
+                    </section>
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">
@@ -155,6 +181,7 @@ const AdminSettingsPage: React.FC<any> = ({
             </main>
             
             <SignupModal isOpen={isAddUserModalOpen} onClose={() => setIsAddUserModalOpen(false)} />
+            <LocationModal isOpen={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />
             <ConfirmationModal isOpen={!!userToDelete} onClose={() => setUserToDelete(null)} onConfirm={handleDeleteConfirm} title="Supprimer l'accès" message={`Voulez-vous supprimer ${userToDelete} du système ?`} />
         </div>
     );
