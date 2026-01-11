@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { AppSettings } from '../types.ts';
 import settingsService from '../services/settingsService.ts';
 import storeService from '../services/storeService.ts';
+import locationService from '../services/locationService.ts';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
 import CheckIcon from './icons/CheckIcon.tsx';
 import PaintBrushIcon from './icons/PaintBrushIcon.tsx';
@@ -26,9 +27,9 @@ const DatabaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const CloudArrowDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const TableCellsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9.75v6.75m0 0-3-3m3 3 3-3m-8.25 6a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h1.5m17.25 0a1.125 1.125 0 0 0 1.125-1.125M20.625 19.5h-1.5M2.25 18.375v-1.125m0-11.25v1.125m0 0h1.5m17.25 0h-1.5m1.5 0v-1.125a1.125 1.125 0 0 0-1.125-1.125H3.375a1.125 1.125 0 0 0-1.125 1.125v1.125m18.375 0v11.25M2.25 8.25h18.375M2.25 12h18.375m-18.375 3.75h18.375M6.75 8.25v11.25m4.5-11.25v11.25m4.5-11.25v11.25" />
     </svg>
 );
 
@@ -42,9 +43,8 @@ interface WhiteLabelPageProps {
 const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, setAccentColor, onSync }) => {
     const [customSettings, setCustomSettings] = useState<AppSettings>(appSettings || settingsService.getDefaultSettings());
     const [isSaving, setIsSaving] = useState(false);
-    const [isImporting, setIsImporting] = useState<string | null>(null);
+    const [isProcessing, setIsProcessing] = useState<string | null>(null);
     const fileInputRef = useRef<Record<string, HTMLInputElement | null>>({});
-    const jsonInputRef = useRef<Record<string, HTMLInputElement | null>>({});
 
     const handleAppSettChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -81,47 +81,61 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
         }
     };
 
-    const handleImportJSON = async (type: 'customers' | 'visits', e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsImporting(type);
-        try {
-            const text = await file.text();
-            const data = JSON.parse(text);
-            
-            let count = 0;
-            if (type === 'customers') {
-                count = await storeService.bulkImportCustomers(data);
-            } else {
-                count = await storeService.bulkImportVisits(data);
-            }
-            
-            alert(`Importation de ${count} éléments réussie !`);
-            
-            if (onSync) await onSync();
-            
-        } catch (err: any) {
-            console.error(err);
-            alert(`Erreur d'importation: ${err.message || 'Format JSON invalide أو erreur serveur'}`);
-        } finally {
-            setIsImporting(null);
-            if (e.target) e.target.value = '';
-        }
+    // --- CSV Conversion Helper ---
+    const convertToCSV = (objArray: any[]) => {
+        if (!objArray || objArray.length === 0) return "";
+        const headers = Object.keys(objArray[0]);
+        const rows = objArray.map(obj => 
+            headers.map(header => {
+                let val = obj[header];
+                if (val === null || val === undefined) val = "";
+                // Escape quotes and wrap in quotes
+                return `"${String(val).replace(/"/g, '""')}"`;
+            }).join(",")
+        );
+        return [headers.join(","), ...rows].join("\n");
     };
 
-    const handleExportJSON = async (type: 'customers' | 'visits') => {
+    const downloadCSV = (data: any[], filename: string) => {
+        const csvContent = "\uFEFF" + convertToCSV(data); // Add BOM for Excel UTF-8 support
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.click();
+    };
+
+    const handleExportCSV = async (type: 'customers' | 'visits' | 'locations' | 'merged') => {
+        setIsProcessing(type);
         try {
-            const data = type === 'customers' ? await storeService.exportCustomers() : await storeService.exportVisits();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `export_${type}_${new Date().toISOString().split('T')[0]}.json`);
-            link.click();
+            let data: any[] = [];
+            switch (type) {
+                case 'customers':
+                    data = await storeService.exportCustomers();
+                    downloadCSV(data, 'export_customers');
+                    break;
+                case 'visits':
+                    data = await storeService.exportVisits();
+                    downloadCSV(data, 'export_visits');
+                    break;
+                case 'locations':
+                    data = await locationService.getAllLocations();
+                    // Clean data for export
+                    data = data.map(l => ({ Ville: l.ville, Region: l.region }));
+                    downloadCSV(data, 'export_locations');
+                    break;
+                case 'merged':
+                    // We can use syncStores to get the mapped merged data
+                    data = await storeService.syncStores(customSettings.app_name as any); // mode doesn't matter much for export
+                    downloadCSV(data, 'export_merged_data');
+                    break;
+            }
         } catch (err: any) {
             console.error(err);
             alert(`Erreur lors de l'exportation: ${err.message || "Erreur inconnue"}`);
+        } finally {
+            setIsProcessing(null);
         }
     };
 
@@ -130,7 +144,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
             <header className="px-8 py-6 flex items-center justify-between border-b border-slate-800 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-30">
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-bold text-white tracking-tight">System Configuration</h1>
-                    <p className="text-xs text-slate-500 font-medium italic">Gérez l'identité et les pipelines de données JSON.</p>
+                    <p className="text-xs text-slate-500 font-medium italic">Gérez l'identité et l'exportation des données CSV.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={onClose} className="px-5 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors border border-slate-800 rounded-lg">Annuler</button>
@@ -142,76 +156,103 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
             </header>
 
             <main className="max-w-6xl mx-auto p-8 space-y-12">
+                
+                {/* Data Export Section */}
                 <section>
                     <div className="flex items-center gap-3 mb-6">
                         <DatabaseIcon className="w-6 h-6 text-emerald-400" />
-                        <h2 className="text-xl font-bold text-white uppercase tracking-wider">Data Pipeline (JSON Only)</h2>
+                        <h2 className="text-xl font-bold text-white uppercase tracking-wider">Exportation des Données (CSV)</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6">
+                        {/* Customers Card */}
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6 hover:border-emerald-500/30 transition-colors">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-white flex items-center gap-2">
                                     <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                                    Base الزبناء (Clients)
+                                    Base des Clients
                                 </h3>
-                                <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Master Data</span>
+                                <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Clients</span>
                             </div>
-                            <p className="text-xs text-slate-500 leading-relaxed">Importez massivement vos prospects. Le système utilise le nom et la ville pour éviter les doublons.</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Exportez la liste complète de vos prospects et clients avec leurs coordonnées et classifications.</p>
                             
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                                <button 
-                                    onClick={() => jsonInputRef.current['cust']?.click()}
-                                    disabled={!!isImporting}
-                                    className="flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-emerald-500/50 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
-                                >
-                                    {isImporting === 'customers' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <CloudArrowDownIcon className="w-4 h-4" />}
-                                    Importer JSON
-                                </button>
-                                <button 
-                                    onClick={() => handleExportJSON('customers')}
-                                    className="flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-sky-500/50 rounded-xl text-xs font-bold text-white transition-all"
-                                >
-                                    <DocumentTextIcon className="w-4 h-4" />
-                                    Exporter JSON
-                                </button>
-                                <input type="file" ref={el => jsonInputRef.current['cust'] = el} className="hidden" accept=".json" onChange={(e) => handleImportJSON('customers', e)} />
-                            </div>
+                            <button 
+                                onClick={() => handleExportCSV('customers')}
+                                disabled={isProcessing !== null}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-emerald-500/50 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
+                            >
+                                {isProcessing === 'customers' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <TableCellsIcon className="w-4 h-4" />}
+                                Exporter CSV (Clients)
+                            </button>
                         </div>
 
-                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6">
+                        {/* Visits Card */}
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6 hover:border-sky-500/30 transition-colors">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-white flex items-center gap-2">
                                     <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                                    Base الزيارات (Visites)
+                                    Base des Visites
                                 </h3>
-                                <span className="text-[10px] font-black bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 uppercase">Event Data</span>
+                                <span className="text-[10px] font-black bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 uppercase">Visits</span>
                             </div>
-                            <p className="text-xs text-slate-500 leading-relaxed">Historique des suivis. Attention : Chaque visite doit contenir un `customer_id` valide pour être liée.</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Historique brut de toutes les interactions commerciales, transactions et notes de terrain.</p>
                             
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                                <button 
-                                    onClick={() => jsonInputRef.current['visit']?.click()}
-                                    disabled={!!isImporting}
-                                    className="flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-sky-500/50 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
-                                >
-                                    {isImporting === 'visits' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <CloudArrowDownIcon className="w-4 h-4" />}
-                                    Importer JSON
-                                </button>
-                                <button 
-                                    onClick={() => handleExportJSON('visits')}
-                                    className="flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-emerald-500/50 rounded-xl text-xs font-bold text-white transition-all"
-                                >
-                                    <DocumentTextIcon className="w-4 h-4" />
-                                    Exporter JSON
-                                </button>
-                                <input type="file" ref={el => jsonInputRef.current['visit'] = el} className="hidden" accept=".json" onChange={(e) => handleImportJSON('visits', e)} />
+                            <button 
+                                onClick={() => handleExportCSV('visits')}
+                                disabled={isProcessing !== null}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-sky-500/50 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
+                            >
+                                {isProcessing === 'visits' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <TableCellsIcon className="w-4 h-4" />}
+                                Exporter CSV (Visites)
+                            </button>
+                        </div>
+
+                        {/* Merged Data Card */}
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6 hover:border-indigo-500/30 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                                    Fichier Merged
+                                </h3>
+                                <span className="text-[10px] font-black bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">Intelligence</span>
                             </div>
+                            <p className="text-xs text-slate-500 leading-relaxed">Exportation complète : combine les données des clients et des visites pour une analyse statistique directe sur Excel.</p>
+                            
+                            <button 
+                                onClick={() => handleExportCSV('merged')}
+                                disabled={isProcessing !== null}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-xl text-xs font-black transition-all disabled:opacity-50"
+                            >
+                                {isProcessing === 'merged' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <DocumentTextIcon className="w-4 h-4" />}
+                                Exporter Rapport Mégamix (CSV)
+                            </button>
+                        </div>
+
+                        {/* Locations Card */}
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-6 hover:border-amber-500/30 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                    Base des Locations
+                                </h3>
+                                <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 uppercase">Cities</span>
+                            </div>
+                            <p className="text-xs text-slate-500 leading-relaxed">Exportez la liste des villes et régions/quartiers configurés pour les formulaires de saisie.</p>
+                            
+                            <button 
+                                onClick={() => handleExportCSV('locations')}
+                                disabled={isProcessing !== null}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 border border-slate-700 hover:border-amber-500/50 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
+                            >
+                                {isProcessing === 'locations' ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <TableCellsIcon className="w-4 h-4" />}
+                                Exporter CSV (Villes)
+                            </button>
                         </div>
                     </div>
+                    
                     <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-blue-900/20 border border-blue-800/30 rounded-xl">
                         <InfoIcon className="w-4 h-4 text-blue-400" />
-                        <p className="text-[11px] text-blue-300 font-medium">Format de fichier supporté : JSON Array of Objects. Voir la documentation pour les schémas requis.</p>
+                        <p className="text-[11px] text-blue-300 font-medium">Les fichiers CSV sont encodés en UTF-8 avec BOM pour assurer une compatibilité parfaite avec Microsoft Excel (Arabe/Français).</p>
                     </div>
                 </section>
 
