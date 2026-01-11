@@ -1,24 +1,25 @@
 
 import React, { useMemo, useState } from 'react';
-import { Store } from '../types.ts';
+import { Store, Customer } from '../types.ts';
 import UsersIcon from './icons/UsersIcon.tsx';
+import UserCircleIcon from './icons/UserCircleIcon.tsx';
 import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
 import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import ChartBarIcon from './icons/ChartBarIcon.tsx';
 import ArrowTrendingUpIcon from './icons/ArrowTrendingUpIcon.tsx';
-import ArrowTrendingDownIcon from './icons/ArrowTrendingDownIcon.tsx';
 import MapIcon from './icons/MapIcon.tsx';
 import PhoneCallIcon from './icons/PhoneCallIcon.tsx';
 import EnvelopeIcon from './icons/EnvelopeIcon.tsx';
 import CameraIcon from './icons/CameraIcon.tsx';
 import LocationMarkerIcon from './icons/LocationMarkerIcon.tsx';
 import ClipboardDocumentCheckIcon from './icons/ClipboardDocumentListIcon.tsx';
-import DocumentChartBarIcon from './icons/DocumentChartBarIcon.tsx';
 import TagIcon from './icons/TagIcon.tsx';
 import WhatsAppIcon from './icons/WhatsAppIcon.tsx';
-import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 import SparklesIcon from './icons/SparklesIcon.tsx';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
+import CubeIcon from './icons/CubeIcon.tsx';
+import ChevronDownIcon from './icons/ChevronDownIcon.tsx';
+import ClockIcon from './icons/ClockIcon.tsx';
 import { GoogleGenAI } from "@google/genai";
 
 interface HomePageProps {
@@ -26,343 +27,235 @@ interface HomePageProps {
     authenticatedUser: string;
 }
 
-const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-    </svg>
-);
-
-const ChevronUpIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-    </svg>
-);
-
 const XMarkIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
   </svg>
 );
 
-const formatWhatsAppLink = (gsm?: string | number): string => {
-    if (!gsm) return '#';
-    const gsmString = String(gsm);
-    let cleanedGsm = gsmString.replace(/[\s+()-]/g, '');
-    if (cleanedGsm.startsWith('0')) {
-        cleanedGsm = '212' + cleanedGsm.substring(1);
-    }
-    return `https://wa.me/${cleanedGsm}`;
-};
+const FunnelIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+    </svg>
+);
 
-const getMapLink = (store: Store): string => {
-    if (store.Localisation && /^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(store.Localisation)) {
-        return `https://www.google.com/maps?q=${store.Localisation}`;
-    }
-    const address = [store.Adresse, store.Ville, store.Région].filter(Boolean).join(', ');
-    if (address) {
-        return `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
-    }
-    return '#';
-};
-
-const AppointmentRow: React.FC<{ appt: any }> = ({ appt }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-        <div className="border border-slate-100 dark:border-slate-700 rounded-lg overflow-hidden transition-all duration-200">
-            <div
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/30 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
-            >
-                <div className="flex flex-col gap-1 w-full mr-2">
-                    <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-900 dark:text-white truncate">{appt.store.Magazin}</span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${appt.days <= 7 ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-600'}`}>
-                            J-{appt.days}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <span>{appt.date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
-                        <span>•</span>
-                        <span className="truncate max-w-[100px]">{appt.user}</span>
-                    </div>
-                </div>
-                {isOpen ? <ChevronUpIcon className="w-5 h-5 text-slate-400 flex-shrink-0" /> : <ChevronDownIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />}
-            </div>
-
-            {isOpen && (
-                <div className="p-3 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 space-y-3">
-                    {appt.store.Note ? (
-                        <div className="text-xs italic text-slate-600 dark:text-slate-300 bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded border border-yellow-100 dark:border-yellow-900/20">
-                            "{appt.store.Note}"
-                        </div>
-                    ) : (
-                        <div className="text-xs text-slate-400 italic">Aucune note.</div>
-                    )}
-                    <div className="flex gap-2">
-                        <a href={formatWhatsAppLink(appt.store.GSM1)} target="_blank" rel="noopener noreferrer" className="flex-1 py-2 flex items-center justify-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">
-                            <WhatsAppIcon className="w-4 h-4" /> WhatsApp
-                        </a>
-                        <a href={`tel:${appt.store.GSM1}`} className="flex-1 py-2 flex items-center justify-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
-                            <PhoneCallIcon className="w-4 h-4" /> Appel
-                        </a>
-                        <a href={getMapLink(appt.store)} target="_blank" rel="noopener noreferrer" className="flex-1 py-2 flex items-center justify-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
-                            <LocationMarkerIcon className="w-4 h-4" /> Carte
-                        </a>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
+const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18" />
+    </svg>
+);
 
 const TopClientsChart = ({ data }: { data: { name: string; value: number }[] }) => {
-    if (!data || data.length === 0) {
-        return (
-            <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm">
-                <svg className="w-16 h-16 mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <p className="font-medium text-slate-600 dark:text-slate-400">Aucune donnée de vente disponible</p>
-                <p className="text-xs text-slate-400 mt-1">Les ventes apparaîtront ici une fois que des prix seront enregistrés</p>
-            </div>
-        );
-    }
-
+    if (!data || data.length === 0) return (
+        <div className="h-64 flex items-center justify-center text-slate-300 italic text-sm">
+            Aucune donnée de vente pour cette période
+        </div>
+    );
     const maxValue = Math.max(...data.map(d => d.value)) || 1;
-
     return (
-        <div className="w-full overflow-x-auto">
-            <div className="h-80 min-w-[1200px] w-full pt-16 pb-4 px-2">
-                <div className="flex items-end justify-between h-56 gap-2 border-b-2 border-slate-200 dark:border-slate-700">
-                    {data.map((item, index) => {
-                        const heightPx = Math.max((item.value / maxValue) * 224, 25);
-                        return (
-                            <div key={index} className="flex-1 flex flex-col justify-end group relative min-w-[40px]">
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max">
-                                    <div className="bg-slate-900 text-white text-xs rounded py-1 px-2 shadow-lg">
-                                        <div className="font-bold">{item.name}</div>
-                                        <div>{item.value.toLocaleString()} MAD</div>
-                                    </div>
-                                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-slate-900 mx-auto"></div>
+        <div className="w-full overflow-x-auto custom-scrollbar">
+            <div className="h-64 min-w-[1200px] flex items-end gap-3 pt-12 pb-4 px-2">
+                {data.map((item, index) => {
+                    const heightPercent = (item.value / maxValue) * 100;
+                    return (
+                        <div key={index} className="flex-1 flex flex-col justify-end group relative h-full">
+                            <div 
+                                className="w-full bg-blue-600 rounded-t-sm transition-all duration-300 group-hover:bg-blue-500 shadow-sm" 
+                                style={{ height: `${heightPercent}%` }}
+                            >
+                                <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-medium">
+                                    {item.value.toLocaleString()} DH
                                 </div>
-                                <div
-                                    className="w-full bg-blue-600 dark:bg-blue-500 rounded-t hover:bg-blue-700 dark:hover:bg-blue-400 transition-all duration-200 cursor-pointer"
-                                    style={{ height: `${heightPx}px`, minHeight: '25px' }}
-                                ></div>
                             </div>
-                        );
-                    })}
-                </div>
-                <div className="flex justify-between mt-2 px-1">
-                    {data.map((item, index) => (
-                        <div key={index} className="flex-1 text-center min-w-[40px]">
-                            <p className="text-[9px] text-slate-500 dark:text-slate-400 truncate px-0.5" title={item.name}>
-                                {item.name.length > 8 ? item.name.substring(0, 6) + '..' : item.name}
-                            </p>
+                            <div className="mt-3 text-[8px] text-slate-400 font-medium truncate text-center uppercase tracking-tight w-full px-0.5 group-hover:text-slate-600 transition-colors" title={item.name}>
+                                {item.name}
+                            </div>
                         </div>
-                    ))}
-                </div>
+                    );
+                })}
             </div>
         </div>
     );
 };
 
-const StatCard: React.FC<{
-    icon: React.ReactNode,
-    title: string,
-    value: string | number,
-    subtext?: string,
-    color: string,
-    trend?: string,
-    trendDirection?: 'up' | 'down'
-}> = ({ icon, title, value, subtext, color, trend, trendDirection = 'up' }) => {
-    const colorClasses: Record<string, string> = {
-        blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
-        green: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400',
-        amber: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
-        purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
-        rose: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400',
-        slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-    };
-
-    return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-xl ${colorClasses[color] || colorClasses.slate}`}>
-                    {icon}
-                </div>
-                {trend && (
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${trendDirection === 'up' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
-                        {trendDirection === 'up' ? <ArrowTrendingUpIcon className="w-3 h-3" /> : <ArrowTrendingDownIcon className="w-3 h-3" />} {trend}
-                    </span>
-                )}
-            </div>
-            <div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{value}</h3>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{title}</p>
-                {subtext && <p className="text-xs text-slate-400 mt-2">{subtext}</p>}
-            </div>
-        </div>
-    );
-};
-
-const ProgressBar = ({ label, count, total, colorClass }: { label: string, count: number, total: number, colorClass: string }) => {
+const ProgressBar = ({ label, count, total, colorClass, showPercent = true }: { label: string, count: number, total: number, colorClass: string, showPercent?: boolean }) => {
     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
     return (
-        <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{percentage}% ({count})</span>
+        <div className="mb-3">
+            <div className="flex justify-between items-center mb-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-white">{showPercent ? `${percentage}%` : ''} ({count})</span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
-                <div className={`h-2 rounded-full ${colorClass}`} style={{ width: `${percentage}%` }}></div>
+            <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-700 ease-out ${colorClass}`} style={{ width: `${percentage}%` }}></div>
             </div>
         </div>
     );
 };
 
-interface AnalysisModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    content: string;
-    isLoading: boolean;
-    language: 'fr' | 'ar';
-    onLanguageChange: (lang: 'fr' | 'ar') => void;
-}
+const QualityStat = ({ icon: Icon, label, value, color }: any) => (
+    <div className="flex flex-col items-center justify-center p-4 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-slate-50 dark:border-slate-700 hover:border-slate-200 transition-colors group">
+        <Icon className={`w-5 h-5 ${color} mb-2 opacity-40 group-hover:opacity-100 transition-opacity`} />
+        <p className="text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">{label}</p>
+        <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{value}</h4>
+    </div>
+);
 
-const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, content, isLoading, language, onLanguageChange }) => {
+const AnalysisModal: React.FC<any> = ({ isOpen, onClose, content, isLoading }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" aria-modal="true" role="dialog" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <header className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-indigo-600 text-white">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
-                            <SparklesIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{language === 'fr' ? 'Analyse Intelligente' : 'تحليل ذكي'}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{language === 'fr' ? 'Généré par Gemini AI' : 'تم الإنشاء بواسطة Gemini AI'}</p>
-                        </div>
+                        <SparklesIcon className="w-6 h-6 text-yellow-300" />
+                        <h3 className="text-xl font-bold tracking-tight">Audit Stratégique IA</h3>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                            <button onClick={() => onLanguageChange('fr')} className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${language === 'fr' ? 'bg-white dark:bg-slate-600 shadow text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>FR</button>
-                            <button onClick={() => onLanguageChange('ar')} className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${language === 'ar' ? 'bg-white dark:bg-slate-600 shadow text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>AR</button>
-                        </div>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"><XMarkIcon className="w-6 h-6 text-slate-500" /></button>
-                    </div>
-                </div>
-                <div className="p-6 overflow-y-auto flex-1">
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </header>
+                <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                            <SpinnerIcon className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{language === 'fr' ? 'Analyse de vos données en cours...' : 'جاري تحليل البيانات...'}</p>
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <SpinnerIcon className="w-12 h-12 text-indigo-600 animate-spin mb-6" />
+                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">L'IA analyse vos performances commerciales...</p>
                         </div>
                     ) : (
-                        <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed" dir={language === 'ar' ? 'rtl' : 'ltr'} dangerouslySetInnerHTML={{ __html: content }} />
+                        <div className="prose prose-indigo dark:prose-invert max-w-none text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: String(content || "") }} />
                     )}
                 </div>
-                <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm">{language === 'fr' ? 'Terminé' : 'إنهاء'}</button>
-                </div>
+                <footer className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end">
+                    <button onClick={onClose} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg">Fermer</button>
+                </footer>
             </div>
         </div>
     );
 };
 
 const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
-    const [showFilters, setShowFilters] = useState<boolean>(false);
-    const [selectedCity, setSelectedCity] = useState<string>('all');
-    const [selectedAction, setSelectedAction] = useState<string>('all');
-    const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
-    const [selectedUser, setSelectedUser] = useState<string>('all');
+    const [showFilters, setShowFilters] = useState(false);
     const [showAnalysisModal, setShowAnalysisModal] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState('');
-    const [analysisLanguage, setAnalysisLanguage] = useState<'fr' | 'ar'>('fr');
+    
+    // States for filtering
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [selectedUser, setSelectedUser] = useState('all');
+    const [selectedCity, setSelectedCity] = useState('all');
+    const [selectedPeriod, setSelectedPeriod] = useState('all');
 
-    const filteredStores = useMemo(() => {
-        return stores.filter(store => {
-            if (selectedCity !== 'all' && store.Ville !== selectedCity) return false;
-            if (selectedAction !== 'all') {
-                const action = (store['Action Client'] || '').trim().toLowerCase();
-                if (selectedAction === 'acheter' && action !== 'acheter') return false;
-                if (selectedAction === 'revisiter' && action !== 'revisiter') return false;
-            }
-            if (selectedPeriod !== 'all') {
-                const storeDate = new Date(store.Date);
-                const now = new Date();
-                const daysDiff = Math.floor((now.getTime() - storeDate.getTime()) / (1000 * 60 * 60 * 24));
-                if (selectedPeriod === '7days' && daysDiff > 7) return false;
-                if (selectedPeriod === '30days' && daysDiff > 30) return false;
-            }
-            if (selectedUser !== 'all' && store.USER !== selectedUser) return false;
-            return true;
-        });
-    }, [stores, selectedCity, selectedAction, selectedPeriod, selectedUser]);
+    // Get unique values for dropdowns
+    const uniqueUsers = useMemo(() => Array.from(new Set(stores.map(s => s.USER))).filter(Boolean).sort(), [stores]);
+    const uniqueCities = useMemo(() => Array.from(new Set(stores.map(s => s.Ville))).filter(Boolean).sort(), [stores]);
 
     const stats = useMemo(() => {
-        const totalLeads = filteredStores.length;
-        const uniqueClients = new Set(stores.map(s => s.Magazin)).size;
-        const uniqueCities = new Set(stores.map(s => s.Ville)).size;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let futureAppointmentsCount = 0;
-        const upcomingAppointments: any[] = [];
-        const processedAppointments = new Set<string>();
+        // Handle Predefined Periods
+        let finalStart: Date | null = startDate ? new Date(startDate) : null;
+        let finalEnd: Date | null = endDate ? new Date(endDate) : null;
 
-        let actionBuy = 0, actionRevisit = 0, actionNone = 0;
-        let gammeHaute = 0, gammeMoyenne = 0, gammeHauteEtMoyenne = 0, gammeEco = 0, totalActionsForGamme = 0;
-        let hasGsm = 0, hasEmail = 0, hasGps = 0, hasImage = 0, hasNote = 0, hasRendezVous = 0;
-        const cityCounts: Record<string, number> = {};
-        const clientSales: Record<string, number> = {};
-        const userStats: Record<string, { visits: number, sales: number, revenue: number }> = {};
+        if (selectedPeriod !== 'all' && selectedPeriod !== 'custom') {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            switch(selectedPeriod) {
+                case 'today':
+                    finalStart = todayStart;
+                    finalEnd = new Date(todayStart.getTime() + 86400000);
+                    break;
+                case 'this_week':
+                    const day = now.getDay();
+                    finalStart = new Date(todayStart.getTime() - day * 86400000);
+                    finalEnd = now;
+                    break;
+                case 'this_month':
+                    finalStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    finalEnd = now;
+                    break;
+                case 'last_month':
+                    finalStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    finalEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+                    break;
+                case 'this_quarter':
+                    const qMonth = Math.floor(now.getMonth() / 3) * 3;
+                    finalStart = new Date(now.getFullYear(), qMonth, 1);
+                    finalEnd = now;
+                    break;
+                case 'last_quarter':
+                    const pqMonth = (Math.floor(now.getMonth() / 3) * 3) - 3;
+                    finalStart = new Date(now.getFullYear(), pqMonth, 1);
+                    finalEnd = new Date(now.getFullYear(), pqMonth + 3, 0);
+                    break;
+                case 'this_year':
+                    finalStart = new Date(now.getFullYear(), 0, 1);
+                    finalEnd = now;
+                    break;
+                case 'last_year':
+                    finalStart = new Date(now.getFullYear() - 1, 0, 1);
+                    finalEnd = new Date(now.getFullYear() - 1, 11, 31);
+                    break;
+            }
+        }
 
-        const parsePrice = (val: any) => {
-            if (val === undefined || val === null || val === '') return 0;
-            if (typeof val === 'number') return val;
-            let str = String(val).replace(/[\s\u00A0]/g, '').replace(/DH|MAD/i, '').replace(/[^\d.,-]/g, '');
-            return parseFloat(str) || 0;
-        };
+        // Filter stores based on all criteria
+        const filteredStores = stores.filter(store => {
+            // User Filter
+            if (selectedUser !== 'all' && store.USER !== selectedUser) return false;
+            
+            // City Filter
+            if (selectedCity !== 'all' && store.Ville !== selectedCity) return false;
 
-        filteredStores.forEach(store => {
-            const action = (store['Action Client'] || '').trim().toLowerCase();
-            const user = store.USER ? store.USER.split('@')[0] : 'Inconnu';
-            if (!userStats[user]) userStats[user] = { visits: 0, sales: 0, revenue: 0 };
-            userStats[user].visits++;
+            // Date Range Filter
+            const storeDate = new Date(store['Date Heure'] || store.Date);
+            if (isNaN(storeDate.getTime())) return true;
 
-            if (store['Rendez-Vous']) {
-                hasRendezVous++;
-                const dateStrings = store['Rendez-Vous'].split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-                dateStrings.forEach(dateStr => {
-                    const key = `${store.ID}-${dateStr}`;
-                    const apptDate = new Date(dateStr);
-                    if (!isNaN(apptDate.getTime()) && apptDate >= today && !processedAppointments.has(key)) {
-                        futureAppointmentsCount++;
-                        processedAppointments.add(key);
-                        upcomingAppointments.push({ id: key, store, date: apptDate, days: Math.ceil((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)), user: store.USER || 'N/A' });
-                    }
-                });
+            if (finalStart) {
+                finalStart.setHours(0, 0, 0, 0);
+                if (storeDate < finalStart) return false;
             }
 
-            const price = parsePrice(store.Prix);
-            if (action === 'acheter') {
-                clientSales[store.Magazin] = (clientSales[store.Magazin] || 0) + price;
-                userStats[user].sales++;
-                userStats[user].revenue += price;
-                actionBuy++;
-            } else if (action === 'revisiter') actionRevisit++;
-            else actionNone++;
+            if (finalEnd) {
+                finalEnd.setHours(23, 59, 59, 999);
+                if (storeDate > finalEnd) return false;
+            }
 
-            if (action === 'acheter' || action === 'revisiter') {
-                totalActionsForGamme++;
-                const g = store.Gamme || '';
-                if (g === 'Haute') gammeHaute++;
-                else if (g === 'Moyenne') gammeMoyenne++;
-                else if (g === 'Haute et Moyenne') gammeHauteEtMoyenne++;
-                else if (g === 'Économie') gammeEco++;
+            return true;
+        });
+
+        const totalVisits = filteredStores.length;
+        const uniqueMagazinsCount = new Set(filteredStores.map(s => s.Magazin.trim().toLowerCase())).size;
+        
+        let revenue = 0, totalQty = 0, buyActions = 0, revisitActions = 0;
+        let hasGsm = 0, hasEmail = 0, hasGps = 0, hasImage = 0, hasNote = 0, hasRendezVous = 0;
+        
+        const cityCounts: Record<string, number> = {};
+        const clientSales: Record<string, number> = {};
+        const userStats: Record<string, { visits: number, revenue: number }> = {};
+        const appointments: any[] = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const uniqueStoreGammeMap = new Map<string, string>();
+
+        filteredStores.forEach(store => {
+            const magKey = store.Magazin.trim().toLowerCase();
+            const action = (store['Action Client'] || '').trim().toLowerCase();
+            const user = store.USER ? store.USER.split('@')[0] : 'Inconnu';
+            
+            if (!uniqueStoreGammeMap.has(magKey)) uniqueStoreGammeMap.set(magKey, store.Gamme || 'Moyenne');
+            if (!userStats[user]) userStats[user] = { visits: 0, revenue: 0 };
+            userStats[user].visits++;
+
+            if (action === 'acheter') {
+                const p = Number(store.Prix) || 0;
+                revenue += p;
+                totalQty += Number(store.Quantité) || 0;
+                buyActions++;
+                clientSales[store.Magazin] = (clientSales[store.Magazin] || 0) + p;
+                userStats[user].revenue += p;
+            } else if (action === 'revisiter') {
+                revisitActions++;
             }
 
             if (store.GSM1) hasGsm++;
@@ -370,52 +263,389 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             if (store.Localisation) hasGps++;
             if (store.Image) hasImage++;
             if (store.Note) hasNote++;
-            cityCounts[store.Ville || 'Autre'] = (cityCounts[store.Ville || 'Autre'] || 0) + 1;
+            if (store['Rendez-Vous']) {
+                hasRendezVous++;
+                const rdvDate = new Date(store['Rendez-Vous']);
+                if (!isNaN(rdvDate.getTime()) && rdvDate >= today) {
+                    appointments.push({ 
+                        store, 
+                        date: rdvDate, 
+                        user,
+                        days: Math.ceil((rdvDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) 
+                    });
+                }
+            }
+
+            if (store.Ville) cityCounts[store.Ville] = (cityCounts[store.Ville] || 0) + 1;
         });
 
-        const revenue = filteredStores.reduce((acc, s) => (s['Action Client']?.trim().toLowerCase() === 'acheter' ? acc + parsePrice(s.Prix) : acc), 0);
-        const topClients = Object.entries(clientSales).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 20);
-        return { totalLeads, uniqueClients, uniqueCities, revenue, revenueDisplay: revenue.toLocaleString() + ' DH', futureAppointmentsCount, upcomingAppointments: upcomingAppointments.sort((a, b) => a.date.getTime() - b.date.getTime()), actions: { buy: actionBuy, revisit: actionRevisit, none: actionNone }, gamme: { haute: gammeHaute, moyenne: gammeMoyenne, hauteEtMoyenne: gammeHauteEtMoyenne, economie: gammeEco, total: totalActionsForGamme }, quality: { gsm: hasGsm, email: hasEmail, gps: hasGps, image: hasImage, note: hasNote, rendezVous: hasRendezVous }, topRegions: Object.entries(cityCounts).sort((a, b) => b[1] - a[1]), topClients, userStats: Object.entries(userStats).map(([name, stat]) => ({ name, ...stat, conversion: stat.visits > 0 ? Math.round((stat.sales / stat.visits) * 100) : 0 })).sort((a, b) => b.revenue - a.revenue) };
-    }, [filteredStores]);
+        const gCounts = { haute: 0, hauteMoyenne: 0, moyenne: 0, economie: 0 };
+        uniqueStoreGammeMap.forEach(g => {
+            if (g === 'Haute') gCounts.haute++;
+            else if (g === 'Haute et Moyenne') gCounts.hauteMoyenne++;
+            else if (g === 'Moyenne') gCounts.moyenne++;
+            else gCounts.economie++;
+        });
 
-    const generateAnalysis = async (lang: 'fr' | 'ar') => {
+        return {
+            totalVisits, uniqueMagazinsCount, revenue, totalQty, buyActions, revisitActions,
+            quality: { gsm: hasGsm, email: hasEmail, gps: hasGps, image: hasImage, note: hasNote, rdv: hasRendezVous },
+            gamme: { ...gCounts, total: uniqueStoreGammeMap.size },
+            topRegions: Object.entries(cityCounts).sort((a,b) => b[1] - a[1]),
+            topClients: Object.entries(clientSales).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 20),
+            userPerformance: Object.entries(userStats).map(([name, s]) => ({ name, ...s, percent: totalVisits > 0 ? (s.visits / totalVisits * 100) : 0 })).sort((a,b) => b.revenue - a.revenue),
+            appointments: appointments.sort((a,b) => a.date.getTime() - b.date.getTime()).slice(0, 10)
+        };
+    }, [stores, startDate, endDate, selectedUser, selectedCity, selectedPeriod]);
+
+    const generateAnalysis = async () => {
         setIsAnalyzing(true);
-        setAnalysisResult('');
+        setShowAnalysisModal(true);
         try {
-            const summary = { metrics: { totalLeads: stats.totalLeads, revenue: stats.revenue, uniqueCities: stats.uniqueCities }, distribution: stats.gamme, performers: stats.userStats.slice(0, 3) };
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
-                contents: `Expert analysis in ${lang === 'fr' ? 'French' : 'Arabic'}. Data: ${JSON.stringify(summary)}. Format as Tailwind HTML: Points Forts, Points Faibles, Plan d'Action.`,
+                contents: `Génère un audit de performance pour Apollo Eyewear. Données: CA=${stats.revenue}DH, Leads=${stats.totalVisits}, Conversion=${(stats.buyActions/stats.totalVisits*100).toFixed(1)}%. Format HTML Tailwind avec plans d'action.`,
             });
-            setAnalysisResult(response.text);
-        } catch (error) {
-            setAnalysisResult(`<div class="text-red-500 p-4">Error generating analysis.</div>`);
-        } finally {
-            setIsAnalyzing(false);
-        }
+            setAnalysisResult(response.text || "Erreur de génération.");
+        } catch (e) { setAnalysisResult("Erreur lors de l'analyse."); }
+        finally { setIsAnalyzing(false); }
     };
 
+    const resetFilters = () => {
+        setStartDate('');
+        setEndDate('');
+        setSelectedUser('all');
+        setSelectedCity('all');
+        setSelectedPeriod('all');
+    };
+
+    const isFilterActive = startDate || endDate || selectedUser !== 'all' || selectedCity !== 'all' || selectedPeriod !== 'all';
+
     return (
-        <div className="p-6 max-w-[1600px] mx-auto space-y-8 pb-20">
-            <AnalysisModal isOpen={showAnalysisModal} onClose={() => setShowAnalysisModal(false)} content={analysisResult} isLoading={isAnalyzing} language={analysisLanguage} onLanguageChange={(l) => { setAnalysisLanguage(l); generateAnalysis(l); }} />
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div><h1 className="text-3xl font-bold text-slate-900 dark:text-white">Tableau de Bord Global</h1><p className="text-slate-500 dark:text-slate-400 mt-1">Vue d'ensemble analytique du réseau Apollo</p></div>
-                <button onClick={() => { setShowAnalysisModal(true); generateAnalysis(analysisLanguage); }} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"><SparklesIcon className="w-5 h-5 text-yellow-300" /> Analyser avec IA</button>
+        <div className="p-6 max-w-[1600px] mx-auto space-y-8 pb-20 bg-[#F7F8FA] dark:bg-slate-900 min-h-screen font-sans">
+            <AnalysisModal isOpen={showAnalysisModal} onClose={() => setShowAnalysisModal(false)} content={analysisResult} isLoading={isAnalyzing} />
+
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-semibold text-slate-800 dark:text-white tracking-tight">Tableau de Bord Global</h1>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1.5">Vue d'ensemble analytique de toutes les données collectées</p>
+                </div>
+                <button onClick={generateAnalysis} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg transition-all font-bold text-xs uppercase tracking-wider">
+                    <SparklesIcon className="w-5 h-5 text-yellow-300" /> Analyser avec IA
+                </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={<CurrencyDollarIcon className="w-6 h-6" />} title="Chiffre d'Affaires" value={stats.revenueDisplay} color="green" />
-                <StatCard icon={<UsersIcon className="w-6 h-6" />} title="Total Leads" value={stats.totalLeads} color="blue" />
-                <StatCard icon={<ChartBarIcon className="w-6 h-6" />} title="Ventes" value={stats.actions.buy} color="purple" />
-                <StatCard icon={<CalendarDaysIcon className="w-6 h-6" />} title="Rendez-vous" value={stats.futureAppointmentsCount} color="amber" />
+
+            {/* Filter Section */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden transition-all">
+                <button 
+                    onClick={() => setShowFilters(!showFilters)} 
+                    className={`w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors ${showFilters ? 'bg-slate-50 dark:bg-slate-700/50' : ''}`}
+                >
+                    <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">
+                        <FunnelIcon className="w-5 h-5" /> 
+                        Filtres { isFilterActive && <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full ml-2">Actif</span> }
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {isFilterActive && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); resetFilters(); }} 
+                                className="text-[10px] font-black text-slate-400 uppercase hover:text-red-500 transition-colors"
+                            >
+                                Réinitialiser
+                            </button>
+                        )}
+                        <ChevronDownIcon className={`w-5 h-5 text-slate-300 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                    </div>
+                </button>
+                
+                {showFilters && (
+                    <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 animate-in slide-in-from-top-1 duration-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+                            {/* Staff Filter */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                    <UserCircleIcon className="w-3.5 h-3.5" /> Utilisateur
+                                </label>
+                                <select 
+                                    value={selectedUser} 
+                                    onChange={(e) => setSelectedUser(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-xs font-bold dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 appearance-none shadow-sm"
+                                >
+                                    <option value="all">Tous les vendeurs</option>
+                                    {uniqueUsers.map(u => <option key={u} value={u}>{u.split('@')[0]}</option>)}
+                                </select>
+                            </div>
+
+                            {/* City Filter */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                    <MapIcon className="w-3.5 h-3.5" /> Ville
+                                </label>
+                                <select 
+                                    value={selectedCity} 
+                                    onChange={(e) => setSelectedCity(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-xs font-bold dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 appearance-none shadow-sm"
+                                >
+                                    <option value="all">Toutes les villes</option>
+                                    {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Period Selection */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                    <ClockIcon className="w-3.5 h-3.5" /> Période
+                                </label>
+                                <select 
+                                    value={selectedPeriod} 
+                                    onChange={(e) => {
+                                        setSelectedPeriod(e.target.value);
+                                        if (e.target.value !== 'custom' && e.target.value !== 'all') {
+                                            setStartDate('');
+                                            setEndDate('');
+                                        }
+                                    }}
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-xs font-bold dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 appearance-none shadow-sm"
+                                >
+                                    <option value="all">Historique Complet</option>
+                                    <option value="today">Aujourd'hui</option>
+                                    <option value="this_week">Cette semaine</option>
+                                    <option value="this_month">Ce mois-ci</option>
+                                    <option value="last_month">Mois dernier</option>
+                                    <option value="this_quarter">Ce trimestre (3m)</option>
+                                    <option value="last_quarter">Trimestre dernier (3m)</option>
+                                    <option value="this_year">Cette année</option>
+                                    <option value="last_year">Année dernière</option>
+                                    <option value="custom">Plage personnalisée...</option>
+                                </select>
+                            </div>
+
+                            {/* Custom Date Range (Conditional) */}
+                            {selectedPeriod === 'custom' && (
+                                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 pt-2 border-t border-slate-50 dark:border-slate-700">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 ml-1 uppercase">Du (Date de début)</label>
+                                        <div className="relative">
+                                            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <input 
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                className="block w-full pl-10 pr-3 py-2.5 text-xs font-bold rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 ml-1 uppercase">Au (Date de fin)</label>
+                                        <div className="relative">
+                                            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <input 
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                className="block w-full pl-10 pr-3 py-2.5 text-xs font-bold rounded-xl border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* PERFORMANCE COMMERCIALE Section */}
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Performance Commercialة</h2>
+                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded uppercase">{selectedPeriod === 'all' ? 'Historique Global' : selectedPeriod.replace('_', ' ')}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                        <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg w-fit mb-5"><CurrencyDollarIcon className="w-6 h-6" /></div>
+                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.revenue.toLocaleString()} DH</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Chiffre d'Affaires</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative">
+                        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg w-fit mb-5"><UsersIcon className="w-6 h-6" /></div>
+                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalVisits}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Total Interactions</p>
+                        <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">{stats.uniqueMagazinsCount} Magazins Visités</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg w-fit mb-5"><CubeIcon className="w-6 h-6" /></div>
+                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalQty} Pièces</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Volume de Ventes</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg w-fit mb-5"><CalendarDaysIcon className="w-6 h-6" /></div>
+                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.quality.rdv}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">RDV Planifiés</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Analysis Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6"><h3 className="font-bold text-slate-900 dark:text-white mb-6">Segmentation</h3><ProgressBar label="Haute Gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" /><ProgressBar label="Moyenne" count={stats.gamme.moyenne} total={stats.gamme.total} colorClass="bg-blue-500" /><ProgressBar label="Economie" count={stats.gamme.economie} total={stats.gamme.total} colorClass="bg-slate-400" /></div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6"><h3 className="font-bold text-slate-900 dark:text-white mb-6">Géographie</h3><div className="space-y-3">{stats.topRegions.slice(0, 8).map(([city, count], idx) => (<div key={city} className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors"><span className="text-sm font-medium text-slate-700 dark:text-slate-200">{city}</span><span className="text-sm font-bold text-slate-900 dark:text-white">{count}</span></div>))}</div></div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6"><h3 className="font-bold text-slate-900 dark:text-white mb-6">Pipeline</h3><ProgressBar label="Acheter" count={stats.actions.buy} total={stats.totalLeads} colorClass="bg-purple-500" /><ProgressBar label="Revisiter" count={stats.actions.revisit} total={stats.totalLeads} colorClass="bg-amber-500" /></div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6"><h3 className="font-bold text-slate-900 dark:text-white mb-6">Vendeurs</h3><div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">{stats.userStats.map(user => (<div key={user.name} className="mb-4"><div className="flex justify-between items-center mb-1"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{user.name}</span><span className="text-xs font-bold text-emerald-600">{user.revenue.toLocaleString()} DH</span></div><div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5"><div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${user.conversion}%` }}></div></div></div>))}</div></div>
+                {/* Segmentation */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-2 mb-6 text-rose-500">
+                        <TagIcon className="w-5 h-5" />
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Segmentation</h3>
+                    </div>
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Par Gamme</p>
+                            <ProgressBar label="Moyenne gamme" count={stats.gamme.moyenne} total={stats.gamme.total} colorClass="bg-blue-200" />
+                            <ProgressBar label="Haute Gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" />
+                            <ProgressBar label="Haute et Moyenne" count={stats.gamme.hauteMoyenne} total={stats.gamme.total} colorClass="bg-[#4407EB]" />
+                            <ProgressBar label="Economie" count={stats.gamme.economie} total={stats.gamme.total} colorClass="bg-slate-400" />
+                        </div>
+                        <div className="pt-5 border-t border-slate-50 dark:border-slate-700">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Action Client</p>
+                            <ProgressBar label="Acheter" count={stats.buyActions} total={stats.totalVisits} colorClass="bg-emerald-500" />
+                            <ProgressBar label="Revisiter" count={stats.revisitActions} total={stats.totalVisits} colorClass="bg-orange-400" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Géographie */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
+                    <div className="flex items-center gap-2 mb-6 text-indigo-500">
+                        <MapIcon className="w-5 h-5" />
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Géographie</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                        {stats.topRegions.map(([city, count], idx) => (
+                            <div key={city} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">{idx + 1}</div>
+                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{city}</span>
+                                </div>
+                                <span className="text-xs font-bold text-slate-900 dark:text-white">{count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Pipeline */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
+                    <div className="flex items-center gap-2 mb-8 text-purple-500">
+                        <CubeIcon className="w-5 h-5" />
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Pipeline (Actions)</h3>
+                    </div>
+                    <div className="space-y-8">
+                        <div className="flex justify-between items-start">
+                            <div><p className="text-sm font-semibold text-slate-800 dark:text-white">Total Interactions</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Suivi effectué</p></div>
+                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.totalVisits}</span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                            <div><p className="text-sm font-semibold text-amber-600">Opportunités</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Négociation en cours</p></div>
+                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.revisitActions}</span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                            <div><p className="text-sm font-semibold text-emerald-600">Ventes Conclues</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Actions "Acheter"</p></div>
+                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.buyActions}</span>
+                        </div>
+                        <div className="pt-10 text-center flex flex-col items-center border-t border-slate-50 dark:border-slate-700">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Taux de conversion</p>
+                            <h4 className="text-3xl font-bold text-slate-900 dark:text-white">{((stats.buyActions / (stats.totalVisits || 1)) * 100).toFixed(1)}%</h4>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Performance Utilisateur */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
+                    <div className="flex items-center gap-2 mb-6 text-blue-500">
+                        <UsersIcon className="w-5 h-5" />
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Performance Staff</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                        {stats.userPerformance.map(u => (
+                            <div key={u.name} className="group">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[120px]">{u.name}</span>
+                                    <div className="text-right">
+                                        <p className="text-[11px] font-bold text-emerald-600">{u.revenue.toLocaleString()} DH</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{u.visits} Visites ({u.percent.toFixed(0)}%)</p>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1 overflow-hidden">
+                                    <div className="bg-blue-600 h-full rounded-full transition-all duration-1000" style={{ width: `${u.percent}%` }}></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6"><h3 className="font-bold text-slate-900 dark:text-white mb-6">Top 20 Clients (Ventes)</h3><TopClientsChart data={stats.topClients} /></div>
+
+            {/* Qualité des Données & Suivi Section */}
+            <div>
+                <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">QUALITÉ DES DONNÉES & SUIVI</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Quality Card */}
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 text-[#4407EB]">
+                            <ClipboardDocumentCheckIcon className="w-5 h-5" />
+                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Qualité de la Base</h3>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <QualityStat icon={PhoneCallIcon} label="Téléphones" value={`${Math.round(stats.quality.gsm / (stats.gamme.total || 1) * 100)}%`} color="text-blue-500" />
+                            <QualityStat icon={EnvelopeIcon} label="Emails" value={`${Math.round(stats.quality.email / (stats.gamme.total || 1) * 100)}%`} color="text-indigo-500" />
+                            <QualityStat icon={LocationMarkerIcon} label="GPS" value={`${Math.round(stats.quality.gps / (stats.gamme.total || 1) * 100)}%`} color="text-purple-500" />
+                            <QualityStat icon={CameraIcon} label="Photos" value={`${Math.round(stats.quality.image / (stats.totalVisits || 1) * 100)}%`} color="text-pink-500" />
+                            <QualityStat icon={ClipboardDocumentCheckIcon} label="Notes" value={`${Math.round(stats.quality.note / (stats.totalVisits || 1) * 100)}%`} color="text-emerald-500" />
+                            <QualityStat icon={CurrencyDollarIcon} label="Ventes" value={`${Math.round(stats.buyActions / (stats.totalVisits || 1) * 100)}%`} color="text-green-500" />
+                            <QualityStat icon={ArrowTrendingUpIcon} label="Relances" value={`${Math.round(stats.revisitActions / (stats.totalVisits || 1) * 100)}%`} color="text-amber-500" />
+                            <QualityStat icon={CalendarDaysIcon} label="RDV" value={`${Math.round(stats.quality.rdv / (stats.totalVisits || 1) * 100)}%`} color="text-rose-500" />
+                        </div>
+                    </div>
+
+                    {/* Rendez-vous Card */}
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 text-amber-500">
+                            <CalendarDaysIcon className="w-5 h-5" />
+                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Prochains Rendez-vous</h3>
+                        </div>
+                        <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
+                            {stats.appointments.map((appt, i) => (
+                                <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-50 dark:border-slate-700 group hover:border-amber-200 transition-colors">
+                                    <div className="flex-1 min-w-0 mr-4">
+                                        <p className="text-xs font-bold text-slate-800 dark:text-white truncate uppercase tracking-tight">{appt.store.Magazin}</p>
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold mt-1">
+                                            <span>{appt.date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
+                                            <span>•</span>
+                                            <span className="truncate">{appt.user}</span>
+                                        </div>
+                                    </div>
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${appt.days <= 3 ? 'bg-red-50 text-red-600' : 'bg-slate-200 text-slate-600'}`}>
+                                        J-{appt.days}
+                                    </span>
+                                </div>
+                            ))}
+                            {stats.appointments.length === 0 && (
+                                <div className="py-20 text-center text-slate-300 italic text-xs font-medium uppercase tracking-widest">Aucun rendez-vous planifié</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Top 20 Clients Section */}
+            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-3 mb-8 text-blue-600">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                        <ChartBarIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Top 20 Clients (Performance Période)</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Classement par Volume d'Affaires</p>
+                    </div>
+                </div>
+                <TopClientsChart data={stats.topClients} />
+            </div>
         </div>
     );
 };

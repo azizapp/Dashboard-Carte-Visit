@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ThemeToggle from './ThemeToggle.tsx';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
 import CheckIcon from './icons/CheckIcon.tsx';
@@ -46,6 +46,15 @@ const AdminSettingsPage: React.FC<any> = ({
         fetchUsers();
     }, []);
 
+    // تصفية المستخدمين بناءً على رتبة المستخدم الحالي
+    const filteredUsers = useMemo(() => {
+        if (userRole === 'admin') {
+            // إذا كان المستخدم أدمين، نخفي عنه أي مستخدم برتبة manager
+            return users.filter(u => u.role !== 'manager');
+        }
+        return users;
+    }, [users, userRole]);
+
     const handleDeleteConfirm = async () => {
         if (!userToDelete) return;
         try { 
@@ -91,7 +100,7 @@ const AdminSettingsPage: React.FC<any> = ({
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                                     {fetchingUsers ? (
                                         <tr><td colSpan={3} className="p-12 text-center"><SpinnerIcon className="w-8 h-8 animate-spin text-slate-300 mx-auto" /></td></tr>
-                                    ) : users.map(user => (
+                                    ) : filteredUsers.map(user => (
                                         <tr key={user.email} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
@@ -113,12 +122,15 @@ const AdminSettingsPage: React.FC<any> = ({
                                             </td>
                                         </tr>
                                     ))}
+                                    {!fetchingUsers && filteredUsers.length === 0 && (
+                                        <tr><td colSpan={3} className="p-12 text-center text-slate-400 italic">Aucun utilisateur disponible</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </section>
 
-                    {/* قسم إدارة المواقع الجديد */}
+                    {/* قسم إدارة المواقع */}
                     <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-8">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">

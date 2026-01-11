@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Store, Mode, Customer } from '../../types.ts';
 import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
@@ -20,7 +21,6 @@ import DeleteIcon from '../icons/DeleteIcon.tsx';
 import ConfirmationModal from '../ConfirmationModal.tsx';
 import UsersIcon from '../icons/UsersIcon.tsx';
 import ClockIcon from '../icons/ClockIcon.tsx';
-/* FIX: Added missing import for XMarkIcon to resolve the 'Cannot find name' error. */
 import XMarkIcon from '../icons/XMarkIcon.tsx';
 import { supabase } from '../../services/supabase.ts';
 
@@ -74,13 +74,17 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
   const allAppointments = useMemo(() => {
     const list: { store: Store; date: Date; user: string; city: string }[] = [];
     const accessibleStores = isAdmin ? stores : stores.filter(s => s.USER === authenticatedUser);
+    
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     accessibleStores.forEach(s => {
       if (s['Rendez-Vous']) {
         const dates = s['Rendez-Vous'].split(/[\n,]/).map(d => d.trim()).filter(Boolean);
         dates.forEach(d => {
           const date = new Date(d);
-          if (!isNaN(date.getTime())) {
+          // استثناء المواعيد القديمة (قبل اليوم)
+          if (!isNaN(date.getTime()) && date >= startOfToday) {
             list.push({ store: s, date, user: s.USER || 'Inconnu', city: s.Ville });
           }
         });
@@ -119,6 +123,8 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         const currentDay = startOfToday.getDay();
         start = new Date(startOfToday);
         start.setDate(startOfToday.getDate() - currentDay);
+        // التأكد من أن البداية ليست قبل اليوم حتى في فلتر الأسبوع
+        if (start < startOfToday) start = startOfToday;
         end = new Date(start);
         end.setDate(start.getDate() + 6);
         end.setHours(23, 59, 59, 999);
@@ -134,7 +140,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         break;
       }
       case 'thisMonth':
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start = startOfToday; // تبدأ الفلترة من اليوم الحالي لنهاية الشهر
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         break;
       case 'nextMonth':
@@ -146,6 +152,8 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         start.setHours(0,0,0,0);
         end = new Date(selectedDate);
         end.setHours(23, 59, 59, 999);
+        // إذا اختار المستخدم يوماً ماضياً في التقويم، لن تظهر مواعيد
+        if (start < startOfToday) return [];
         break;
       }
       default:
@@ -159,11 +167,11 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
 
   const getTimeFilterLabel = () => {
       switch(timeFilter) {
-          case 'all': return "Toutes les dates";
+          case 'all': return "Toutes les dates à venir";
           case 'today': return "Aujourd'hui";
-          case 'thisWeek': return "Cette semaine";
+          case 'thisWeek': return "Cette semaine (À venir)";
           case 'nextWeek': return "Semaine prochaine";
-          case 'thisMonth': return "Ce mois";
+          case 'thisMonth': return "Ce mois (À venir)";
           case 'nextMonth': return "Mois prochain";
           case 'calendar': return selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
           default: return "Rendez-vous";
@@ -324,13 +332,13 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
                 </div>
 
                 {displayAppointments.length === 0 ? (
-                    <div className="text-center py-20 text-slate-400 font-medium italic">Aucun rendez-vous pour cette période</div>
+                    <div className="text-center py-20 text-slate-400 font-medium italic">Aucun rendez-vous à venir pour cette période</div>
                 ) : (
                     displayAppointments.map((a, i) => (
                         <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onViewDetails(a.store)}>
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">{a.store.Magazin}</h3>
-                                <span className="text-[10px] font-black px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full uppercase font-bold">
+                                <span className="text-[10px] font-black px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full uppercase">
                                     {a.date.toLocaleDateString('fr-FR', { weekday: 'short' })}
                                 </span>
                             </div>
@@ -338,7 +346,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
                             
                             <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-700 flex justify-between items-end">
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest font-bold">{a.city}</span>
+                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{a.city}</span>
                                     <div className="flex gap-2 mt-3">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleEditClick(a.store); }} 
@@ -413,7 +421,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Planning des Rendez-vous</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-                <span className="font-semibold text-slate-900 dark:text-white">{allAppointments.length}</span> rendez-vous programmés au total.
+                <span className="font-semibold text-slate-900 dark:text-white">{allAppointments.length}</span> rendez-vous actifs programmés.
             </p>
         </div>
 
@@ -522,7 +530,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
                       {getTimeFilterLabel()}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {displayAppointments.length} {displayAppointments.length > 1 ? 'Rendez-vous' : 'Rendez-vous'} {timeFilter === 'today' ? "aujourd'hui" : 'sur cette période'}
+                      {displayAppointments.length} {displayAppointments.length > 1 ? 'Rendez-vous' : 'Rendez-vous'} {timeFilter === 'today' ? "aujourd'hui" : 'à venir'}
                   </p>
               </div>
 
@@ -566,6 +574,9 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
                               <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
                                   <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
                                   {appt.date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                  <span className="ml-auto text-[9px] font-black text-slate-300">
+                                      {appt.date.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'})}
+                                  </span>
                               </p>
                               
                               <div className="flex items-center gap-2">
@@ -593,7 +604,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
 
                   {displayAppointments.length === 0 && (
                       <div className="text-center py-20 text-slate-400 font-medium italic text-xs">
-                        Aucun rendez-vous trouvé.
+                        Aucun rendez-vous à venir trouvé.
                       </div>
                   )}
               </div>

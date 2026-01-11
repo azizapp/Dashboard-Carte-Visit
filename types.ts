@@ -95,4 +95,6 @@ export type FilterState = {
   city: string;
   gammes: string[];
   priorities: string[];
+  startDate?: string;
+  endDate?: string;
 };

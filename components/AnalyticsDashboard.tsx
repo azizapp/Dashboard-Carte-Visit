@@ -7,6 +7,8 @@ import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import ChartBarIcon from './icons/ChartBarIcon.tsx';
 import MapIcon from './icons/MapIcon.tsx';
 import FilterModal from './FilterModal.tsx';
+// FIX: Added missing import for CalendarDaysIcon
+import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
 
 const FilterIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -31,16 +33,18 @@ const KpiCard = ({ title, value, change, subtext, icon, prevValue }: any) => {
                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-600 dark:text-slate-300">
                     {icon}
                 </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tagBg}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tagBg}`}>
                     {change}
                 </span>
             </div>
             <div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">{title}</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{subtext}</p>
+                <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{value}</h3>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">{title}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium italic">{subtext}</p>
                 {prevValue !== undefined && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">vs {prevValue.toLocaleString()} la période précédente</p>
+                    <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-700">
+                         <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Précédent: <span className="font-bold text-slate-600 dark:text-slate-300">{prevValue.toLocaleString()}</span></p>
+                    </div>
                 )}
             </div>
         </div>
@@ -57,20 +61,19 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
   const [filters, setFilters] = useState<FilterState>({
     city: '',
     gammes: [],
-    priorities: []
+    priorities: [],
+    startDate: '',
+    endDate: ''
   });
 
   const stats = useMemo(() => {
     const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
     
     const parseWritingDate = (s: Store) => {
         const dStr = s['Date Heure'] || s.Date;
         if (!dStr) return null;
         const d = new Date(dStr);
         if (!isNaN(d.getTime())) return d;
-        const parts = dStr.split('/');
-        if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
         return null;
     };
 
@@ -88,6 +91,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     let currentStart: Date, currentEnd: Date;
     let prevStart: Date, prevEnd: Date;
 
+    // Default Period Setup
     if (period === 'Ce mois') {
         currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
         currentEnd = today;
@@ -108,6 +112,20 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         currentEnd = today;
         prevStart = new Date(today.getFullYear() - 1, 0, 1);
         prevEnd = new Date(today.getFullYear() - 1, 11, 31);
+    }
+
+    // Custom Date Logic (Overrides default if present)
+    const isCustom = !!(filters.startDate || filters.endDate);
+    if (isCustom) {
+        currentStart = filters.startDate ? new Date(filters.startDate) : new Date(0);
+        currentEnd = filters.endDate ? new Date(filters.endDate) : new Date();
+        currentStart.setHours(0, 0, 0, 0);
+        currentEnd.setHours(23, 59, 59, 999);
+
+        // Smart previous period calculation (same duration)
+        const duration = currentEnd.getTime() - currentStart.getTime();
+        prevEnd = new Date(currentStart.getTime() - 1);
+        prevStart = new Date(prevEnd.getTime() - duration);
     }
 
     const calculateMetrics = (data: Store[], sDate: Date, eDate: Date) => {
@@ -163,9 +181,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     };
 
     const cityCounts: Record<string, number> = {};
-    currentData.forEach(s => {
-        cityCounts[s.Ville] = (cityCounts[s.Ville] || 0) + 1;
-    });
+    currentData.forEach(s => { cityCounts[s.Ville] = (cityCounts[s.Ville] || 0) + 1; });
     const sortedCities = Object.entries(cityCounts).sort((a,b) => b[1]-a[1]);
 
     const totalRevenue = currentMetrics.revenue || 1;
@@ -199,13 +215,19 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         contribution: (data.revenue / totalRevenue) * 100
     })).sort((a,b) => b.visits - a.visits);
 
+    const customLabel = (filters.startDate && filters.endDate) 
+        ? `${new Date(filters.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} - ${new Date(filters.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}`
+        : "Période Personnalisée";
+
     return {
         currentMetrics,
         prevMetrics,
         trends,
         sortedCities,
         coverage: coverageData,
-        priority: priorityStats
+        priority: priorityStats,
+        isCustom,
+        customLabel
     };
   }, [stores, period, filters]);
 
@@ -217,37 +239,46 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
   const p4 = (stats.priority.economie / totalLeadsCount) * circumference;
 
   return (
-    <div className="p-6">
-      <div className="space-y-6">
+    <div className="p-6 max-w-[1600px] mx-auto">
+      <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
               <span>Gestion des Leads</span>
               <span className="text-slate-300">/</span>
-              <span className="text-blue-600 font-medium">Analyses</span>
+              <span className="text-blue-600">Analyses Globales</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Analyses & Rapports</h1>
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">Analyses & Rapports</h1>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-1 bg-white dark:bg-slate-800 px-1 py-1 rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto max-w-[calc(100vw-80px)]">
+            <div className="hidden md:flex items-center gap-1 bg-white dark:bg-slate-800 px-1 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto">
               {['Ce mois', 'Mois passé', 'Dernier trimestre', 'Cette année'].map(p => (
                 <button 
                   key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${period === p ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                  onClick={() => {
+                    setPeriod(p);
+                    setFilters(prev => ({...prev, startDate: '', endDate: ''}));
+                  }}
+                  className={`px-4 py-2 text-[11px] font-bold rounded-lg whitespace-nowrap transition-all ${!stats.isCustom && period === p ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white shadow-inner' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
                 >
                   {p}
                 </button>
               ))}
+              {stats.isCustom && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-[11px] font-black bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-200/50">
+                      <CalendarDaysIcon className="w-3.5 h-3.5" />
+                      <span>{stats.customLabel}</span>
+                  </div>
+              )}
             </div>
             <button 
               onClick={() => setIsFilterModalOpen(true)}
-              className="p-2 rounded-lg shadow-sm transition-colors flex-shrink-0 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+              className={`p-2.5 rounded-xl shadow-sm border transition-all flex-shrink-0 ${stats.isCustom ? 'bg-white border-blue-200 text-blue-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-50'}`}
             >
               <FilterIcon className="w-5 h-5" />
             </button>
-            <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex-shrink-0">
+            <button className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-200 dark:shadow-none transition-all flex-shrink-0">
               <DownloadIcon className="w-5 h-5" />
             </button>
           </div>
@@ -258,7 +289,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
             title="Total des Leads" 
             value={stats.currentMetrics.leads} 
             change={stats.trends.leads} 
-            subtext="Prospects actifs visités" 
+            subtext="Visites uniques effectuées" 
             prevValue={stats.prevMetrics.leads}
             icon={<MapIcon className="w-6 h-6" />} 
           />
@@ -266,101 +297,98 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
             title="Nouveaux Clients" 
             value={stats.currentMetrics.newClientsCount} 
             change={stats.trends.newClients} 
-            subtext="Croissance des acquisitions" 
+            subtext="Acquisitions sur la période" 
             prevValue={stats.prevMetrics.newClientsCount}
             icon={<PresentationChartLineIcon className="w-6 h-6" />} 
           />
           <KpiCard 
-            title="Objectifs" 
+            title="Conversion" 
             value={`${stats.currentMetrics.convRate.toFixed(1)}%`} 
             change={stats.trends.convRate} 
-            subtext="Taux de transformation" 
-            prevValue={`${stats.currentMetrics.buyCount} ventes / ${stats.currentMetrics.leads} visites`}
+            subtext="Actions d'achat réussies" 
+            prevValue={`${stats.currentMetrics.buyCount} ventes`}
             icon={<ChartBarIcon className="w-6 h-6" />} 
           />
           <KpiCard 
-            title="Commissions Estimées" 
-            value={`${stats.currentMetrics.revenue.toLocaleString()} MAD`} 
+            title="Volume d'Affaires" 
+            value={`${stats.currentMetrics.revenue.toLocaleString()} DH`} 
             change={stats.trends.revenue} 
-            subtext="Évolution du Chiffre d'Affaires" 
+            subtext="Montant total des commandes" 
             prevValue={stats.prevMetrics.revenue}
             icon={<CurrencyDollarIcon className="w-6 h-6" />} 
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-6">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white">Répartition par Ville</h3>
-                <p className="text-xs text-slate-500">Top villes performantes ({period})</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Répartition par Ville</h3>
+                <p className="text-xs text-slate-500 font-medium italic">Villes les plus actives ({stats.isCustom ? 'Période personnalisée' : period})</p>
               </div>
             </div>
-            <div className="flex items-end space-x-6 h-56 w-full pt-4">
-              {stats.sortedCities.slice(0, 6).map(([city, count], idx) => {
+            <div className="flex items-end space-x-6 h-64 w-full pt-4">
+              {stats.sortedCities.slice(0, 7).map(([city, count], idx) => {
                 const maxCount = Math.max(...stats.sortedCities.map(c => c[1]));
                 const heightPercent = (count / maxCount) * 100;
                 return (
                   <div key={city} className="flex flex-col items-center justify-end flex-1 h-full group">
-                    <div className="relative w-full max-w-[40px] flex flex-col justify-end h-full">
+                    <div className="relative w-full max-w-[44px] flex flex-col justify-end h-full">
                       <div 
-                        className="w-full bg-blue-500 rounded-t-lg group-hover:bg-blue-600 transition-all duration-300 relative" 
+                        className="w-full bg-blue-500 rounded-t-xl group-hover:bg-blue-600 transition-all duration-500 relative shadow-sm" 
                         style={{ height: `${heightPercent}%` }}
                       >
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-lg">
-                          {count} leads
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-xl">
+                          {count} visites
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-3 truncate w-full text-center" title={city}>{city}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-4 truncate w-full text-center" title={city}>{city}</span>
                   </div>
                 );
               })}
               {stats.sortedCities.length === 0 && (
-                <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold italic text-sm">Données insuffisantes</div>
+                <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold italic text-sm">Aucune donnée disponible</div>
               )}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col">
-            <div className="mb-4">
-              <h3 className="font-bold text-slate-900 dark:text-white">Leads par Priorité</h3>
-              <p className="text-xs text-slate-500">Qualification des prospects ({period})</p>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col">
+            <div className="mb-6 text-center lg:text-left">
+              <h3 className="font-bold text-slate-900 dark:text-white text-lg">Qualité du Pipe</h3>
+              <p className="text-xs text-slate-500 font-medium">Segmentation par Gamme</p>
             </div>
             <div className="flex-1 flex items-center justify-center min-h-[200px]">
-              <div className="relative w-44 h-44">
+              <div className="relative w-48 h-48">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F1F5F9" strokeWidth="15"></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10B981" strokeWidth="15" strokeDasharray={`${p1} ${circumference}`} strokeDashoffset="0"></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3B82F6" strokeWidth="15" strokeDasharray={`${p2} ${circumference}`} strokeDashoffset={`-${p1}`}></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F59E0B" strokeWidth="15" strokeDasharray={`${p3} ${circumference}`} strokeDashoffset={`-${p1 + p2}`}></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F43F5E" strokeWidth="15" strokeDasharray={`${p4} ${circumference}`} strokeDashoffset={`-${p1 + p2 + p3}`}></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F1F5F9" strokeWidth="12" className="dark:stroke-slate-700"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10B981" strokeWidth="12" strokeDasharray={`${p1} ${circumference}`} strokeDashoffset="0" className="transition-all duration-1000"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3B82F6" strokeWidth="12" strokeDasharray={`${p2} ${circumference}`} strokeDashoffset={`-${p1}`} className="transition-all duration-1000"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F59E0B" strokeWidth="12" strokeDasharray={`${p3} ${circumference}`} strokeDashoffset={`-${p1 + p2}`} className="transition-all duration-1000"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F43F5E" strokeWidth="12" strokeDasharray={`${p4} ${circumference}`} strokeDashoffset={`-${p1 + p2 + p3}`} className="transition-all duration-1000"></circle>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-bold text-slate-800 dark:text-white">{stats.currentMetrics.leads}</span>
-                  <span className="text-[10px] uppercase text-slate-400 font-semibold">Total</span>
+                  <span className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{stats.currentMetrics.leads}</span>
+                  <span className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Leads</span>
                 </div>
               </div>
             </div>
-            <div className="space-y-3 mt-4">
+            <div className="space-y-3.5 mt-8">
               {[
-                { label: 'Haute Gamme', sub: 'Produits Premium & Luxe', count: stats.priority.haute, color: 'bg-emerald-500' },
-                { label: 'Haute et Moyenne', sub: 'Offre Mixte / Intermédiaire', count: stats.priority.hauteMoyenne, color: 'bg-blue-500' },
-                { label: 'Moyenne Gamme', sub: 'Produits Standard', count: stats.priority.moyenne, color: 'bg-amber-500' },
-                { label: 'Economie', sub: 'Budget / Entrée de gamme', count: stats.priority.economie, color: 'bg-rose-500' }
+                { label: 'Haute Gamme', count: stats.priority.haute, color: 'bg-emerald-500' },
+                { label: 'Haute & Moyenne', count: stats.priority.hauteMoyenne, color: 'bg-blue-500' },
+                { label: 'Moyenne Gamme', count: stats.priority.moyenne, color: 'bg-amber-500' },
+                { label: 'Économie', count: stats.priority.economie, color: 'bg-rose-500' }
               ].map(item => (
-                <div key={item.label} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${item.color}`}></span>
-                    <div className="flex flex-col">
-                      <span className="text-slate-700 dark:text-slate-200 font-medium">{item.label}</span>
-                      <span className="text-[10px] text-slate-400">{item.sub}</span>
-                    </div>
+                <div key={item.label} className="flex items-center justify-between text-[11px] group">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`w-2.5 h-2.5 rounded-sm ${item.color} shadow-sm group-hover:scale-125 transition-transform`}></span>
+                    <span className="text-slate-600 dark:text-slate-300 font-bold uppercase tracking-tight">{item.label}</span>
                   </div>
                   <div className="text-right">
-                    <span className="block font-bold text-slate-800 dark:text-white">{item.count}</span>
-                    <span className="text-[10px] text-slate-400">{((item.count / totalLeadsCount) * 100).toFixed(1)}%</span>
+                    <span className="font-black text-slate-900 dark:text-white mr-1.5">{item.count}</span>
+                    <span className="text-slate-400 font-medium">({((item.count / totalLeadsCount) * 100).toFixed(0)}%)</span>
                   </div>
                 </div>
               ))}
@@ -369,59 +397,57 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white">Couverture Territoriale</h3>
-                <p className="text-xs text-slate-500">Villes visitées ({period})</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Efficacité par Territoire</h3>
+                <p className="text-xs text-slate-500 font-medium italic">Visites vs Commandes ({stats.isCustom ? 'Période personnalisée' : period})</p>
               </div>
-              <div className="flex gap-2">
-                <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold border border-emerald-100">Actif</span>
-                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold border border-slate-200">Prospect</span>
+              <div className="flex gap-2.5">
+                <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase tracking-widest border border-emerald-100">Client Actif</span>
+                <span className="px-2 py-1 bg-slate-50 text-slate-500 rounded text-[9px] font-black uppercase tracking-widest border border-slate-100">Prospect</span>
               </div>
             </div>
-            <div className="relative w-full h-[400px] overflow-y-auto pr-2 custom-scrollbar p-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative w-full h-[450px] overflow-y-auto pr-3 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {stats.coverage.map((city) => (
-                  <div key={city.name} className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all group shadow-sm hover:shadow-md">
-                    <div className="flex justify-between items-start mb-3">
+                  <div key={city.name} className="bg-slate-50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-400 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${city.sales > 0 ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-600 dark:text-slate-400'}`}>
+                        <div className={`p-2.5 rounded-xl ${city.sales > 0 ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'}`}>
                           <MapIcon className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate max-w-[120px]" title={city.name}>{city.name}</h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${city.status === 'Actif' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300'}`}>
-                              {city.status}
-                            </span>
-                          </div>
+                          <h4 className="font-bold text-slate-800 dark:text-white text-[14px] truncate max-w-[130px]">{city.name}</h4>
+                          <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded tracking-tighter ${city.status === 'Actif' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                            {city.status}
+                          </span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`text-sm font-bold ${city.sales > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}>{city.conv}%</span>
-                        <p className="text-[10px] text-slate-400">Conv.</p>
+                        <span className={`text-sm font-black ${city.sales > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>{city.conv}%</span>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase">Conv.</p>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5 mb-4">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mb-5 shadow-inner">
                       <div 
-                        className={`h-1.5 rounded-full ${city.sales > 0 ? 'bg-emerald-500' : 'bg-slate-400'}`} 
+                        className={`h-1.5 rounded-full transition-all duration-1000 ${city.sales > 0 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`} 
                         style={{ width: `${city.conv}%` }}
                       ></div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-slate-600 pt-3">
+                    <div className="grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-slate-700/50 pt-4">
                       <div className="text-center">
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Visites</p>
-                        <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">{city.visits}</p>
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Visites</p>
+                        <p className="font-bold text-slate-700 dark:text-slate-200 text-xs">{city.visits}</p>
                       </div>
-                      <div className="text-center border-l border-slate-200 dark:border-slate-600">
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Ventes</p>
-                        <p className="font-bold text-slate-900 dark:text-white text-sm">{city.sales}</p>
+                      <div className="text-center border-x border-slate-200 dark:border-slate-700/50">
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Ventes</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-xs">{city.sales}</p>
                       </div>
-                      <div className="text-center border-l border-slate-200 dark:border-slate-600">
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Chiffre</p>
-                        <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm truncate" title={`${city.revenue.toLocaleString()} MAD`}>
-                          {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue}
+                      <div className="text-center">
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Montant</p>
+                        <p className="font-black text-emerald-600 dark:text-emerald-400 text-[10px] truncate">
+                          {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} DH
                         </p>
                       </div>
                     </div>
@@ -431,32 +457,42 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Performance Régionale</h3>
-            <div className="space-y-4">
-              {stats.coverage.slice(0, 5).map((city, i) => (
-                <div key={city.name} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-slate-100 text-slate-700' : 'bg-orange-50 text-orange-700'}`}>
-                      {i + 1}
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-6">Performance Régionale</h3>
+            <div className="space-y-5">
+              {stats.coverage.slice(0, 6).map((city, i) => (
+                <div key={city.name} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/20 border border-transparent hover:border-slate-100 transition-colors group">
+                  <div className="flex items-center gap-4">
+                    <div className={`flex items-center justify-center w-9 h-9 rounded-xl text-xs font-black shadow-sm ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-700'}`}>
+                      #{i + 1}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{city.name}</p>
-                      <p className="text-xs text-slate-500">{city.visits} leads • {city.sales} ventes</p>
+                      <p className="text-sm font-bold text-slate-800 dark:text-white">{city.name}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{city.visits} Visites • {city.sales} Ventes</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-emerald-600">{city.contribution.toFixed(1)}%</p>
-                    <p className="text-[10px] text-slate-400">Contribution CA</p>
+                    <p className="text-sm font-black text-emerald-600">{city.contribution.toFixed(1)}%</p>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-tight">Part CA</p>
                   </div>
                 </div>
               ))}
+              {stats.coverage.length === 0 && (
+                  <div className="py-20 text-center opacity-30 italic text-sm">Données insuffisantes</div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApply={(newFilters) => { setFilters(newFilters); setIsFilterModalOpen(false); }} onClear={() => { setFilters({ city: '', gammes: [], priorities: [] }); setIsFilterModalOpen(false); }} currentFilters={filters} stores={stores} />
+      <FilterModal 
+        isOpen={isFilterModalOpen} 
+        onClose={() => setIsFilterModalOpen(false)} 
+        onApply={(newFilters) => { setFilters(newFilters); setIsFilterModalOpen(false); }} 
+        onClear={() => { setFilters({ city: '', gammes: [], priorities: [], startDate: '', endDate: '' }); setIsFilterModalOpen(false); }} 
+        currentFilters={filters} 
+        stores={stores} 
+      />
     </div>
   );
 };
