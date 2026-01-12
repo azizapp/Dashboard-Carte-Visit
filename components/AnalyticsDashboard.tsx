@@ -7,8 +7,8 @@ import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import ChartBarIcon from './icons/ChartBarIcon.tsx';
 import MapIcon from './icons/MapIcon.tsx';
 import FilterModal from './FilterModal.tsx';
-// FIX: Added missing import for CalendarDaysIcon
 import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
+import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
 
 const FilterIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -91,7 +91,6 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     let currentStart: Date, currentEnd: Date;
     let prevStart: Date, prevEnd: Date;
 
-    // Default Period Setup
     if (period === 'Ce mois') {
         currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
         currentEnd = today;
@@ -99,7 +98,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
     } else if (period === 'Mois passé') {
         currentStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        currentEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        currentEnd = today;
         prevStart = new Date(today.getFullYear(), today.getMonth() - 2, 1);
         prevEnd = new Date(today.getFullYear(), today.getMonth() - 1, 0);
     } else if (period === 'Dernier trimestre') {
@@ -114,15 +113,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         prevEnd = new Date(today.getFullYear() - 1, 11, 31);
     }
 
-    // Custom Date Logic (Overrides default if present)
     const isCustom = !!(filters.startDate || filters.endDate);
     if (isCustom) {
         currentStart = filters.startDate ? new Date(filters.startDate) : new Date(0);
         currentEnd = filters.endDate ? new Date(filters.endDate) : new Date();
         currentStart.setHours(0, 0, 0, 0);
         currentEnd.setHours(23, 59, 59, 999);
-
-        // Smart previous period calculation (same duration)
         const duration = currentEnd.getTime() - currentStart.getTime();
         prevEnd = new Date(currentStart.getTime() - 1);
         prevStart = new Date(prevEnd.getTime() - duration);
@@ -208,7 +204,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     const coverageData = Object.entries(coverageMap).map(([name, data]: any) => ({
         name,
         status: data.sales > 0 ? 'Actif' : 'Prospect',
-        conv: Math.round((data.sales / data.visits) * 100),
+        conv: Math.round((data.sales / (data.visits || 1)) * 100),
         visits: data.visits,
         sales: data.sales,
         revenue: data.revenue,
@@ -330,7 +326,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
             <div className="flex items-end space-x-6 h-64 w-full pt-4">
               {stats.sortedCities.slice(0, 7).map(([city, count], idx) => {
                 const maxCount = Math.max(...stats.sortedCities.map(c => c[1]));
-                const heightPercent = (count / maxCount) * 100;
+                const heightPercent = (count / (maxCount || 1)) * 100;
                 return (
                   <div key={city} className="flex flex-col items-center justify-end flex-1 h-full group">
                     <div className="relative w-full max-w-[44px] flex flex-col justify-end h-full">
@@ -396,92 +392,82 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Efficacité par Territoire</h3>
-                <p className="text-xs text-slate-500 font-medium italic">Visites vs Commandes ({stats.isCustom ? 'Période personnalisée' : period})</p>
-              </div>
-              <div className="flex gap-2.5">
-                <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase tracking-widest border border-emerald-100">Client Actif</span>
-                <span className="px-2 py-1 bg-slate-50 text-slate-500 rounded text-[9px] font-black uppercase tracking-widest border border-slate-100">Prospect</span>
-              </div>
-            </div>
-            <div className="relative w-full h-[450px] overflow-y-auto pr-3 custom-scrollbar">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {/* --- SECTION: Efficacité par Territoire (Mise à jour: Plus fine/rallongée) --- */}
+        <div className="space-y-6">
+            <h3 className="font-bold text-slate-900 dark:text-white text-xl">Aperçu de la Performance</h3>
+            <p className="text-sm text-slate-500 -mt-4 font-medium">Suivez les indicateurs clés de vente par ville en temps réel.</p>
+            
+            <div className="space-y-3">
                 {stats.coverage.map((city) => (
-                  <div key={city.name} className="bg-slate-50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-400 transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl ${city.sales > 0 ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'bg-white dark:bg-slate-800 text-slate-400 shadow-sm'}`}>
-                          <MapIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-800 dark:text-white text-[14px] truncate max-w-[130px]">{city.name}</h4>
-                          <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded tracking-tighter ${city.status === 'Actif' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                            {city.status}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-sm font-black ${city.sales > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>{city.conv}%</span>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase">Conv.</p>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mb-5 shadow-inner">
-                      <div 
-                        className={`h-1.5 rounded-full transition-all duration-1000 ${city.sales > 0 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`} 
-                        style={{ width: `${city.conv}%` }}
-                      ></div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-slate-700/50 pt-4">
-                      <div className="text-center">
-                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Visites</p>
-                        <p className="font-bold text-slate-700 dark:text-slate-200 text-xs">{city.visits}</p>
-                      </div>
-                      <div className="text-center border-x border-slate-200 dark:border-slate-700/50">
-                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Ventes</p>
-                        <p className="font-bold text-slate-900 dark:text-white text-xs">{city.sales}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Montant</p>
-                        <p className="font-black text-emerald-600 dark:text-emerald-400 text-[10px] truncate">
-                          {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} DH
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                    <div key={city.name} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col relative group hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col md:flex-row items-center p-4 gap-4 md:gap-0">
+                            {/* Left: Icon & City Info */}
+                            <div className="flex items-center gap-4 w-full md:w-1/4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-500 flex-shrink-0">
+                                    <ClipboardDocumentListIcon className="w-5 h-5" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-xl font-semibold text-slate-800 dark:text-white tracking-tight">{city.name}</h4>
+                                    <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded uppercase tracking-wider">Actif</span>
+                                </div>
+                            </div>
 
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-6">Performance Régionale</h3>
-            <div className="space-y-5">
-              {stats.coverage.slice(0, 6).map((city, i) => (
-                <div key={city.name} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/20 border border-transparent hover:border-slate-100 transition-colors group">
-                  <div className="flex items-center gap-4">
-                    <div className={`flex items-center justify-center w-9 h-9 rounded-xl text-xs font-black shadow-sm ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-700'}`}>
-                      #{i + 1}
+                            {/* Center: Metrics Grid (Plus fin) */}
+                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full text-center md:text-left">
+                                {/* Visites */}
+                                <div className="md:px-6">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Visites</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.visits}</p>
+                                </div>
+                                
+                                {/* Ventes */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Ventes</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.sales}</p>
+                                </div>
+
+                                {/* Montant */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Montant</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">
+                                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} <span className="text-[10px] font-semibold text-slate-400">DH</span>
+                                    </p>
+                                </div>
+
+                                {/* Conversion */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Conversion</p>
+                                    <div className="flex items-baseline gap-1 justify-center md:justify-start">
+                                        <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{city.conv}%</p>
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase">Conv.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Bottom Decoration: Realistic Blue Progress Bar */}
+                        <div className="w-full bg-slate-50 dark:bg-slate-900 h-1 relative overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-1000 ease-out rounded-r-full shadow-[0_0_4px_rgba(59,130,246,0.3)]" 
+                                style={{ width: `${Math.min(city.conv, 100)}%` }} 
+                            />
+                        </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800 dark:text-white">{city.name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{city.visits} Visites • {city.sales} Ventes</p>
+                ))}
+                
+                {stats.coverage.length === 0 && (
+                    <div className="py-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-slate-400 italic font-medium">Aucune donnée disponible pour cette période.</p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-emerald-600">{city.contribution.toFixed(1)}%</p>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-tight">Part CA</p>
-                  </div>
-                </div>
-              ))}
-              {stats.coverage.length === 0 && (
-                  <div className="py-20 text-center opacity-30 italic text-sm">Données insuffisantes</div>
-              )}
+                )}
             </div>
-          </div>
+
+            {/* Footer Note */}
+            <div className="text-center py-4">
+                <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                    Dernière mise à jour : Aujourd'hui à {new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})} • Données basées sur la période sélectionnée
+                </p>
+            </div>
         </div>
       </div>
 
