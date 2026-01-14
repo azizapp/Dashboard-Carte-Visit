@@ -17,13 +17,15 @@ const api = {
   },
 
   async syncStores(mode: Mode): Promise<Store[]> {
+    // تم زيادة النطاق (range) لجلب حتى 10,000 سجل لضمان عدم ضياع أي بيانات
     const { data, error } = await supabase
       .from('visits')
       .select(`
         *,
         customers (*)
       `)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(0, 10000); 
 
     if (error) throw new Error(error.message || "Erreur de synchronisation avec Supabase");
 
@@ -110,7 +112,6 @@ const api = {
 
     if (cleaned.length === 0) throw new Error("Aucune donnée valide trouvée dans le fichier JSON.");
 
-    // محاولة الإدخال مع معالجة خطأ القيد الفريد
     const { error } = await supabase
       .from('customers')
       .upsert(cleaned, { onConflict: 'name,city' });

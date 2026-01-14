@@ -50,7 +50,7 @@ const AnalysisModal: React.FC<{ isOpen: boolean; onClose: () => void; content: s
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div className="p-8 max-h-[70vh] overflow-y-auto">
+                <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <SpinnerIcon className="w-12 h-12 text-indigo-600 animate-spin mb-6" />
@@ -84,7 +84,8 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
     const [transactionToDelete, setTransactionToDelete] = useState<Store | null>(null);
     const [transactionToEdit, setTransactionToEdit] = useState<Store | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const itemsPerPage = 12;
+    
+    const itemsPerPage = 20;
 
     const runAiAnalysis = async () => {
         setIsAnalyzing(true);
@@ -105,30 +106,22 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
         } finally { setIsAnalyzing(false); }
     };
 
-    const recentTransactions = useMemo(() => {
-        const now = new Date();
-        const tenDaysAgo = new Date();
-        tenDaysAgo.setDate(now.getDate() - 10);
-        tenDaysAgo.setHours(0, 0, 0, 0);
-
+    const processedTransactions = useMemo(() => {
         return stores.filter(t => {
-            const tDate = new Date(t['Date Heure'] || t.created_at || t.Date);
-            const isRecent = tDate >= tenDaysAgo;
-            
             const matchesSearch = searchQuery === '' || 
                 t.Magazin.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 t.Ville.toLowerCase().includes(searchQuery.toLowerCase());
             
             const matchesUser = selectedUser === 'all' || t.USER === selectedUser;
             
-            return isRecent && matchesSearch && matchesUser;
+            return matchesSearch && matchesUser;
         });
     }, [stores, searchQuery, selectedUser]);
 
     const sortedTransactions = useMemo(() => {
-        if (!sortConfig) return recentTransactions;
+        if (!sortConfig) return processedTransactions;
 
-        return [...recentTransactions].sort((a, b) => {
+        return [...processedTransactions].sort((a, b) => {
             let aV: any = sortConfig.key === 'Date' ? new Date(a['Date Heure'] || a.created_at || a.Date).getTime() : a[sortConfig.key as keyof Store];
             let bV: any = sortConfig.key === 'Date' ? new Date(b['Date Heure'] || b.created_at || b.Date).getTime() : b[sortConfig.key as keyof Store];
             
@@ -140,26 +133,47 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             const strB = String(bV || "");
             return sortConfig.direction === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
         });
-    }, [recentTransactions, sortConfig]);
+    }, [processedTransactions, sortConfig]);
 
     const stats = useMemo(() => {
-        const tSales = recentTransactions.reduce((acc, t) => acc + (Number(t.Prix) || 0), 0);
-        const tQty = recentTransactions.reduce((acc, t) => acc + (Number(t.Quantité) || 0), 0);
-        const buyT = recentTransactions.filter(t => t['Action Client']?.toLowerCase() === 'acheter').length;
+        const tSales = processedTransactions.reduce((acc, t) => acc + (Number(t.Prix) || 0), 0);
+        const tQty = processedTransactions.reduce((acc, t) => acc + (Number(t.Quantité) || 0), 0);
+        const buyT = processedTransactions.filter(t => t['Action Client']?.toLowerCase() === 'acheter').length;
         return { 
             totalSales: tSales, 
             totalQty: tQty, 
-            totalVisits: recentTransactions.length, 
-            conversionRate: recentTransactions.length > 0 ? (buyT / recentTransactions.length * 100) : 0 
+            totalVisits: processedTransactions.length, 
+            conversionRate: processedTransactions.length > 0 ? (buyT / processedTransactions.length * 100) : 0 
         };
-    }, [recentTransactions]);
-
-    const paginatedData = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return sortedTransactions.slice(start, start + itemsPerPage);
-    }, [sortedTransactions, currentPage]);
+    }, [processedTransactions]);
 
     const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedData = sortedTransactions.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    // وظيفة لحساب أرقام الصفحات المعروضة (نافذة عائمة) لضمان تجربة مستخدم مماثلة لصفحة Leads
+    const getVisiblePageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
 
     const handleSort = (key: keyof Store | 'Date') => {
         let direction: 'asc' | 'desc' = 'asc';
@@ -194,10 +208,10 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white">Registre des Transactions</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Registre des Transactions</h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                         <ClockIcon className="w-4 h-4 text-indigo-500" />
-                        Suivi des activités des <span className="font-bold text-slate-700 dark:text-slate-200 underline decoration-indigo-500 decoration-2">10 derniers jours</span>
+                        Historique complet de toutes les activités ({stores.length} enregistrements)
                     </p>
                 </div>
                 <button 
@@ -212,7 +226,7 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                     <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 flex-shrink-0 dark:bg-emerald-900/20"><CurrencyDollarIcon className="w-6 h-6" /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CA Récent</p><h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSales.toLocaleString()} DH</h3></div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CA Global</p><h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalSales.toLocaleString()} DH</h3></div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                     <div className="p-3 rounded-xl bg-blue-50 text-blue-600 flex-shrink-0 dark:bg-blue-900/20"><CubeIcon className="w-6 h-6" /></div>
@@ -220,7 +234,7 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                     <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0 dark:bg-indigo-900/20"><ClipboardDocumentListIcon className="w-6 h-6" /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Visites</p><h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalVisits.toLocaleString()}</h3></div>
+                    <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Transactions</p><h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalVisits.toLocaleString()}</h3></div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                     <div className="p-3 rounded-xl bg-amber-50 text-amber-600 flex-shrink-0 dark:bg-amber-900/20"><ArrowTrendingUpIcon className="w-6 h-6" /></div>
@@ -238,20 +252,26 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                                 placeholder="Rechercher (Client, Ville...)" 
                                 className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                         </div>
                         <select 
                             className="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                             value={selectedUser}
-                            onChange={(e) => setSelectedUser(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedUser(e.target.value);
+                                setCurrentPage(1);
+                            }}
                         >
                             <option value="all">Tous les vendeurs</option>
                             {uniqueUsers.map(u => <option key={u} value={u}>{u.split('@')[0]}</option>)}
                         </select>
                     </div>
                     <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">
-                        {sortedTransactions.length} résultats récents
+                        {sortedTransactions.length.toLocaleString()} résultats trouvés
                     </div>
                 </div>
 
@@ -341,8 +361,7 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                                     <td colSpan={7} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center">
                                             <ClipboardDocumentListIcon className="w-12 h-12 text-slate-200 mb-4" />
-                                            <p className="text-slate-500 font-bold">Aucune transaction trouvée pour ces 10 jours</p>
-                                            <p className="text-xs text-slate-400 mt-1">Les nouvelles transactions s'afficheront ici automatiquement.</p>
+                                            <p className="text-slate-500 font-bold">Aucune transaction trouvée</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -351,23 +370,61 @@ const AdminTransactionsPage: React.FC<AdminTransactionsPageProps> = ({ stores, o
                     </table>
                 </div>
 
+                {/* Pagination Container - تم التحديث ليطابق الصورة المطلوبة */}
                 {totalPages > 1 && (
-                    <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/30 flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-400">Page {currentPage} sur {totalPages}</span>
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg gap-4">
+                        {/* Left Side: Records Info */}
+                        <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                            Affichage de <span className="font-bold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-bold text-slate-900 dark:text-white">{Math.min(endIndex, sortedTransactions.length)}</span> sur <span className="font-bold text-slate-900 dark:text-white">{sortedTransactions.length}</span> résultats
+                        </div>
+
+                        {/* Right Side: Page Controls */}
+                        <div className="flex items-center space-x-1">
+                            {/* Previous Arrow */}
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className="p-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className={`p-2 rounded-lg border border-slate-200 dark:border-slate-700 transition-all ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                             >
-                                <ChevronLeftIcon className="w-4 h-4" />
+                                <ChevronLeftIcon className="w-5 h-5" />
                             </button>
-                            <button 
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            
+                            {/* Dynamic Page Numbers */}
+                            <div className="flex space-x-1">
+                                {getVisiblePageNumbers().map((pageNum) => (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => handlePageChange(pageNum)}
+                                        className={`min-w-[40px] h-10 px-3 py-1 text-sm font-bold rounded-lg border transition-all ${
+                                            currentPage === pageNum 
+                                            ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/40' 
+                                            : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
+                                
+                                {totalPages > 5 && !getVisiblePageNumbers().includes(totalPages) && (
+                                    <>
+                                        <span className="px-2 py-2 text-slate-400">...</span>
+                                        <button
+                                            onClick={() => handlePageChange(totalPages)}
+                                            className={`min-w-[40px] h-10 px-3 py-1 text-sm font-bold rounded-lg border bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50`}
+                                        >
+                                            {totalPages}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Next Arrow */}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages}
-                                className="p-2 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className={`p-2 rounded-lg border border-slate-200 dark:border-slate-700 transition-all ${currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                             >
-                                <ChevronRightIcon className="w-4 h-4" />
+                                <ChevronRightIcon className="w-5 h-5" />
                             </button>
                         </div>
                     </div>

@@ -1,3 +1,4 @@
+
 import { Store } from '../types.ts';
 import EditIcon from './icons/EditIcon.tsx';
 import DeleteIcon from './icons/DeleteIcon.tsx';
@@ -79,7 +80,26 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
   const currentStores = sortedStores.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (page >= 1 && page <= totalPages) {
+        setCurrentPage(page);
+    }
+  };
+
+  // وظيفة لحساب أرقام الصفحات المعروضة (نافذة عائمة)
+  const getVisiblePageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
 
   const handleSort = (key: string) => {
@@ -264,41 +284,61 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
         </tfoot>
       </table>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg">
+      {/* Pagination Container - تحديث ليتطابق مع الصورة */}
+      <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg gap-4">
+        {/* Left Side: Records Info */}
         <div className="text-sm text-slate-500 dark:text-slate-400">
-          Affichage de <span className="font-semibold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-semibold text-slate-900 dark:text-white">{Math.min(endIndex, stores.length)}</span> sur <span className="font-semibold text-slate-900 dark:text-white">{stores.length}</span> résultats
+          Affichage de <span className="font-bold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-bold text-slate-900 dark:text-white">{Math.min(endIndex, stores.length)}</span> sur <span className="font-bold text-slate-900 dark:text-white">{stores.length}</span> résultats
         </div>
-        <div className="flex items-center space-x-2">
+
+        {/* Right Side: Page Controls */}
+        <div className="flex items-center space-x-1">
+          {/* Previous Arrow */}
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`p-2 rounded-md border ${currentPage === 1 ? 'border-slate-200 text-slate-300 cursor-not-allowed dark:border-slate-700 dark:text-slate-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded-lg border border-slate-200 dark:border-slate-700 transition-all ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
           >
-            <ChevronLeftIcon className="w-4 h-4" />
+            <ChevronLeftIcon className="w-5 h-5" />
           </button>
           
+          {/* Dynamic Page Numbers */}
           <div className="flex space-x-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
+            {getVisiblePageNumbers().map((pageNum) => (
+                <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`min-w-[40px] h-10 px-3 py-1 text-sm font-bold rounded-lg border transition-all ${
+                        currentPage === pageNum 
+                        ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/40' 
+                        : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                >
+                    {pageNum}
+                </button>
+            ))}
+            
+            {/* Show ellipsis and last page if far enough */}
+            {totalPages > 5 && !getVisiblePageNumbers().includes(totalPages) && (
+                <>
+                    <span className="px-2 py-2 text-slate-400">...</span>
                     <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-1 text-sm font-medium rounded-md border ${currentPage === pageNum ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-400' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'}`}
+                        onClick={() => handlePageChange(totalPages)}
+                        className={`min-w-[40px] h-10 px-3 py-1 text-sm font-bold rounded-lg border bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50`}
                     >
-                        {pageNum}
+                        {totalPages}
                     </button>
-                );
-            })}
+                </>
+            )}
           </div>
 
+          {/* Next Arrow */}
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
-            className={`p-2 rounded-md border ${currentPage === totalPages || totalPages === 0 ? 'border-slate-200 text-slate-300 cursor-not-allowed dark:border-slate-700 dark:text-slate-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded-lg border border-slate-200 dark:border-slate-700 transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
           >
-            <ChevronRightIcon className="w-4 h-4" />
+            <ChevronRightIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
