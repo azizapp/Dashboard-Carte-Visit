@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Store, Mode, Customer } from '../types.ts';
 import XMarkIcon from './icons/XMarkIcon.tsx';
@@ -49,6 +50,10 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
     const [isCoordonneesOpen, setIsCoordonneesOpen] = useState(false);
 
     const stats = useMemo(() => {
+        const now = new Date();
+        const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+
         const totalVisits = history.length;
         const buyActions = history.filter(h => h['Action Client']?.toLowerCase().includes('acheter'));
         const buyCount = buyActions.length;
@@ -75,29 +80,40 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
             else if (method.includes('physique')) physicsCount++;
         });
 
-        const now = new Date();
-        const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
-        const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-
-        // حساب نوع الزبون
+        // حساب تواريخ الشراء بناءً على created_at (Date Heure)
         const orders = history.filter(i => i['Action Client']?.toLowerCase() === 'acheter');
-        const latestOrder = orders.length > 0 ? orders.sort((a, b) => new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime())[0] : null;
-        const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.Date) : null;
+        const sortedOrders = [...orders].sort((a, b) => {
+            const dateA = new Date(a['Date Heure'] || a.created_at || a.Date).getTime();
+            const dateB = new Date(b['Date Heure'] || b.created_at || b.Date).getTime();
+            return dateA - dateB;
+        });
         
-        const ordersLast180Days = orders.filter(i => new Date(i['Date Heure'] || i.Date) >= hundredEightyDaysAgo);
+        const firstOrder = sortedOrders[0];
+        const latestOrder = sortedOrders[sortedOrders.length - 1];
+        
+        const firstOrderDate = firstOrder ? new Date(firstOrder['Date Heure'] || firstOrder.created_at || firstOrder.Date) : null;
+        const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.created_at || latestOrder.Date) : null;
+        
+        const ordersLast180Days = orders.filter(i => {
+            const d = new Date(i['Date Heure'] || i.created_at || i.Date);
+            return d >= hundredEightyDaysAgo;
+        });
         const totalRevenueYear = orders
-            .filter(i => new Date(i['Date Heure'] || i.Date) >= oneYearAgo)
+            .filter(i => {
+                const d = new Date(i['Date Heure'] || i.created_at || i.Date);
+                return d >= oneYearAgo;
+            })
             .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
 
         let type = 'Lead';
         if (store.is_blocked) {
             type = 'Client Bloqué';
         } else if (totalRevenueYear >= 40000) {
-            type = 'Client Stratégique';
+            type = 'Compte Stratégique';
         } else if (ordersLast180Days.length >= 2) {
             type = 'Client Actif';
         } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
-            type = 'Client Perdu';
+            type = 'Client Inactif';
         } else if (orders.length === 1) {
             type = 'Nouveau Client';
         }
@@ -121,9 +137,38 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
             physicsCount,
             contactHistory,
             clientType: type,
-            nextAppt: nextAppt ? nextAppt.toLocaleString('fr-FR') : 'Aucun'
+            firstOrderDate,
+            latestOrderDate,
+            nextAppt: apptDateString(nextAppt)
         };
     }, [history, store.is_blocked]);
+
+    function apptDateString(date?: Date) {
+        if (!date) return 'Aucun';
+        return date.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    const formatVisitDate = (h: Store) => {
+        const timestamp = h['Date Heure'] || h.created_at;
+        if (!timestamp) return h.Date;
+        
+        const dateObj = new Date(timestamp);
+        if (isNaN(dateObj.getTime())) return h.Date;
+
+        return dateObj.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).replace(':', 'h').replace(' ', ' à ');
+    };
 
     const handleSaveAppointment = (customer: Customer, date: string, note: string, userEmail: string, action: string) => {
         const newStore: Store = {
@@ -197,7 +242,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
 
     return (
         <div className="flex flex-col h-full bg-[#F7F8FA] dark:bg-slate-900 font-sans overflow-hidden">
-            {/* Header */}
             <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -211,7 +255,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                             <span>/</span>
                             <span>Détails du Lead</span>
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Détails du Lead</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{store.Magazin}</h1>
                         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                             <span>ID: {displayId}</span>
                             <span>•</span>
@@ -236,11 +280,8 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                 </div>
             </header>
 
-            {/* Main Section */}
             <main className="p-6 overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    {/* Column 1: Contact Info Card */}
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-6">
@@ -344,7 +385,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                         </div>
                     </div>
 
-                    {/* Column 2: Interaction History Timeline */}
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 h-full">
                             <div className="flex items-center justify-between mb-6">
@@ -354,7 +394,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     </div>
                                     <div>
                                         <h2 className="font-bold text-slate-900 dark:text-white">Historique des Interactions</h2>
-                                        <p className="text-xs text-slate-500">Chronologie des échanges et activités</p>
+                                        <p className="text-xs text-slate-500">Chronologie des échanges (created_at)</p>
                                     </div>
                                 </div>
                             </div>
@@ -365,7 +405,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{h['Action Client'] || 'Visite'}</h4>
-                                                <p className="text-xs text-slate-500 mt-0.5">Par {h.USER?.split('@')[0]} • {h.created_at ? new Date(h.created_at).toLocaleString('fr-FR') : h.Date}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">Par {h.USER?.split('@')[0]} • {formatVisitDate(h)}</p>
                                             </div>
                                         </div>
                                         
@@ -401,17 +441,15 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                         </div>
                     </div>
 
-                    {/* Column 3: Stats & Classification */}
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                     <TagIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                                 </div>
-                                hide-scrollbar
                                 <div>
                                     <h2 className="font-bold text-slate-900 dark:text-white">Classification du Lead</h2>
-                                    <p className="text-xs text-slate-500">Catégorisation</p>
+                                    <p className="text-xs text-slate-500">Catégorisation و تتبع المشتريات</p>
                                 </div>
                             </div>
                             <div className="space-y-4">
@@ -422,20 +460,34 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-1">Statut Client</label>
                                     <div className={`w-full text-sm border border-slate-200 dark:border-slate-600 rounded-md px-3 py-2 font-bold ${
-                                        stats.clientType === 'Client Bloqué' ? 'bg-red-50 text-red-600' :
-                                        stats.clientType === 'Client Stratégique' ? 'bg-purple-50 text-purple-600' :
-                                        stats.clientType === 'Client Actif' ? 'bg-emerald-50 text-emerald-600' :
-                                        stats.clientType === 'Client Perdu' ? 'bg-orange-50 text-orange-600' :
-                                        stats.clientType === 'Nouveau Client' ? 'bg-blue-50 text-blue-600' :
+                                        stats.clientType === 'Client Bloqué' ? 'bg-red-50 text-red-600 border-red-100' :
+                                        stats.clientType === 'Compte Stratégique' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                        stats.clientType === 'Client Actif' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                        stats.clientType === 'Client Inactif' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                        stats.clientType === 'Nouveau Client' ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                         'bg-slate-50 text-slate-600'
                                     }`}>
                                         {stats.clientType}
                                     </div>
                                 </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Premier Achat</label>
+                                        <div className="w-full text-xs border border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700/50 px-3 py-2 font-bold text-slate-700 dark:text-slate-200">
+                                            {stats.firstOrderDate ? stats.firstOrderDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Aucun'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Dernier Achat</label>
+                                        <div className="w-full text-xs border border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-700/50 px-3 py-2 font-bold text-slate-700 dark:text-slate-200">
+                                            {stats.latestOrderDate ? stats.latestOrderDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Aucun'}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Aperçu Rapide - القائمة المنسدلة */}
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
                             <button 
                                 onClick={() => setIsApercuOpen(!isApercuOpen)}
@@ -458,7 +510,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                     <div className="flex justify-between">
                                         <span className="text-slate-500">Priorité (Calc.)</span>
                                         <span className={`font-medium px-2 py-0.5 rounded text-xs ${stats.buyCount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-green-100 text-green-700'}`}>
-                                            {stats.buyCount > 0 ? 'Élevée' : 'Faible'}
+                                            {stats.buyCount > 0 ? 'Élevée' : 'Normale'}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -487,15 +539,10 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                         <span className="text-slate-500">Actions "Acheter"</span>
                                         <span className="font-medium text-green-600">{stats.buyCount}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500">Nb. Transactions</span>
-                                        <span className="font-medium text-slate-800 dark:text-white">{stats.buyCount}</span>
-                                    </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Journal des Contacts - القائمة المنسدلة */}
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
                             <button 
                                 onClick={() => setIsContactsOpen(!isContactsOpen)}
@@ -546,7 +593,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                             )}
                         </div>
 
-                        {/* سجل الشراء - مطوي افتراضياً */}
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
                             <button 
                                 onClick={() => setIsPurchaseHistoryOpen(!isPurchaseHistoryOpen)}
@@ -610,7 +656,6 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                             )}
                         </div>
 
-                        {/* Coordonnées & Actions - القائمة المنسدلة الجديدة */}
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700 transition-all duration-300">
                             <button 
                                 onClick={() => setIsCoordonneesOpen(!isCoordonneesOpen)}

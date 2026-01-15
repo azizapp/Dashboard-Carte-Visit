@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Store } from '../types.ts';
 import SearchIcon from './icons/SearchIcon.tsx';
@@ -52,7 +53,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
     const [selectedVille, setSelectedVille] = useState('');
     const [selectedGamme, setSelectedGamme] = useState('');
     const [selectedUser, setSelectedUser] = useState('');
-    const [selectedActionClient, setSelectedActionClient] = useState('');
+    const [selectedClientStatus, setSelectedClientStatus] = useState('');
     const [isPrioritizationModalOpen, setIsPrioritizationModalOpen] = useState(false);
 
     const accessibleStores = useMemo(() => {
@@ -63,24 +64,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
         const villes = new Set<string>();
         const gammes = new Set<string>();
         const users = new Set<string>();
-        const actions = new Set<string>();
 
         accessibleStores.forEach(store => {
             if (store.Ville) villes.add(store.Ville);
             if (store.Gamme) gammes.add(store.Gamme);
             if (store.USER) users.add(store.USER);
-            if (store['Action Client']) actions.add(store['Action Client']);
         });
 
         return {
             villes: Array.from(villes).sort(),
             gammes: Array.from(gammes).sort(),
             users: Array.from(users).sort(),
-            actions: Array.from(actions).sort(),
+            statuses: [
+                'Nouveau Client',
+                'Client Actif',
+                'Client Bloqué',
+                'Client Inactif',
+                'Compte Stratégique',
+                'Lead'
+            ]
         };
     }, [accessibleStores]);
 
-    const filteredStores = useMemo(() => {
+    const filteredBaseStores = useMemo(() => {
         return accessibleStores.filter(store => {
             const matchesSearch = searchQuery === '' ||
                 Object.values(store).some(val =>
@@ -90,11 +96,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
             const matchesVille = selectedVille === '' || store.Ville === selectedVille;
             const matchesGamme = selectedGamme === '' || store.Gamme === selectedGamme;
             const matchesUser = selectedUser === '' || store.USER === selectedUser;
-            const matchesAction = selectedActionClient === '' || store['Action Client'] === selectedActionClient;
 
-            return matchesSearch && matchesVille && matchesGamme && matchesUser && matchesAction;
+            return matchesSearch && matchesVille && matchesGamme && matchesUser;
         });
-    }, [accessibleStores, searchQuery, selectedVille, selectedGamme, selectedUser, selectedActionClient]);
+    }, [accessibleStores, searchQuery, selectedVille, selectedGamme, selectedUser]);
 
     const uniqueDisplayStores = useMemo(() => {
         const map = new Map<string, Store & { clientType?: string }>();
@@ -109,7 +114,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
             storeGroups.get(key)!.push(s);
         });
 
-        filteredStores.forEach(store => {
+        filteredBaseStores.forEach(store => {
             if (!store.Magazin) return;
             const key = store.Magazin.trim().toLowerCase();
             const existing = map.get(key);
@@ -128,18 +133,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                 .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
 
             let type = 'Lead';
-            // التحقق أولاً من خاصية الحظر الدائمة
             if (store.is_blocked) {
                 type = 'Client Bloqué';
             } else if (totalRevenueYear >= 40000) {
-                type = 'Client Stratégique';
+                type = 'Compte Stratégique';
             } else if (ordersLast180Days.length >= 2) {
                 type = 'Client Actif';
             } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
-                type = 'Client Perdu';
+                type = 'Client Inactif';
             } else if (orders.length === 1) {
                 type = 'Nouveau Client';
             }
+
+            // Apply Status Filter
+            if (selectedClientStatus !== '' && type !== selectedClientStatus) return;
 
             if (!existing) {
                 map.set(key, { ...store, Prix: currentPrix, Quantité: currentQty, clientType: type });
@@ -160,7 +167,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
         });
 
         return Array.from(map.values());
-    }, [filteredStores, accessibleStores]);
+    }, [filteredBaseStores, accessibleStores, selectedClientStatus]);
 
     const stats = useMemo(() => {
         const uniqueMagazins = new Set(accessibleStores.map(s => s.Magazin.trim().toLowerCase())).size;
@@ -199,14 +206,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
         setSelectedVille('');
         setSelectedGamme('');
         setSelectedUser('');
-        setSelectedActionClient('');
+        setSelectedClientStatus('');
     };
 
     const exportToExcel = () => {
-        if (filteredStores.length === 0) return;
-        const headers = ['ID Visite', 'Date Visite', 'Magazin', 'Le Gérant', 'GSM 1', 'Ville', 'Gamme', 'Action', 'Prix', 'Quantité', 'USER'];
-        const csvRows = filteredStores.map(store => {
-            const row = [store.ID, store.Date, store.Magazin, store['Le Gérant'], store.GSM1, store.Ville, store.Gamme, store['Action Client'], store.Prix, store.Quantité, store.USER];
+        if (uniqueDisplayStores.length === 0) return;
+        const headers = ['Client', 'Le Gérant', 'GSM 1', 'Ville', 'Statut Client', 'Gamme', 'Total Prix', 'Total Quantité'];
+        const csvRows = uniqueDisplayStores.map(store => {
+            const row = [store.Magazin, store['Le Gérant'], store.GSM1, store.Ville, store.clientType, store.Gamme, store.Prix, store.Quantité];
             return row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
         });
         const csvContent = [headers.join(','), ...csvRows].join('\n');
@@ -214,7 +221,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `export_apollo_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `export_clients_apollo_${new Date().toISOString().split('T')[0]}.csv`);
         link.click();
     };
 
@@ -223,7 +230,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Gestion des Leads</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Créez et suivez vos prospects à travers le Maroc. Filtrez, organisez et planifiez vos actions commerciales.</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Créeز et suivez vos prospects à travers le Maroc. Filtrez par statut, gamme et ville.</p>
                 </div>
                 <button
                     onClick={() => setIsPrioritizationModalOpen(true)}
@@ -286,7 +293,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedVille(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-900 dark:text-white"
                     >
-                        <option value="">Villes</option>
+                        <option value="">Toutes les Villes</option>
                         {filterOptions.villes.map(v => <option key={v} value={v}>{v}</option>)}
                     </select>
                     <select
@@ -294,7 +301,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedGamme(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-900 dark:text-white"
                     >
-                        <option value="">Gammes</option>
+                        <option value="">Toutes les Gammes</option>
                         {filterOptions.gammes.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                     <select
@@ -302,16 +309,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         onChange={(e) => setSelectedUser(e.target.value)}
                         className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-900 dark:text-white"
                     >
-                        <option value="">Utilisateurs</option>
+                        <option value="">Tous les Utilisateurs</option>
                         {filterOptions.users.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                     <select
-                        value={selectedActionClient}
-                        onChange={(e) => setSelectedActionClient(e.target.value)}
-                        className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-900 dark:text-white"
+                        value={selectedClientStatus}
+                        onChange={(e) => setSelectedClientStatus(e.target.value)}
+                        className="w-full rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm sm:text-sm border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-slate-900 dark:text-white font-bold"
                     >
-                        <option value="">Actions Client</option>
-                        {filterOptions.actions.map(a => <option key={a} value={a}>{a}</option>)}
+                        <option value="">Statut Client (Tous)</option>
+                        {filterOptions.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                 <div className="flex justify-end">
@@ -324,10 +331,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex wrap items-center justify-between gap-4">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                    <span className="font-bold text-slate-800 dark:text-white">{uniqueDisplayStores.length}</span> Clients Uniques
-                    <span className="text-xs ml-1 text-slate-400">(sur {stats.totalInteractions} interactions)</span>
+                    <span className="font-bold text-slate-800 dark:text-white">{uniqueDisplayStores.length}</span> Clients Uniques Filtrés
                 </p>
                 <div className="flex items-center gap-2">
                     <button
@@ -335,12 +341,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ stores, authenticatedUser
                         className="p-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
                     >
                         <ExportExcelIcon /> Export Excel
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="p-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-                    >
-                        <PdfIcon /> PDF
                     </button>
                 </div>
             </div>

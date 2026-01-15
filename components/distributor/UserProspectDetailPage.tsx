@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Store } from '../../types.ts';
 import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
@@ -21,7 +22,7 @@ const ArrowLeftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
     </svg>
 );
@@ -46,12 +47,11 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
     const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null);
 
     const stats = useMemo(() => {
-        const totalVisits = history.length;
-        
         const now = new Date();
         const hundredEightyDaysAgo = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
         const oneYearAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
 
+        const totalVisits = history.length;
         const orders = history.filter(i => i['Action Client']?.toLowerCase() === 'acheter');
         const latestOrder = orders.length > 0 ? orders.sort((a, b) => new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime())[0] : null;
         const latestOrderDate = latestOrder ? new Date(latestOrder['Date Heure'] || latestOrder.Date) : null;
@@ -61,15 +61,16 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
             .filter(i => new Date(i['Date Heure'] || i.Date) >= oneYearAgo)
             .reduce((sum, i) => sum + (Number(i.Prix) || 0), 0);
 
+        // --- القواعد الجديدة للتقييم ---
         let type = 'Lead';
         if (store.is_blocked) {
             type = 'Client Bloqué';
         } else if (totalRevenueYear >= 40000) {
-            type = 'Client Stratégique';
+            type = 'Compte Stratégique';
         } else if (ordersLast180Days.length >= 2) {
             type = 'Client Actif';
         } else if (latestOrderDate && latestOrderDate < hundredEightyDaysAgo) {
-            type = 'Client Perdu';
+            type = 'Client Inactif';
         } else if (orders.length === 1) {
             type = 'Nouveau Client';
         }
@@ -120,20 +121,19 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                             <TagIcon className="w-3.5 h-3.5" /> {store.Gamme || 'Haute et Moyenne'}
                         </span>
                         
-                        {/* Statut Client Badge */}
                         <span className={`px-3 py-1.5 rounded text-[11px] font-bold border flex items-center gap-1.5 ${
                             stats.clientType === 'Client Bloqué' ? 'bg-red-50 text-red-600 border-red-100' :
-                            stats.clientType === 'Client Stratégique' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                            stats.clientType === 'Compte Stratégique' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                             stats.clientType === 'Client Actif' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                            stats.clientType === 'Client Perdu' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                            stats.clientType === 'Client Inactif' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                             stats.clientType === 'Nouveau Client' ? 'bg-blue-50 text-blue-600 border-blue-100' :
                             'bg-slate-50 text-slate-600 border-slate-100'
                         }`}>
                             <div className={`w-1.5 h-1.5 rounded-full ${
                                 stats.clientType === 'Client Bloqué' ? 'bg-red-500' :
-                                stats.clientType === 'Client Stratégique' ? 'bg-purple-500' :
+                                stats.clientType === 'Compte Stratégique' ? 'bg-purple-500' :
                                 stats.clientType === 'Client Actif' ? 'bg-emerald-500' :
-                                stats.clientType === 'Client Perdu' ? 'bg-orange-500' :
+                                stats.clientType === 'Client Inactif' ? 'bg-orange-500' :
                                 stats.clientType === 'Nouveau Client' ? 'bg-blue-500' :
                                 'bg-slate-400'
                             }`}></div>

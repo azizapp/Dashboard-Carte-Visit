@@ -85,7 +85,6 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
     }
   };
 
-  // وظيفة لحساب أرقام الصفحات المعروضة (نافذة عائمة)
   const getVisiblePageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -135,14 +134,14 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
 
   const getClientTypeBadge = (type?: string) => {
     switch (type) {
-      case 'Client Stratégique':
+      case 'Compte Stratégique':
         return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200">Stratégique</span>;
       case 'Client Actif':
         return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200">Actif</span>;
       case 'Nouveau Client':
         return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200">Nouveau</span>;
-      case 'Client Perdu':
-        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200">Perdu</span>;
+      case 'Client Inactif':
+        return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200">Inactif</span>;
       case 'Client Bloqué':
         return <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200">Bloqué</span>;
       default:
@@ -284,16 +283,12 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
         </tfoot>
       </table>
 
-      {/* Pagination Container - تحديث ليتطابق مع الصورة */}
       <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-lg gap-4">
-        {/* Left Side: Records Info */}
         <div className="text-sm text-slate-500 dark:text-slate-400">
           Affichage de <span className="font-bold text-slate-900 dark:text-white">{startIndex + 1}</span> à <span className="font-bold text-slate-900 dark:text-white">{Math.min(endIndex, stores.length)}</span> sur <span className="font-bold text-slate-900 dark:text-white">{stores.length}</span> résultats
         </div>
 
-        {/* Right Side: Page Controls */}
         <div className="flex items-center space-x-1">
-          {/* Previous Arrow */}
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -302,7 +297,6 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
             <ChevronLeftIcon className="w-5 h-5" />
           </button>
           
-          {/* Dynamic Page Numbers */}
           <div className="flex space-x-1">
             {getVisiblePageNumbers().map((pageNum) => (
                 <button
@@ -318,7 +312,6 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
                 </button>
             ))}
             
-            {/* Show ellipsis and last page if far enough */}
             {totalPages > 5 && !getVisiblePageNumbers().includes(totalPages) && (
                 <>
                     <span className="px-2 py-2 text-slate-400">...</span>
@@ -332,7 +325,6 @@ const StoreTable: React.FC<StoreTableProps> = ({ stores, onViewDetails, onEdit, 
             )}
           </div>
 
-          {/* Next Arrow */}
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
