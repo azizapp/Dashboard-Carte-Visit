@@ -1,359 +1,340 @@
-
 import React, { useState, useMemo } from 'react';
 import { Store } from '../types.ts';
-import ChartBarIcon from './icons/ChartBarIcon.tsx';
-import ChevronDownIcon from './icons/ChevronDownIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
-import TargetIcon from './icons/TargetIcon.tsx';
 import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
 import MapIcon from './icons/MapIcon.tsx';
 import UsersIcon from './icons/UsersIcon.tsx';
-import ArrowTrendingUpIcon from './icons/ArrowTrendingUpIcon.tsx';
+import BellIcon from './icons/BellIcon.tsx';
+import ClockIcon from './icons/ClockIcon.tsx';
 
-const LockIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-  </svg>
-);
-
-const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
-  </svg>
-);
-
-interface CommissionsPageProps {
-    stores: Store[];
-}
-
-const KPICard = ({ title, value, subtext, icon, trend, iconBg, iconColor }: any) => (
-    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:shadow-md">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-lg ${iconBg} ${iconColor}`}>
-                {icon}
-            </div>
-            {trend && (
-                <div className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                    <ArrowTrendingUpIcon className="w-3 h-3" />
-                    {trend}
-                </div>
-            )}
-        </div>
-        <div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 uppercase tracking-wide">{title}</p>
-            <p className="text-xs text-slate-400 mt-1">{subtext}</p>
-        </div>
+// --- StatCard: بطاقة إحصاء بنصوص صغيرة وأوزان خفيفة ---
+const StatCard = ({ title, value, sub, icon: Icon, iconBg }: any) => (
+  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
+    <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center`}>
+      <Icon className="w-4 h-4 text-current" />
     </div>
+    <div className="space-y-0.5">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">{value}</h3>
+      <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">{title}</p>
+      <p className="text-[10px] text-slate-400 font-normal italic">{sub}</p>
+    </div>
+  </div>
 );
 
-const CommissionProgressBar = ({ current, max = 2100 }: { current: number, max?: number }) => {
-    const thresholds = [
-        { val: 0, pos: 0 },
-        { val: 700, pos: 33.33 },
-        { val: 1000, pos: 47.61 },
-        { val: 1400, pos: 66.66 },
-        { val: 2100, pos: 100 }
-    ];
-    
-    const markerPosition = Math.min((current / max) * 100, 100);
+// --- CommissionLevelBar: بطاقة البائع بمستويات واقعية (0-2000 مبيعة) ---
+const CommissionLevelBar: React.FC<{ user: string; currentSales: number; revenue: number }> = ({ user, currentSales, revenue }) => {
+  const levels = [0, 700, 1000, 1500, 2000];
+  const max = 2000;
+  const progressPercent = Math.min((currentSales / max) * 100, 100);
+  
+  const getLevelLabel = (sales: number) => {
+    if (sales >= 2000) return "Élite Diamant";
+    if (sales >= 1501) return "Sénior Expert";
+    if (sales >= 1001) return "Confirmé Plus";
+    if (sales >= 701) return "Intermédiaire";
+    return ""; 
+  };
 
-    return (
-        <div className="relative mt-8 mb-6">
-            <div className="relative h-6 mb-2">
-                <span className="absolute left-0 text-[10px] font-bold text-slate-500">Level 1</span>
-                <span className="absolute left-[33%] text-[10px] font-bold text-slate-500 -translate-x-1/2">Lvl 2</span>
-                <span className="absolute left-[47%] text-[10px] font-bold text-slate-500 -translate-x-1/2">Lvl 3</span>
-                <span className="absolute right-0 text-[10px] font-bold text-slate-400">Level 4</span>
-            </div>
+  const levelLabel = getLevelLabel(currentSales);
+  const nextLevel = levels.find(l => l > currentSales) || max;
+  const remaining = nextLevel - currentSales;
 
-            <div className="h-2 w-full bg-slate-200 dark:bg-slate-700/50 rounded-full flex overflow-hidden">
-                <div style={{ width: '33.33%' }} className="h-full border-r border-white/10 dark:border-slate-900/30"></div>
-                <div style={{ width: '14.28%' }} className="h-full border-r border-white/10 dark:border-slate-900/30"></div>
-                <div style={{ width: '19.05%' }} className="h-full border-r border-white/10 dark:border-slate-900/30"></div>
-                <div style={{ width: '33.34%' }} className="h-full"></div>
-            </div>
-
-            <div 
-                className="absolute top-[32px] left-0 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] transition-all duration-1000"
-                style={{ width: `${markerPosition}%` }}
-            >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-blue-500 z-10"></div>
-            </div>
-
-            <div className="relative h-4 mt-2">
-                {thresholds.map((t, i) => (
-                    <span 
-                        key={i} 
-                        className={`absolute text-[10px] font-bold text-slate-400 -translate-x-1/2`}
-                        style={{ left: `${t.pos}%` }}
-                    >
-                        {t.val}
-                    </span>
-                ))}
-            </div>
+  return (
+    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4 hover:border-accent transition-colors group">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center text-slate-400 font-semibold text-sm">
+            {user.substring(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white group-hover:text-accent transition-colors">{user}</h3>
+            {levelLabel && (
+                <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[8px] font-bold uppercase rounded border border-indigo-100 dark:border-indigo-800/50">
+                    {levelLabel}
+                </span>
+            )}
+          </div>
         </div>
-    );
+        <div className="text-right">
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{revenue.toLocaleString()} DH</h4>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{currentSales} Pièces Vendues / {max}</p>
+        </div>
+      </div>
+
+      <div className="relative pt-2 pb-1">
+        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full relative">
+          <div 
+            className="absolute top-0 left-0 h-full bg-accent rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(79,70,229,0.3)]"
+            style={{ width: `${progressPercent}%` }}
+          />
+          {levels.map((v, i) => (
+             <div 
+                key={i} 
+                className="absolute top-1/2 -translate-y-1/2 w-1 h-1 bg-white dark:bg-slate-900 rounded-full z-10 opacity-30"
+                style={{ left: `${(v/max)*100}%` }}
+             />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2.5 text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
+          <span>Start</span>
+          <span>700</span>
+          <span>1000</span>
+          <span>1500</span>
+          <span>Max 2000</span>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center border-t border-slate-50 dark:border-slate-700 pt-3">
+        <span className="text-[9px] font-medium text-slate-400 italic">Basé sur le volume de ventes réel</span>
+        <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+          {remaining > 0 ? `${remaining} pièces pour progresser` : 'Objectif Final Atteint'}
+          <ClockIcon className="w-2 h-2" />
+        </p>
+      </div>
+    </div>
+  );
 };
 
-const CommissionsPage: React.FC<CommissionsPageProps> = ({ stores = [] }) => {
-    const [selectedUser, setSelectedUser] = useState<string>('Tous les vendeurs');
-    const [period, setPeriod] = useState<string>('Ce mois-ci');
-    const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
+  const [selectedUser, setSelectedUser] = useState('all');
+  const [selectedCity, setSelectedCity] = useState('all');
+  // تم تغيير الحالة الافتراضية إلى 'month' (هذا الشهر) بناءً على الطلب
+  const [period, setPeriod] = useState('month');
 
-    const uniqueUsers = useMemo(() => {
-        const users = new Set<string>();
-        stores.forEach(s => { if (s.USER) users.add(s.USER); });
-        return Array.from(users).sort();
-    }, [stores]);
+  const uniqueUsers = useMemo(() => Array.from(new Set(stores.map(s => s.USER))).filter(Boolean).sort(), [stores]);
+  const uniqueCities = useMemo(() => Array.from(new Set(stores.map(s => s.Ville))).filter(Boolean).sort(), [stores]);
 
-    const parseWritingDate = (s: Store) => {
-        const dStr = s['Date Heure'] || s.Date;
-        if (!dStr) return null;
-        const d = new Date(dStr);
-        if (!isNaN(d.getTime())) return d;
-        return null;
-    };
+  const stats = useMemo(() => {
+    const now = new Date();
 
-    const filteredData = useMemo(() => {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        let start: Date, end: Date;
+    // تفعيل الفلترة الصارمة على جميع البيانات المستعملة في الصفحة
+    const filtered = stores.filter(s => {
+      const matchesUser = selectedUser === 'all' || s.USER === selectedUser;
+      const matchesCity = selectedCity === 'all' || s.Ville === selectedCity;
+      
+      let matchesPeriod = true;
+      if (period !== 'all') {
+          const storeDate = new Date(s['Date Heure'] || s.Date);
+          
+          if (period === 'today') {
+              matchesPeriod = storeDate.toDateString() === now.toDateString();
+          } else if (period === 'month') {
+              matchesPeriod = storeDate.getMonth() === now.getMonth() && storeDate.getFullYear() === now.getFullYear();
+          } else if (period === 'last_month') {
+              const firstOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+              const firstOfLast = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              matchesPeriod = storeDate >= firstOfLast && storeDate < firstOfCurrent;
+          } else if (period === 'last_3_months') {
+              const threeMonthsAgo = new Date();
+              threeMonthsAgo.setDate(now.getDate() - 90);
+              matchesPeriod = storeDate >= threeMonthsAgo;
+          } else if (period === 'current_quarter') {
+              const qMonth = Math.floor(now.getMonth() / 3) * 3;
+              const firstOfQuarter = new Date(now.getFullYear(), qMonth, 1);
+              matchesPeriod = storeDate >= firstOfQuarter;
+          }
+      }
+      return matchesUser && matchesCity && matchesPeriod;
+    });
 
-        switch (period) {
-            case "Aujourd'hui":
-                start = today;
-                end = new Date(today.getTime() + 86400000);
-                break;
-            case "Hier":
-                start = new Date(today.getTime() - 86400000);
-                end = today;
-                break;
-            case "Cette semaine":
-                const day = today.getDay();
-                start = new Date(today.getTime() - day * 86400000);
-                end = now;
-                break;
-            case "Semaine dernière":
-                const lastWeekDay = today.getDay();
-                start = new Date(today.getTime() - (lastWeekDay + 7) * 86400000);
-                end = new Date(today.getTime() - lastWeekDay * 86400000);
-                break;
-            case "Ce mois-ci":
-                start = new Date(now.getFullYear(), now.getMonth(), 1);
-                end = now;
-                break;
-            case "Mois dernier":
-                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                end = new Date(now.getFullYear(), now.getMonth(), 0);
-                break;
-            case "Ce trimestre":
-                const qMonth = Math.floor(now.getMonth() / 3) * 3;
-                start = new Date(now.getFullYear(), qMonth, 1);
-                end = now;
-                break;
-            case "Trimestre dernier":
-                const pqMonth = (Math.floor(now.getMonth() / 3) * 3) - 3;
-                start = new Date(now.getFullYear(), pqMonth, 1);
-                end = new Date(now.getFullYear(), pqMonth + 3, 0);
-                break;
-            case "Ce semestre":
-                const sMonth = now.getMonth() < 6 ? 0 : 6;
-                start = new Date(now.getFullYear(), sMonth, 1);
-                end = now;
-                break;
-            case "Semestre dernier":
-                const psMonth = now.getMonth() < 6 ? -6 : 0;
-                start = new Date(now.getFullYear(), psMonth, 1);
-                end = new Date(now.getFullYear(), psMonth + 6, 0);
-                break;
-            case "Cette année":
-                start = new Date(now.getFullYear(), 0, 1);
-                end = now;
-                break;
-            case "Année dernière":
-                start = new Date(now.getFullYear() - 1, 0, 1);
-                end = new Date(now.getFullYear() - 1, 11, 31);
-                break;
-            default:
-                start = new Date(now.getFullYear(), now.getMonth(), 1);
-                end = now;
-        }
+    const totalSales = filtered.filter(s => s['Action Client']?.toLowerCase() === 'acheter').reduce((acc, s) => acc + (Number(s.Quantité) || 0), 0);
+    const totalRevenue = filtered.reduce((acc, s) => acc + (Number(s.Prix) || 0), 0);
+    const citiesCount = new Set(filtered.map(s => s.Ville)).size;
+    const interactionsCount = filtered.length;
 
-        return stores.filter(store => {
-            const writingDate = parseWritingDate(store);
-            if (!writingDate || writingDate < start || writingDate > end) return false;
-            return true;
+    // العثور على آخر مبيعة بناءً على البيانات المفلترة
+    const salesOnly = filtered.filter(s => s['Action Client']?.toLowerCase() === 'acheter');
+    const latestSale = salesOnly.sort((a, b) => 
+        new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime()
+    )[0];
+
+    const userMap = new Map<string, { revenue: number; sales: number }>();
+    filtered.forEach(s => {
+        if (!s.USER) return;
+        const current = userMap.get(s.USER) || { revenue: 0, sales: 0 };
+        const isSale = s['Action Client']?.toLowerCase() === 'acheter';
+        userMap.set(s.USER, {
+            revenue: current.revenue + (Number(s.Prix) || 0),
+            // حساب التقدم بناءً على عدد القطع المباعة (الكمية) وليس عدد الزيارات
+            sales: current.sales + (isSale ? (Number(s.Quantité) || 1) : 0)
         });
-    }, [stores, period]);
+    });
 
-    const statsCalculation = useMemo(() => {
-        const getMetrics = (data: Store[]) => {
-            let sold = 0;
-            let comm = 0;
-            const cities = new Set<string>();
-            data.forEach(store => {
-                if (selectedUser !== 'Tous les vendeurs' && store.USER !== selectedUser) return;
-                if (store['Action Client']?.trim().toLowerCase() === 'acheter') {
-                    sold += Number(store.Quantité) || 0;
-                    comm += Number(store.Prix) || 0;
-                }
-                if (store.Ville) cities.add(store.Ville.trim());
-            });
-            return { sold, comm, citiesCount: cities.size };
-        };
-        const currentMetrics = getMetrics(filteredData);
-        return { current: currentMetrics };
-    }, [filteredData, selectedUser]);
+    const ranking = Array.from(userMap.entries()).map(([email, data]) => ({
+        name: email.split('@')[0],
+        fullEmail: email,
+        ...data
+    })).sort((a, b) => b.revenue - a.revenue);
 
-    const userPerformanceData = useMemo(() => {
-        const statsMap: Record<string, { visits: number, salesCount: number, revenue: number }> = {};
-        filteredData.forEach(store => {
-             if (selectedUser !== 'Tous les vendeurs' && store.USER !== selectedUser) return;
-             const user = store.USER || 'Inconnu';
-             if (!statsMap[user]) statsMap[user] = { visits: 0, salesCount: 0, revenue: 0 };
-             statsMap[user].visits += 1;
-             if (store['Action Client']?.trim().toLowerCase() === 'acheter') {
-                 statsMap[user].salesCount += Number(store.Quantité) || 0;
-                 statsMap[user].revenue += Number(store.Prix) || 0;
-             }
-        });
-        return Object.entries(statsMap).map(([email, data]) => ({
-            email,
-            name: email.split('@')[0],
-            salesCount: data.salesCount,
-            revenue: data.revenue
-        })).sort((a, b) => b.salesCount - a.salesCount);
-    }, [filteredData, selectedUser]);
+    return { totalSales, totalRevenue, citiesCount, interactionsCount, ranking, latestSale };
+  }, [stores, selectedUser, selectedCity, period]);
 
-    return (
-        <div className="p-6 space-y-8 max-w-[1600px] mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Suivi Commercial & Commissions</h1>
-                    <p className="text-sm text-slate-500 font-medium">Analyse de performance ({period})</p>
-                </div>
-                <button 
-                    onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm"
+  return (
+    <div className="p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto pb-32 bg-[#F7F8FA] dark:bg-slate-900 min-h-screen font-sans">
+      
+      {/* Header & Filters Area */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">Suivi Commercial</h1>
+          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-[0.2em] mt-1.5">Analyse des objectifs et des paliers de l'équipe</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div className="flex bg-white dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm w-full lg:w-auto">
+                <select 
+                    value={selectedUser} 
+                    onChange={e => { setSelectedUser(e.target.value); }}
+                    className="bg-transparent text-[11px] font-bold text-slate-600 dark:text-slate-300 px-4 py-2 outline-none border-r border-slate-100 dark:border-slate-700 cursor-pointer"
                 >
-                    Filtres d'affichage
-                    <ChevronDownIcon className={`w-4 h-4 transition-transform ${isFiltersExpanded ? 'rotate-180' : ''}`} />
-                </button>
-            </div>
-
-            {isFiltersExpanded && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 animate-in slide-in-from-top-2">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vendeur</label>
-                        <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)} className="w-full text-sm font-bold border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700 rounded-lg py-2 px-3 dark:text-white outline-none">
-                            <option>Tous les vendeurs</option>
-                            {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
-                        </select>
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Période</label>
-                        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="w-full text-sm font-bold border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700 rounded-lg py-2 px-3 dark:text-white outline-none">
-                            <option value="Aujourd'hui">Aujourd'hui</option>
-                            <option value="Hier">Hier</option>
-                            <option value="Cette semaine">Cette semaine</option>
-                            <option value="Semaine dernière">Semaine dernière</option>
-                            <option value="Ce mois-ci">Ce mois-ci</option>
-                            <option value="Mois dernier">Mois dernier</option>
-                            <option value="Ce trimestre">Ce trimestre</option>
-                            <option value="Trimestre dernier">Trimestre dernier</option>
-                            <option value="Ce semestre">Ce semestre</option>
-                            <option value="Semestre dernier">Semestre dernier</option>
-                            <option value="Cette année">Cette année</option>
-                            <option value="Année dernière">Année dernière</option>
-                        </select>
-                    </div>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KPICard title="Pièces Vendues" value={statsCalculation.current.sold} subtext={period} icon={<CubeIcon className="w-6 h-6" />} iconBg="bg-blue-50 dark:bg-blue-900/20" iconColor="text-blue-600 dark:text-blue-400" />
-                <KPICard title="CA Réalisé" value={`${statsCalculation.current.comm.toLocaleString()} DH`} subtext={period} icon={<CurrencyDollarIcon className="w-6 h-6" />} iconBg="bg-emerald-50 dark:bg-emerald-900/20" iconColor="text-emerald-600 dark:text-emerald-400" />
-                <KPICard title="Villes Couvertes" value={statsCalculation.current.citiesCount} subtext="Zones actives" icon={<MapIcon className="w-6 h-6" />} iconBg="bg-purple-50 dark:bg-purple-900/20" iconColor="text-purple-600 dark:text-purple-400" />
-                <KPICard title="Performance Équipe" value={`${userPerformanceData.length} Pers.`} subtext="Membres filtrés" icon={<UsersIcon className="w-6 h-6" />} iconBg="bg-amber-50 dark:bg-amber-900/20" iconColor="text-amber-600 dark:text-amber-400" />
-            </div>
-
-            <div className="bg-slate-50 dark:bg-[#0f172a] p-3 rounded-lg flex flex-wrap items-center gap-6 border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Commission Levels:</span>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Lvl 1 (1-700)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Lvl 2 (701-1000)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Lvl 3 (1001-1400)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Lvl 4 (1401-2100)</span>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                {userPerformanceData.map((user, index) => {
-                    const sales = user.salesCount;
-                    let currentLevel = 1;
-                    if (sales > 1400) currentLevel = 4;
-                    else if (sales > 1000) currentLevel = 3;
-                    else if (sales > 700) currentLevel = 2;
-                    const levelLabel = currentLevel === 4 ? 'Level 4 Expert' : currentLevel === 3 ? 'Level 3 Advanced' : currentLevel === 2 ? 'Level 2 Senior' : 'Level 1 Junior';
-                    const nextThreshold = currentLevel === 1 ? 700 : currentLevel === 2 ? 1000 : currentLevel === 3 ? 1400 : 2100;
-                    const remainingToNext = nextThreshold - sales;
-                    return (
-                        <div key={user.email} className="bg-white dark:bg-[#1e293b] rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                            {currentLevel === 4 && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>}
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="flex items-center gap-5">
-                                    <div className="relative">
-                                        <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff&size=128`} className="w-16 h-16 rounded-full border-2 border-slate-200 dark:border-slate-700" alt={user.name} />
-                                        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-[#1e293b]">#{index + 1}</div>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{user.name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="px-2 py-0.5 bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-md text-[10px] font-black uppercase">{levelLabel}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-left md:text-right">
-                                    <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{user.salesCount.toLocaleString()}</div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ventes {period}</p>
-                                </div>
-                            </div>
-                            <CommissionProgressBar current={sales} />
-                            <div className="flex justify-end mt-4">
-                                {currentLevel < 4 ? (
-                                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-bold">
-                                        <span>{remainingToNext} ventes pour débloquer Level {currentLevel + 1}</span>
-                                        <LockIcon className="w-3 h-3" />
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold hover:underline cursor-pointer">
-                                        <span>{Math.max(0, 2100 - sales)} ventes pour max Level 4</span>
-                                        <ArrowRightIcon className="w-4 h-4" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-                {userPerformanceData.length === 0 && (
-                    <div className="py-20 text-center bg-white dark:bg-[#1e293b] rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                        <p className="text-slate-400 font-bold">Aucune donnée de performance pour cette sélection.</p>
-                    </div>
-                )}
+                    <option value="all">Toute l'Équipe</option>
+                    {uniqueUsers.map(u => <option key={u} value={u}>{u.split('@')[0]}</option>)}
+                </select>
+                <select 
+                    value={selectedCity} 
+                    onChange={e => { setSelectedCity(e.target.value); }}
+                    className="bg-transparent text-[11px] font-bold text-slate-600 dark:text-slate-300 px-4 py-2 outline-none border-r border-slate-100 dark:border-slate-700 cursor-pointer"
+                >
+                    <option value="all">Toutes les Villes</option>
+                    {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select 
+                    value={period} 
+                    onChange={e => { setPeriod(e.target.value); }}
+                    className="bg-transparent text-[11px] font-bold text-slate-600 dark:text-slate-300 px-4 py-2 outline-none cursor-pointer"
+                >
+                    <option value="all">Global</option>
+                    <option value="today">Aujourd'hui</option>
+                    <option value="month">Ce mois</option>
+                    <option value="last_month">Mois dernier</option>
+                    <option value="last_3_months">3 derniers mois</option>
+                    <option value="current_quarter">Trimestre actuel</option>
+                </select>
             </div>
         </div>
-    );
+      </div>
+
+      {/* Top Stat Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Pièces Vendues" value={stats.totalSales} sub="Volume cumulé (Période)" icon={CubeIcon} iconBg="bg-blue-50 text-blue-500 dark:bg-blue-900/20" />
+        <StatCard title="CA RÉALISÉ" value={`${stats.totalRevenue.toLocaleString()} DH`} sub="Valeur totale (Période)" icon={CurrencyDollarIcon} iconBg="bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20" />
+        <StatCard title="Villes Actives" value={stats.citiesCount} sub="Secteurs d'activité" icon={MapIcon} iconBg="bg-purple-50 text-purple-500 dark:bg-purple-900/20" />
+        <StatCard title="Interactions" value={stats.interactionsCount} sub="Visites & Contacts" icon={UsersIcon} iconBg="bg-amber-50 text-amber-500 dark:bg-amber-900/20" />
+      </div>
+
+      {/* Main Container with Sidebar alignment */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        {/* Left Column: Staff Progression */}
+        <div className="lg:col-span-8 flex flex-col gap-6">
+             <div className="flex items-center justify-between px-1">
+                <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-1 h-4 bg-accent rounded-full"></span>
+                    Progression de l'Équipe
+                </h2>
+                <span className="text-[9px] font-bold text-slate-300 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-700 shadow-sm">Objectif: 2000 Pièces</span>
+             </div>
+             <div className="flex flex-col gap-5">
+                {stats.ranking.map((user) => (
+                    <CommissionLevelBar key={user.fullEmail} user={user.name} currentSales={user.sales} revenue={user.revenue} />
+                ))}
+                {stats.ranking.length === 0 && (
+                    <div className="py-24 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-400 font-medium italic">Aucune donnée pour cette sélection</p>
+                    </div>
+                )}
+             </div>
+        </div>
+
+        {/* Right Column: Alerts & Performance */}
+        <div className="lg:col-span-4 flex flex-col h-full">
+          
+          {/* Header MATCHING the left column for alignment */}
+          <div className="flex items-center justify-between px-1 mb-6">
+            <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span className="w-1 h-4 bg-indigo-400 rounded-full"></span>
+                Analyse & Performance
+            </h2>
+            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">Filtres Actifs</span>
+          </div>
+
+          {/* Top Performance Ranking Card */}
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mb-8">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Classement (Période)</h3>
+            </div>
+            
+            <div className="space-y-6">
+              {stats.ranking.slice(0, 5).map((user, idx) => (
+                <div key={user.fullEmail} className="flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black border ${idx === 0 ? 'bg-amber-50 border-amber-100 text-amber-600 shadow-sm' : 'bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600 text-slate-400'}`}>
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h4 className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{user.name}</h4>
+                      <p className="text-[9px] text-slate-400 font-medium">{user.sales} pièces</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">{user.revenue.toLocaleString()} DH</p>
+                  </div>
+                </div>
+              ))}
+              {stats.ranking.length === 0 && (
+                <p className="text-center py-6 text-[10px] text-slate-400 italic">Aucune donnée</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-grow"></div>
+
+          {/* Activity Alerts - ALIGNED TO BOTTOM OF GRID */}
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mt-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-500 shadow-sm">
+                  <BellIcon className="w-4 h-4" />
+              </div>
+              <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Dernière Vente (Période)</h3>
+            </div>
+            <div className="space-y-5">
+               {/* Last Sale Enhanced Alert */}
+               {stats.latestSale ? (
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border-l-4 border-emerald-500 group hover:bg-emerald-100 transition-colors shadow-sm">
+                     <div className="flex items-center justify-between mb-3">
+                         <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-black uppercase tracking-tight">Vente Récente</p>
+                         <span className="text-[9px] font-bold text-slate-400">{stats.latestSale.Date}</span>
+                     </div>
+                     <div className="flex justify-between items-end">
+                         <div className="max-w-[140px]">
+                             <p className="text-[12px] font-bold text-slate-800 dark:text-white leading-tight truncate">{stats.latestSale.Magazin}</p>
+                             <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Par {stats.latestSale.USER?.split('@')[0]}</p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-[14px] font-black text-emerald-600 dark:text-emerald-400">{stats.latestSale.Prix.toLocaleString()} DH</p>
+                            <p className="text-[8px] text-emerald-400 font-bold uppercase">{stats.latestSale.Quantité} Unités</p>
+                         </div>
+                     </div>
+                  </div>
+               ) : (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-l-4 border-slate-300">
+                     <p className="text-[10px] text-slate-400 font-bold uppercase italic text-center">Aucune vente enregistrée sur cette période</p>
+                  </div>
+               )}
+
+               <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-l-4 border-indigo-400">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed uppercase tracking-tight">Focus <span className="text-indigo-600 font-black">{selectedCity === 'all' ? (uniqueCities[0] || 'Secteur') : selectedCity}</span></p>
+                  <p className="text-[11px] text-slate-500 mt-1">L'IA analyse les opportunités sur ce segment temporel.</p>
+               </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default CommissionsPage;

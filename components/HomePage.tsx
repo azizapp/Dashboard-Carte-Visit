@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Store, Customer } from '../types.ts';
 import UsersIcon from './icons/UsersIcon.tsx';
@@ -20,6 +19,7 @@ import SpinnerIcon from './icons/SpinnerIcon.tsx';
 import CubeIcon from './icons/CubeIcon.tsx';
 import ChevronDownIcon from './icons/ChevronDownIcon.tsx';
 import ClockIcon from './icons/ClockIcon.tsx';
+import StoreIcon from './icons/StoreIcon.tsx';
 import { GoogleGenAI } from "@google/genai";
 
 interface HomePageProps {
@@ -94,10 +94,10 @@ const ProgressBar = ({ label, count, total, colorClass, showPercent = true }: { 
 };
 
 const QualityStat = ({ icon: Icon, label, value, color }: any) => (
-    <div className="flex flex-col items-center justify-center p-4 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-slate-50 dark:border-slate-700 hover:border-slate-200 transition-colors group">
-        <Icon className={`w-5 h-5 ${color} mb-2 opacity-40 group-hover:opacity-100 transition-opacity`} />
-        <p className="text-[10px] font-bold text-slate-400 uppercase text-center mb-1 tracking-wider">{label}</p>
-        <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{value}</h4>
+    <div className="flex flex-col items-center justify-center p-3 bg-slate-50/50 dark:bg-slate-900/20 rounded-xl border border-slate-50 dark:border-slate-700 hover:border-slate-200 transition-all group shadow-sm">
+        <Icon className={`w-4 h-4 ${color} mb-1.5 opacity-60 group-hover:opacity-100 transition-opacity`} />
+        <p className="text-[9px] font-black text-slate-400 uppercase text-center mb-1 tracking-tighter leading-tight h-5 flex items-center">{label}</p>
+        <h4 className="text-[13px] font-black text-slate-800 dark:text-white">{value}</h4>
     </div>
 );
 
@@ -151,7 +151,6 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
     const uniqueCities = useMemo(() => Array.from(new Set(stores.map(s => s.Ville))).filter(Boolean).sort(), [stores]);
 
     const stats = useMemo(() => {
-        // Handle Predefined Periods
         let finalStart: Date | null = startDate ? new Date(startDate) : null;
         let finalEnd: Date | null = endDate ? new Date(endDate) : null;
 
@@ -198,37 +197,31 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             }
         }
 
-        // Filter stores based on all criteria
         const filteredStores = stores.filter(store => {
-            // User Filter
             if (selectedUser !== 'all' && store.USER !== selectedUser) return false;
-            
-            // City Filter
             if (selectedCity !== 'all' && store.Ville !== selectedCity) return false;
-
-            // Date Range Filter
             const storeDate = new Date(store['Date Heure'] || store.Date);
             if (isNaN(storeDate.getTime())) return true;
-
             if (finalStart) {
                 finalStart.setHours(0, 0, 0, 0);
                 if (storeDate < finalStart) return false;
             }
-
             if (finalEnd) {
                 finalEnd.setHours(23, 59, 59, 999);
                 if (storeDate > finalEnd) return false;
             }
-
             return true;
         });
 
         const totalVisits = filteredStores.length;
         const uniqueMagazinsCount = new Set(filteredStores.map(s => s.Magazin.trim().toLowerCase())).size;
         
-        let revenue = 0, totalQty = 0, buyActions = 0, revisitActions = 0;
+        let revenue = 0, totalQty = 0, buyActions = 0, revisitActions = 0, visitActionsCount = 0;
         let hasGsm = 0, hasEmail = 0, hasGps = 0, hasImage = 0, hasNote = 0, hasRendezVous = 0;
         
+        // جودة البيانات الجديدة
+        let hasName = 0, hasManager = 0, hasCity = 0, hasRegion = 0, hasAddress = 0, hasGsm1 = 0, hasGsm2 = 0, hasGamme = 0, hasPhone = 0;
+
         const cityCounts: Record<string, number> = {};
         const clientSales: Record<string, number> = {};
         const userStats: Record<string, { visits: number, revenue: number }> = {};
@@ -237,6 +230,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
         today.setHours(0, 0, 0, 0);
 
         const uniqueStoreGammeMap = new Map<string, string>();
+        const processedUniqueMagazins = new Set<string>();
 
         filteredStores.forEach(store => {
             const magKey = store.Magazin.trim().toLowerCase();
@@ -247,6 +241,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             if (!userStats[user]) userStats[user] = { visits: 0, revenue: 0 };
             userStats[user].visits++;
 
+            // حساب الأفعال
             if (action === 'acheter') {
                 const p = Number(store.Prix) || 0;
                 revenue += p;
@@ -256,11 +251,26 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                 userStats[user].revenue += p;
             } else if (action === 'revisiter') {
                 revisitActions++;
+            } else if (action === 'visiter') {
+                visitActionsCount++;
             }
 
-            if (store.GSM1) hasGsm++;
-            if (store.Email) hasEmail++;
-            if (store.Localisation) hasGps++;
+            // إكمال بيانات الزبائن (نحسبها للزيارات الفريدة لكل متجر لضمان دقة نسبة جودة "القاعدة")
+            if (!processedUniqueMagazins.has(magKey)) {
+                if (store.Magazin) hasName++;
+                if (store['Le Gérant']) hasManager++;
+                if (store.Ville) hasCity++;
+                if (store.Région) hasRegion++;
+                if (store.Adresse) hasAddress++;
+                if (store.GSM1) hasGsm1++;
+                if (store.GSM2) hasGsm2++;
+                if (store.Phone) hasPhone++;
+                if (store.Gamme) hasGamme++;
+                if (store.Email) hasEmail++;
+                if (store.Localisation) hasGps++;
+                processedUniqueMagazins.add(magKey);
+            }
+
             if (store.Image) hasImage++;
             if (store.Note) hasNote++;
             if (store['Rendez-Vous']) {
@@ -288,8 +298,23 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
         });
 
         return {
-            totalVisits, uniqueMagazinsCount, revenue, totalQty, buyActions, revisitActions,
-            quality: { gsm: hasGsm, email: hasEmail, gps: hasGps, image: hasImage, note: hasNote, rdv: hasRendezVous },
+            totalVisits, uniqueMagazinsCount, revenue, totalQty, buyActions, revisitActions, visitActionsCount,
+            quality: { 
+                gsm: hasGsm1, 
+                email: hasEmail, 
+                gps: hasGps, 
+                image: hasImage, 
+                note: hasNote, 
+                rdv: hasRendezVous,
+                name: hasName,
+                manager: hasManager,
+                city: hasCity,
+                region: hasRegion,
+                address: hasAddress,
+                gsm2: hasGsm2,
+                phone: hasPhone,
+                gamme: hasGamme
+            },
             gamme: { ...gCounts, total: uniqueStoreGammeMap.size },
             topRegions: Object.entries(cityCounts).sort((a,b) => b[1] - a[1]),
             topClients: Object.entries(clientSales).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 20),
@@ -363,7 +388,6 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                 {showFilters && (
                     <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 animate-in slide-in-from-top-1 duration-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
-                            {/* Staff Filter */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                     <UserCircleIcon className="w-3.5 h-3.5" /> Utilisateur
@@ -378,7 +402,6 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                                 </select>
                             </div>
 
-                            {/* City Filter */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                     <MapIcon className="w-3.5 h-3.5" /> Ville
@@ -393,7 +416,6 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                                 </select>
                             </div>
 
-                            {/* Period Selection */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                     <ClockIcon className="w-3.5 h-3.5" /> Période
@@ -422,7 +444,6 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                                 </select>
                             </div>
 
-                            {/* Custom Date Range (Conditional) */}
                             {selectedPeriod === 'custom' && (
                                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 pt-2 border-t border-slate-50 dark:border-slate-700">
                                     <div>
@@ -456,178 +477,156 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                 )}
             </div>
 
-            {/* PERFORMANCE COMMERCIALE Section */}
-            <div>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Performance Commercialة</h2>
-                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded uppercase">{selectedPeriod === 'all' ? 'Historique Global' : selectedPeriod.replace('_', ' ')}</span>
+            {/* PERFORMANCE Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                    <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg w-fit mb-5"><CurrencyDollarIcon className="w-6 h-6" /></div>
+                    <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.revenue.toLocaleString()} DH</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Chiffre d'Affaires</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group">
-                        <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg w-fit mb-5"><CurrencyDollarIcon className="w-6 h-6" /></div>
-                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.revenue.toLocaleString()} DH</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Chiffre d'Affaires</p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative">
-                        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg w-fit mb-5"><UsersIcon className="w-6 h-6" /></div>
-                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalVisits}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Total Interactions</p>
-                        <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">{stats.uniqueMagazinsCount} Magazins Visités</p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg w-fit mb-5"><CubeIcon className="w-6 h-6" /></div>
-                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalQty} Pièces</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Volume de Ventes</p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg w-fit mb-5"><CalendarDaysIcon className="w-6 h-6" /></div>
-                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.quality.rdv}</h3>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">RDV Planifiés</p>
-                    </div>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg w-fit mb-5"><UsersIcon className="w-6 h-6" /></div>
+                    <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalVisits}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Total Interactions</p>
+                    <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">{stats.uniqueMagazinsCount} Magazins Visités</p>
+                </div>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg w-fit mb-5"><CubeIcon className="w-6 h-6" /></div>
+                    <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.totalQty} Pièces</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Volume de Ventes</p>
+                </div>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg w-fit mb-5"><CalendarDaysIcon className="w-6 h-6" /></div>
+                    <h3 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">{stats.quality.rdv}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">RDV Planifiés</p>
                 </div>
             </div>
 
             {/* Analysis Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                {/* Segmentation */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <div className="flex items-center gap-2 mb-6 text-rose-500">
-                        <TagIcon className="w-5 h-5" />
-                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Segmentation</h3>
-                    </div>
-                    <div className="space-y-4">
-                        <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Par Gamme</p>
-                            <ProgressBar label="Moyenne gamme" count={stats.gamme.moyenne} total={stats.gamme.total} colorClass="bg-blue-200" />
-                            <ProgressBar label="Haute Gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" />
-                            <ProgressBar label="Haute et Moyenne" count={stats.gamme.hauteMoyenne} total={stats.gamme.total} colorClass="bg-[#4407EB]" />
-                            <ProgressBar label="Economie" count={stats.gamme.economie} total={stats.gamme.total} colorClass="bg-slate-400" />
-                        </div>
-                        <div className="pt-5 border-t border-slate-50 dark:border-slate-700">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Action Client</p>
-                            <ProgressBar label="Acheter" count={stats.buyActions} total={stats.totalVisits} colorClass="bg-emerald-500" />
-                            <ProgressBar label="Revisiter" count={stats.revisitActions} total={stats.totalVisits} colorClass="bg-orange-400" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Géographie */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
-                    <div className="flex items-center gap-2 mb-6 text-indigo-500">
-                        <MapIcon className="w-5 h-5" />
-                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Géographie</h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                        {stats.topRegions.map(([city, count], idx) => (
-                            <div key={city} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">{idx + 1}</div>
-                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{city}</span>
-                                </div>
-                                <span className="text-xs font-bold text-slate-900 dark:text-white">{count}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Pipeline */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
-                    <div className="flex items-center gap-2 mb-8 text-purple-500">
-                        <CubeIcon className="w-5 h-5" />
-                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Pipeline (Actions)</h3>
-                    </div>
-                    <div className="space-y-8">
-                        <div className="flex justify-between items-start">
-                            <div><p className="text-sm font-semibold text-slate-800 dark:text-white">Total Interactions</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Suivi effectué</p></div>
-                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.totalVisits}</span>
-                        </div>
-                        <div className="flex justify-between items-start">
-                            <div><p className="text-sm font-semibold text-amber-600">Opportunités</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Négociation en cours</p></div>
-                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.revisitActions}</span>
-                        </div>
-                        <div className="flex justify-between items-start">
-                            <div><p className="text-sm font-semibold text-emerald-600">Ventes Conclues</p><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Actions "Acheter"</p></div>
-                            <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stats.buyActions}</span>
-                        </div>
-                        <div className="pt-10 text-center flex flex-col items-center border-t border-slate-50 dark:border-slate-700">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Taux de conversion</p>
-                            <h4 className="text-3xl font-bold text-slate-900 dark:text-white">{((stats.buyActions / (stats.totalVisits || 1)) * 100).toFixed(1)}%</h4>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Performance Utilisateur */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[460px]">
-                    <div className="flex items-center gap-2 mb-6 text-blue-500">
-                        <UsersIcon className="w-5 h-5" />
-                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Performance Staff</h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
-                        {stats.userPerformance.map(u => (
-                            <div key={u.name} className="group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[120px]">{u.name}</span>
-                                    <div className="text-right">
-                                        <p className="text-[11px] font-bold text-emerald-600">{u.revenue.toLocaleString()} DH</p>
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{u.visits} Visites ({u.percent.toFixed(0)}%)</p>
-                                    </div>
-                                </div>
-                                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1 overflow-hidden">
-                                    <div className="bg-blue-600 h-full rounded-full transition-all duration-1000" style={{ width: `${u.percent}%` }}></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Qualité des Données & Suivi Section */}
-            <div>
-                <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">QUALITÉ DES DONNÉES & SUIVI</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Quality Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                
+                {/* Left side stats */}
+                <div className="lg:col-span-8 space-y-8">
+                    {/* Quality Card Enhanced */}
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-2 mb-6 text-[#4407EB]">
-                            <ClipboardDocumentCheckIcon className="w-5 h-5" />
-                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Qualité de la Base</h3>
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <ClipboardDocumentCheckIcon className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Qualité de la Base & Actions</h3>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Complétude des données (Base Clients: {stats.uniqueMagazinsCount})</p>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <QualityStat icon={PhoneCallIcon} label="Téléphones" value={`${Math.round(stats.quality.gsm / (stats.gamme.total || 1) * 100)}%`} color="text-blue-500" />
-                            <QualityStat icon={EnvelopeIcon} label="Emails" value={`${Math.round(stats.quality.email / (stats.gamme.total || 1) * 100)}%`} color="text-indigo-500" />
-                            <QualityStat icon={LocationMarkerIcon} label="GPS" value={`${Math.round(stats.quality.gps / (stats.gamme.total || 1) * 100)}%`} color="text-purple-500" />
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            {/* Actions Group */}
+                            <QualityStat icon={CurrencyDollarIcon} label="Acheter" value={`${Math.round(stats.buyActions / (stats.totalVisits || 1) * 100)}%`} color="text-emerald-500" />
+                            <QualityStat icon={ArrowTrendingUpIcon} label="Revisiter" value={`${Math.round(stats.revisitActions / (stats.totalVisits || 1) * 100)}%`} color="text-amber-500" />
+                            <QualityStat icon={UsersIcon} label="Visiter" value={`${Math.round(stats.visitActionsCount / (stats.totalVisits || 1) * 100)}%`} color="text-blue-500" />
+                            
+                            {/* Data Completeness Group (Based on Unique Customers) */}
+                            <QualityStat icon={StoreIcon} label="Name" value={`${Math.round(stats.quality.name / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-500" />
+                            <QualityStat icon={UserCircleIcon} label="Manager" value={`${Math.round(stats.quality.manager / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-400" />
+                            <QualityStat icon={MapIcon} label="City" value={`${Math.round(stats.quality.city / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-500" />
+                            <QualityStat icon={LocationMarkerIcon} label="Region" value={`${Math.round(stats.quality.region / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-400" />
+                            <QualityStat icon={LocationMarkerIcon} label="Address" value={`${Math.round(stats.quality.address / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-600" />
+                            <QualityStat icon={PhoneCallIcon} label="GSM 1" value={`${Math.round(stats.quality.gsm / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-emerald-500" />
+                            <QualityStat icon={PhoneCallIcon} label="GSM 2" value={`${Math.round(stats.quality.gsm2 / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-emerald-400" />
+                            <QualityStat icon={PhoneCallIcon} label="Phone" value={`${Math.round(stats.quality.phone / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-blue-400" />
+                            <QualityStat icon={TagIcon} label="Gamme" value={`${Math.round(stats.quality.gamme / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-purple-500" />
+                            <QualityStat icon={EnvelopeIcon} label="Email" value={`${Math.round(stats.quality.email / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-500" />
+                            
+                            {/* Interaction Details Group */}
+                            <QualityStat icon={LocationMarkerIcon} label="GPS" value={`${Math.round(stats.quality.gps / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-rose-500" />
                             <QualityStat icon={CameraIcon} label="Photos" value={`${Math.round(stats.quality.image / (stats.totalVisits || 1) * 100)}%`} color="text-pink-500" />
                             <QualityStat icon={ClipboardDocumentCheckIcon} label="Notes" value={`${Math.round(stats.quality.note / (stats.totalVisits || 1) * 100)}%`} color="text-emerald-500" />
-                            <QualityStat icon={CurrencyDollarIcon} label="Ventes" value={`${Math.round(stats.buyActions / (stats.totalVisits || 1) * 100)}%`} color="text-green-500" />
-                            <QualityStat icon={ArrowTrendingUpIcon} label="Relances" value={`${Math.round(stats.revisitActions / (stats.totalVisits || 1) * 100)}%`} color="text-amber-500" />
                             <QualityStat icon={CalendarDaysIcon} label="RDV" value={`${Math.round(stats.quality.rdv / (stats.totalVisits || 1) * 100)}%`} color="text-rose-500" />
                         </div>
                     </div>
 
-                    {/* Rendez-vous Card */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Géographie */}
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[400px]">
+                            <div className="flex items-center gap-2 mb-6 text-indigo-500">
+                                <MapIcon className="w-5 h-5" />
+                                <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Villes les plus Actives</h3>
+                            </div>
+                            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                                {stats.topRegions.map(([city, count], idx) => (
+                                    <div key={city} className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">{idx + 1}</div>
+                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{city}</span>
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">{count} Visites</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Staff Performance */}
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col h-[400px]">
+                            <div className="flex items-center gap-2 mb-6 text-blue-500">
+                                <UsersIcon className="w-5 h-5" />
+                                <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Performance Commerciale</h3>
+                            </div>
+                            <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                                {stats.userPerformance.map(u => (
+                                    <div key={u.name} className="group">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[120px]">{u.name}</span>
+                                            <div className="text-right">
+                                                <p className="text-[11px] font-bold text-emerald-600">{u.revenue.toLocaleString()} DH</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{u.visits} Visites</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1 overflow-hidden">
+                                            <div className="bg-blue-600 h-full rounded-full transition-all duration-1000" style={{ width: `${u.percent}%` }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right side charts/segments */}
+                <div className="lg:col-span-4 space-y-8">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 text-rose-500">
+                            <TagIcon className="w-5 h-5" />
+                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Segmentation Client</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <ProgressBar label="Haute Gamme" count={stats.gamme.haute} total={stats.gamme.total} colorClass="bg-emerald-500" />
+                            <ProgressBar label="Haute et Moyenne" count={stats.gamme.hauteMoyenne} total={stats.gamme.total} colorClass="bg-[#4407EB]" />
+                            <ProgressBar label="Moyenne gamme" count={stats.gamme.moyenne} total={stats.gamme.total} colorClass="bg-blue-300" />
+                            <ProgressBar label="Economie" count={stats.gamme.economie} total={stats.gamme.total} colorClass="bg-slate-400" />
+                        </div>
+                    </div>
+
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-2 mb-6 text-amber-500">
                             <CalendarDaysIcon className="w-5 h-5" />
-                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Prochains Rendez-vous</h3>
+                            <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Prochains RDV</h3>
                         </div>
                         <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
                             {stats.appointments.map((appt, i) => (
-                                <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-50 dark:border-slate-700 group hover:border-amber-200 transition-colors">
+                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-50 dark:border-slate-700 group hover:border-amber-200 transition-colors">
                                     <div className="flex-1 min-w-0 mr-4">
-                                        <p className="text-xs font-bold text-slate-800 dark:text-white truncate uppercase tracking-tight">{appt.store.Magazin}</p>
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold mt-1">
+                                        <p className="text-[11px] font-bold text-slate-800 dark:text-white truncate uppercase tracking-tight">{appt.store.Magazin}</p>
+                                        <div className="flex items-center gap-2 text-[9px] text-slate-400 font-bold mt-1">
                                             <span>{appt.date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>
                                             <span>•</span>
                                             <span className="truncate">{appt.user}</span>
                                         </div>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${appt.days <= 3 ? 'bg-red-50 text-red-600' : 'bg-slate-200 text-slate-600'}`}>
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-lg ${appt.days <= 3 ? 'bg-red-50 text-red-600' : 'bg-slate-200 text-slate-600'}`}>
                                         J-{appt.days}
                                     </span>
                                 </div>
                             ))}
-                            {stats.appointments.length === 0 && (
-                                <div className="py-20 text-center text-slate-300 italic text-xs font-medium uppercase tracking-widest">Aucun rendez-vous planifié</div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -640,8 +639,8 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                         <ChartBarIcon className="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Top 20 Clients (Performance Période)</h3>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Classement par Volume d'Affaires</p>
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm uppercase tracking-tight">Top 20 Magazins (Ventes Filtrées)</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Classement par Volume d'Affaires sur la période</p>
                     </div>
                 </div>
                 <TopClientsChart data={stats.topClients} />

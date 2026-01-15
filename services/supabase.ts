@@ -1,11 +1,20 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-// استخدام متغيرات البيئة الخاصة بـ Vite
-// ملاحظة: يجب أن تبدأ المتغيرات بـ VITE_ في ملف .env
-// FIX: Replaced import.meta.env with process.env to resolve TypeScript error and maintain consistency with other environment variable usage defined in vite.config.ts.
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://isvhmsatlnwykmwukurh.supabase.co';
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
+// Fallback constants
+const DEFAULT_URL = 'https://isvhmsatlnwykmwukurh.supabase.co';
+const DEFAULT_KEY = 'sb_publishable_4lFHcw3ymRZBCN_tlmCE7Q_pW_qhaS1';
+
+// Robust environment variable access
+const getEnv = (key: string) => {
+    try {
+        return (process.env && process.env[key]) || null;
+    } catch (e) {
+        return null;
+    }
+};
+
+const SUPABASE_URL = getEnv('VITE_SUPABASE_URL') || DEFAULT_URL;
+const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || DEFAULT_KEY;
 
 const getStoredConfig = () => {
   const url = localStorage.getItem('supabase_url') || SUPABASE_URL;

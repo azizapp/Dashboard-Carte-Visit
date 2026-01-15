@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
                 console.log('Opened cache');
                 return cache.addAll(urlsToCache);
             })
-            .then(() => self.skipWaiting()) // تفعيل Service Worker الجديد فوراً
+            .then(() => self.skipWaiting())
     );
 });
 
@@ -26,30 +26,31 @@ self.addEventListener('fetch', (event) => {
     try {
         const url = new URL(request.url);
 
-        // تجاهل الطلبات من chrome-extension أو غير HTTP/HTTPS
+        // تجاهل الطلبات من غير HTTP/HTTPS
         if (!url.protocol.startsWith('http')) {
             return;
         }
 
-        // استراتيجية Network First للـ API calls
+        // استراتيجية Network First للـ API calls و Supabase
         if (url.pathname.includes('/api/') || url.hostname.includes('supabase')) {
             event.respondWith(
                 fetch(request)
                     .then(response => {
-                        // حفظ نسخة في الكاش للاستخدام offline
-                        if (response && response.status === 200 && response.type !== 'opaque') {
+                        // حفظ نسخة في الكاش للاستخدام offline فقط لطلبات GET الناجحة
+                        if (response && response.status === 200 && request.method === 'GET' && response.type !== 'opaque') {
                             const responseClone = response.clone();
                             caches.open(CACHE_NAME).then(cache => {
-                                cache.put(request, responseClone).catch(err => {
-                                    // تجاهل أخطاء التخزين المؤقت بصمت
-                                });
+                                cache.put(request, responseClone).catch(() => {});
                             });
                         }
                         return response;
                     })
-                    .catch(() => {
-                        // في حالة عدم وجود اتصال، استخدم الكاش
-                        return caches.match(request);
+                    .catch(async () => {
+                        // في حالة فشل الشبكة، حاول البحث في الكاش
+                        const cachedResponse = await caches.match(request);
+                        if (cachedResponse) return cachedResponse;
+                        // إذا لم يوجد في الكاش وفشل الاتصال، اترك الخطأ يظهر بشكل طبيعي بدلاً من إرجاع undefined
+                        throw new Error('Network failure and no cache available');
                     })
             );
         }
@@ -62,13 +63,10 @@ self.addEventListener('fetch', (event) => {
                             return response;
                         }
                         return fetch(request).then(response => {
-                            // حفظ الملفات الجديدة في الكاش
                             if (request.method === 'GET' && response && response.status === 200 && response.type !== 'opaque') {
                                 const responseClone = response.clone();
                                 caches.open(CACHE_NAME).then(cache => {
-                                    cache.put(request, responseClone).catch(err => {
-                                        // تجاهل أخطاء التخزين المؤقت بصمت
-                                    });
+                                    cache.put(request, responseClone).catch(() => {});
                                 });
                             }
                             return response;
@@ -77,12 +75,11 @@ self.addEventListener('fetch', (event) => {
             );
         }
     } catch (error) {
-        // في حالة حدوث خطأ في parsing URL، تجاهل الطلب
         return;
     }
 });
 
-// Activate event - clean up old caches and take control immediately
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -97,6 +94,6 @@ self.addEventListener('activate', (event) => {
                     })
                 );
             })
-            .then(() => self.clients.claim()) // السيطرة على جميع الصفحات فوراً
+            .then(() => self.clients.claim())
     );
 });

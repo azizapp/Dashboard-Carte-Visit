@@ -1,4 +1,3 @@
-
 import { Store, Mode, StoreFormData, Customer, Visit } from '../types.ts';
 import { supabase, uploadImageToStorage } from './supabase.ts';
 
@@ -16,20 +15,42 @@ const api = {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
   },
 
-  async syncStores(mode: Mode): Promise<Store[]> {
-    // تم زيادة النطاق (range) لجلب حتى 10,000 سجل لضمان عدم ضياع أي بيانات
-    const { data, error } = await supabase
-      .from('visits')
-      .select(`
-        *,
-        customers (*)
-      `)
-      .order('created_at', { ascending: false })
-      .range(0, 10000); 
+  async syncStores(_mode: Mode): Promise<Store[]> {
+    let allVisits: any[] = [];
+    let from = 0;
+    const step = 1000;
+    let hasMore = true;
 
-    if (error) throw new Error(error.message || "Erreur de synchronisation avec Supabase");
+    // جلب البيانات على دفعات لتجاوز حد الـ 1000 سجل في Supabase
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('visits')
+        .select(`
+          *,
+          customers (*)
+        `)
+        .order('created_at', { ascending: false })
+        .range(from, from + step - 1);
 
-    const mappedData = (data || []).map(v => {
+      if (error) throw new Error(error.message || "Erreur de synchronisation avec Supabase");
+      
+      if (data && data.length > 0) {
+        allVisits = [...allVisits, ...data];
+        // إذا كان عدد السجلات المسترجعة أقل من الخطوة، فهذا يعني أننا وصلنا للنهاية
+        if (data.length < step) {
+          hasMore = false;
+        } else {
+          from += step;
+        }
+      } else {
+        hasMore = false;
+      }
+      
+      // أمان إضافي لمنع الحلقات اللانهائية في حال وجود خلل ما
+      if (from > 20000) hasMore = false; 
+    }
+
+    const mappedData = allVisits.map(v => {
         if (!v.customers) return null;
         const c = v.customers;
         return {
