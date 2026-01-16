@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Store, Mode, Customer } from '../types.ts';
 import XMarkIcon from './icons/XMarkIcon.tsx';
@@ -76,7 +75,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
             const method = (h['Contacté'] || '').toLowerCase().trim();
             if (method === 'email') emailCount++;
             else if (method.includes('whatsapp')) whatsappCount++;
-            else if (method.includes('téléphone') || method.includes('telephone')) phoneCount++;
+            else if (method.includes('phone') || method.includes('téléphone') || method.includes('telephone')) phoneCount++;
             else if (method.includes('physique')) physicsCount++;
         });
 
@@ -371,7 +370,7 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
                                             <PhoneCallIcon className="w-5 h-5 mb-1" />
                                             <span className="text-[10px] font-bold uppercase">Appeler</span>
                                         </a>
-                                        <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-blue-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                        <a href={`https://wa.me/${store.GSM1?.replace(/\s/g, '')}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-green-50 dark:bg-blue-900/20 text-green-600 dark:text-blue-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
                                             <WhatsAppIcon className="w-5 h-5 mb-1" />
                                             <span className="text-[10px] font-bold uppercase">WhatsApp</span>
                                         </a>
