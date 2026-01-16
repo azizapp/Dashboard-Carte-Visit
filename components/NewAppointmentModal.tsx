@@ -99,7 +99,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
           {!selectedCustomer ? (
             <div className="space-y-4">
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Rechercher un client (Tableau Clients)
+                Rechercher un client
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -160,7 +160,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Assigner à (Mozâa) :</label>
+                <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Assigner à (Vendeur) :</label>
                 <div className="relative">
                     <UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                     <select
@@ -169,7 +169,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         onChange={(e) => setSelectedUser(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-sm dark:text-white appearance-none"
                     >
-                        <option value="">Sélectionner un Mozâa</option>
+                        <option value="">Sélectionner un vendeur</option>
                         {userList.map(email => <option key={email} value={email}>{email}</option>)}
                     </select>
                 </div>

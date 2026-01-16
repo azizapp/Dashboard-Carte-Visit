@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Store, StoreFormData } from '../../types.ts';
 import LocationMarkerIcon from '../icons/LocationMarkerIcon.tsx';
@@ -11,7 +12,7 @@ import CubeIcon from '../icons/CubeIcon.tsx';
 import SpinnerIcon from '../icons/SpinnerIcon.tsx';
 import XMarkIcon from '../icons/XMarkIcon.tsx';
 
-// --- مساعدات الصور ---
+// --- Aides pour les images ---
 const compressImage = (fileOrDataUrl: File | string, quality = 0.7, maxWidth = 1024): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -40,7 +41,7 @@ const compressImage = (fileOrDataUrl: File | string, quality = 0.7, maxWidth = 1
     });
 };
 
-// --- مكون الكاميرا ---
+// --- Composant Caméra ---
 interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -59,7 +60,7 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
           if (videoRef.current) videoRef.current.srcObject = stream;
         })
         .catch(err => {
-          console.error("Camera error:", err);
+          console.error("Erreur caméra :", err);
           alert("Impossible d'accéder à la caméra.");
           onClose();
         });

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Mode, AppSettings, UserSession, Store, Customer } from './types.ts';
 import Sidebar from './components/Sidebar.tsx';
@@ -22,12 +21,22 @@ import CustomerEditModal from './components/CustomerEditModal.tsx';
 import settingsService from './services/settingsService.ts';
 import storeService from './services/storeService.ts';
 
-// FIX: Replaced the truncated snippet with a complete functional App component to resolve "Cannot find name" and "no default export" errors.
 const App: React.FC = () => {
   // Authentication & Session State
   const [session, setSession] = useState<UserSession | null>(() => {
-    const saved = localStorage.getItem('user-session');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('user-session');
+      if (!saved) return null;
+      // Protection contre les erreurs de type "[object Object]" stockées par accident
+      if (saved === "[object Object]") {
+        localStorage.removeItem('user-session');
+        return null;
+      }
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error("Failed to parse user session", e);
+      return null;
+    }
   });
 
   // App Configuration State

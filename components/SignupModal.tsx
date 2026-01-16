@@ -58,7 +58,7 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
             }, 2500);
         } catch (err: any) {
             setError({
-                message: err.message || 'حدث خطأ أثناء إنشاء الحساب',
+                message: err.message || 'Une erreur est survenue lors de la création du compte.',
                 code: err.code
             });
         } finally {
@@ -84,8 +84,8 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
                             <ShieldCheckIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">إضافة عضو للفريق</h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">حدد صلاحيات العضو الجديد في النظام</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Ajouter un membre</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Définissez les permissions du nouveau membre</p>
                     </div>
 
                     {success ? (
@@ -93,13 +93,13 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <h3 className="text-lg font-bold text-emerald-600 mb-1">تمت العملية بنجاح!</h3>
-                            <p className="text-slate-500 dark:text-slate-400">تم تسجيل المستخدم بصفة ({role === 'admin' ? 'مسؤول' : 'مستخدم'})</p>
+                            <h3 className="text-lg font-bold text-emerald-600 mb-1">Opération réussie !</h3>
+                            <p className="text-slate-500 dark:text-slate-400">L'utilisateur a été enregistré en tant que ({role === 'admin' ? 'Administrateur' : 'Utilisateur'})</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSignup} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">البريد الإلكتروني</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Adresse e-mail</label>
                                 <div className="relative border border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-blue-500 transition-colors">
                                     <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                     <input
@@ -107,14 +107,14 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm"
+                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm text-left"
                                         placeholder="user@example.com"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">رمز الدخول (Code)</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Code d'accès</label>
                                 <div className="relative border border-slate-200 dark:border-slate-700 rounded-xl focus-within:border-blue-500 transition-colors">
                                     <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                     <input
@@ -122,35 +122,35 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                         required
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
-                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm"
+                                        className="block w-full bg-transparent py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none sm:text-sm text-left"
                                         placeholder="••••••••"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 mr-1">صلاحية المستخدم</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Rôle de l'utilisateur</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setRole('user')}
                                         className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${role === 'user' ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                                     >
-                                        مستخدم (User)
+                                        Utilisateur
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setRole('admin')}
                                         className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${role === 'admin' ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                                     >
-                                        مسؤول (Admin)
+                                        Admin
                                     </button>
                                 </div>
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl text-right">
-                                    <p className="text-xs text-red-700 dark:text-red-400 font-bold mb-1">خطأ في النظام ({error.code})</p>
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl text-left">
+                                    <p className="text-xs text-red-700 dark:text-red-400 font-bold mb-1">Erreur Système ({error.code})</p>
                                     <p className="text-[11px] text-red-600 dark:text-red-300 leading-relaxed">{error.message}</p>
                                     
                                     {error.code === '42703' && (
@@ -159,7 +159,7 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                             onClick={copySql}
                                             className="mt-3 w-full py-2 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold rounded-lg transition-colors shadow-sm"
                                         >
-                                            {copied ? '✅ تم النسخ' : '📋 نسخ كود إضافة عمود Role لـ Supabase'}
+                                            {copied ? '✅ Copié' : "📋 Ajouter la colonne 'Role' à Supabase"}
                                         </button>
                                     )}
                                 </div>
@@ -170,7 +170,7 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                 disabled={isLoading}
                                 className="w-full py-3.5 bg-slate-900 dark:bg-blue-600 hover:opacity-90 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center"
                             >
-                                {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : 'تأكيد الإضافة'}
+                                {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : 'Confirmer l\'ajout'}
                             </button>
                         </form>
                     )}

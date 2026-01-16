@@ -174,7 +174,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                                 </h3>
                                 <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Clients</span>
                             </div>
-                            <p className="text-xs text-slate-500 leading-relaxed">Exportez la liste complète de vos prospects et clients avec leurs coordonnées et classifications.</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Exportez la liste complète de vos prospects et clients with leurs coordonnées et classifications.</p>
                             
                             <button 
                                 onClick={() => handleExportCSV('customers')}
@@ -252,7 +252,7 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                     
                     <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-blue-900/20 border border-blue-800/30 rounded-xl">
                         <InfoIcon className="w-4 h-4 text-blue-400" />
-                        <p className="text-[11px] text-blue-300 font-medium">Les fichiers CSV sont encodés en UTF-8 avec BOM pour assurer une compatibilité parfaite avec Microsoft Excel (Arabe/Français).</p>
+                        <p className="text-[11px] text-blue-300 font-medium">Les fichiers CSV sont encodés en UTF-8 with BOM pour assurer une compatibilité parfaite with Microsoft Excel (Arabe/Français).</p>
                     </div>
                 </section>
 
@@ -293,7 +293,8 @@ const WhiteLabelPage: React.FC<WhiteLabelPageProps> = ({ appSettings, onClose, s
                                 <div onClick={() => fileInputRef.current[asset.key]?.click()} className="aspect-square bg-slate-900/50 border-2 border-dashed border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer hover:border-sky-500 transition-all overflow-hidden p-4">
                                     {(customSettings as any)[asset.key] ? <img src={(customSettings as any)[asset.key]} className="w-full h-full object-contain" /> : <PhotoIcon className="w-8 h-8 text-slate-700" />}
                                 </div>
-                                <input type="file" ref={el => fileInputRef.current[asset.key] = el} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(asset.key, e)} />
+                                {/* FIX: Wrapped ref assignment in curly braces to return void and satisfy the Ref type requirement. */}
+                                <input type="file" ref={el => { fileInputRef.current[asset.key] = el; }} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(asset.key, e)} />
                             </div>
                         ))}
                     </div>

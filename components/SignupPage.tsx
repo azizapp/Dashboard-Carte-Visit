@@ -48,7 +48,7 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
             }, 3000);
         } catch (err: any) {
             setError({
-                message: err.message || 'حدث خطأ أثناء إنشاء الحساب',
+                message: err.message || 'Une erreur est survenue lors de la création du compte.',
                 code: err.code
             });
         } finally {
@@ -68,9 +68,9 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                 <div className="mb-6 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl animate-bounce">
                     <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                 </div>
-                <h1 className="text-3xl font-bold mb-2">تم إنشاء الحساب!</h1>
-                <p className="text-blue-100 mb-8">سيتم تحويلك لصفحة تسجيل الدخول خلال لحظات...</p>
-                <button onClick={onBackToLogin} className="text-white underline font-semibold">اضغط هنا للذهاب فوراً</button>
+                <h1 className="text-3xl font-bold mb-2">Compte créé avec succès !</h1>
+                <p className="text-blue-100 mb-8">Vous allez être redirigé vers la page de connexion dans quelques instants...</p>
+                <button onClick={onBackToLogin} className="text-white underline font-semibold">Cliquez ici pour y aller immédiatement</button>
             </div>
         );
     }
@@ -83,8 +83,8 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
 
             <div className="w-full max-w-sm mx-auto text-center">
                 <div className="mb-12">
-                    <h1 className="text-4xl font-bold text-white">إنشاء حساب جديد</h1>
-                    <p className="text-blue-200 mt-2">انضم إلى فريق Apollo Ayoware</p>
+                    <h1 className="text-4xl font-bold text-white">Créer un nouveau compte</h1>
+                    <p className="text-blue-200 mt-2">Rejoignez l'équipe Apollo Eyewear</p>
                 </div>
 
                 <form className="space-y-6" onSubmit={handleSignup}>
@@ -96,8 +96,8 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full bg-transparent py-3 pl-10 text-white placeholder:text-slate-300 focus:outline-none sm:text-sm"
-                                placeholder="البريد الإلكتروني"
+                                className="block w-full bg-transparent py-3 pl-10 text-white placeholder:text-slate-300 focus:outline-none sm:text-sm text-left"
+                                placeholder="Adresse e-mail"
                             />
                         </div>
                     </div>
@@ -110,29 +110,29 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                                 required
                                 value={code}
                                 onChange={(e) => setCode(e.target.value)}
-                                className="block w-full bg-transparent py-3 pl-10 text-white placeholder:text-slate-300 focus:outline-none sm:text-sm"
-                                placeholder="اختر رمز دخول (Code)"
+                                className="block w-full bg-transparent py-3 pl-10 text-white placeholder:text-slate-300 focus:outline-none sm:text-sm text-left"
+                                placeholder="Choisissez un code d'accès"
                             />
                         </div>
                     </div>
 
                     {error && (
-                        <div className="mt-4 text-right">
+                        <div className="mt-4 text-left">
                             <div className="bg-red-900/40 border border-red-500/30 p-3 rounded-lg">
-                                <p className="text-xs text-red-100 font-bold mb-1">خطأ في النظام (Code: {error.code || 'Unknown'})</p>
+                                <p className="text-xs text-red-100 font-bold mb-1">Erreur Système (Code: {error.code || 'Unknown'})</p>
                                 <p className="text-[11px] text-red-200 leading-relaxed">{error.message}</p>
                             </div>
                             
                             {error.code === '42501' && (
                                 <div className="mt-2 bg-slate-900/80 p-3 rounded-lg border border-amber-500/30">
-                                    <p className="text-[10px] text-amber-300 mb-2 font-bold underline">حل مشكلة الصلاحيات (RLS):</p>
-                                    <p className="text-[9px] text-slate-300 mb-2">انسخ الكود التالي ونفذه في SQL Editor داخل Supabase:</p>
+                                    <p className="text-[10px] text-amber-300 mb-2 font-bold underline">Résolution du problème de permissions (RLS) :</p>
+                                    <p className="text-[9px] text-slate-300 mb-2">Copiez ce code et exécutez-le dans l'éditeur SQL de Supabase :</p>
                                     <button 
                                         type="button"
                                         onClick={copySql}
                                         className="w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold rounded transition-colors"
                                     >
-                                        {copied ? '✅ تم النسخ' : '📋 نسخ كود SQL للإصلاح'}
+                                        {copied ? '✅ Copié' : '📋 Copier le code SQL de réparation'}
                                     </button>
                                 </div>
                             )}
@@ -147,15 +147,15 @@ CREATE POLICY "Allow public select" ON allowed_users FOR SELECT USING (true);`;
                         >
                             {isLoading ? (
                                 <SpinnerIcon className="animate-spin h-5 w-5 text-white" />
-                            ) : 'تأكيد إنشاء الحساب'}
+                            ) : 'Confirmer la création du compte'}
                         </button>
                     </div>
                 </form>
 
                 <p className="mt-10 text-center text-sm text-blue-200">
-                    لديك حساب بالفعل؟ 
+                    Déjà un compte ? 
                     <button onClick={onBackToLogin} className="font-semibold text-cyan-300 hover:text-cyan-200 underline ml-2">
-                        سجل دخولك هنا
+                        Connectez-vous ici
                     </button>
                 </p>
             </div>

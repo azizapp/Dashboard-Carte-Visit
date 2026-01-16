@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Store, Customer } from '../types.ts';
 import UsersIcon from './icons/UsersIcon.tsx';
@@ -219,7 +220,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
         let revenue = 0, totalQty = 0, buyActions = 0, revisitActions = 0, visitActionsCount = 0;
         let hasGsm = 0, hasEmail = 0, hasGps = 0, hasImage = 0, hasNote = 0, hasRendezVous = 0;
         
-        // جودة البيانات الجديدة
+        // Quality components (FR)
         let hasName = 0, hasManager = 0, hasCity = 0, hasRegion = 0, hasAddress = 0, hasGsm1 = 0, hasGsm2 = 0, hasGamme = 0, hasPhone = 0;
 
         const cityCounts: Record<string, number> = {};
@@ -241,7 +242,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             if (!userStats[user]) userStats[user] = { visits: 0, revenue: 0 };
             userStats[user].visits++;
 
-            // حساب الأفعال
+            // calculate actions
             if (action === 'acheter') {
                 const p = Number(store.Prix) || 0;
                 revenue += p;
@@ -255,7 +256,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                 visitActionsCount++;
             }
 
-            // إكمال بيانات الزبائن (نحسبها للزيارات الفريدة لكل متجر لضمان دقة نسبة جودة "القاعدة")
+            // check database completeness
             if (!processedUniqueMagazins.has(magKey)) {
                 if (store.Magazin) hasName++;
                 if (store['Le Gérant']) hasManager++;
@@ -330,7 +331,7 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
-                contents: `Génère un audit de performance pour Apollo Eyewear. Données: CA=${stats.revenue}DH, Leads=${stats.totalVisits}, Conversion=${(stats.buyActions/stats.totalVisits*100).toFixed(1)}%. Format HTML Tailwind avec plans d'action.`,
+                contents: `Génère un audit de performance pour Apollo Eyewear. Données: CA=${stats.revenue}DH, Leads=${stats.totalVisits}, Conversion=${(stats.buyActions/stats.totalVisits*100).toFixed(1)}%. Format HTML Tailwind avec plans d'action en français.`,
             });
             setAnalysisResult(response.text || "Erreur de génération.");
         } catch (e) { setAnalysisResult("Erreur lors de l'analyse."); }
@@ -526,14 +527,14 @@ const HomePage: React.FC<HomePageProps> = ({ stores, authenticatedUser }) => {
                             <QualityStat icon={UsersIcon} label="Visiter" value={`${Math.round(stats.visitActionsCount / (stats.totalVisits || 1) * 100)}%`} color="text-blue-500" />
                             
                             {/* Data Completeness Group (Based on Unique Customers) */}
-                            <QualityStat icon={StoreIcon} label="Name" value={`${Math.round(stats.quality.name / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-500" />
-                            <QualityStat icon={UserCircleIcon} label="Manager" value={`${Math.round(stats.quality.manager / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-400" />
-                            <QualityStat icon={MapIcon} label="City" value={`${Math.round(stats.quality.city / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-500" />
-                            <QualityStat icon={LocationMarkerIcon} label="Region" value={`${Math.round(stats.quality.region / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-400" />
-                            <QualityStat icon={LocationMarkerIcon} label="Address" value={`${Math.round(stats.quality.address / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-600" />
+                            <QualityStat icon={StoreIcon} label="Nom" value={`${Math.round(stats.quality.name / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-500" />
+                            <QualityStat icon={UserCircleIcon} label="Gérant" value={`${Math.round(stats.quality.manager / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-400" />
+                            <QualityStat icon={MapIcon} label="Ville" value={`${Math.round(stats.quality.city / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-500" />
+                            <QualityStat icon={LocationMarkerIcon} label="Région" value={`${Math.round(stats.quality.region / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-400" />
+                            <QualityStat icon={LocationMarkerIcon} label="Adresse" value={`${Math.round(stats.quality.address / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-sky-600" />
                             <QualityStat icon={PhoneCallIcon} label="GSM 1" value={`${Math.round(stats.quality.gsm / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-emerald-500" />
                             <QualityStat icon={PhoneCallIcon} label="GSM 2" value={`${Math.round(stats.quality.gsm2 / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-emerald-400" />
-                            <QualityStat icon={PhoneCallIcon} label="Phone" value={`${Math.round(stats.quality.phone / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-blue-400" />
+                            <QualityStat icon={PhoneCallIcon} label="Téléphone" value={`${Math.round(stats.quality.phone / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-blue-400" />
                             <QualityStat icon={TagIcon} label="Gamme" value={`${Math.round(stats.quality.gamme / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-purple-500" />
                             <QualityStat icon={EnvelopeIcon} label="Email" value={`${Math.round(stats.quality.email / (stats.uniqueMagazinsCount || 1) * 100)}%`} color="text-indigo-500" />
                             

@@ -97,8 +97,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
       >
         <header className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Filtres Avancés</h2>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Personnalisez vos analyses</p>
+            <h2 className="text-lg font-medium text-slate-900 dark:text-white uppercase tracking-tight">Filtres Avancés</h2>
+            <p className="text-[10px] text-slate-400 font-normal uppercase tracking-widest mt-0.5">Personnalisez vos analyses</p>
           </div>
           <button
             type="button"
@@ -114,14 +114,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
           {/* Section Période Custom */}
           <div className="space-y-4">
             <div className="flex items-center justify-between ml-1">
-                <h3 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Période personnalisée</h3>
+                <h3 className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Période personnalisée</h3>
                 {(filters.startDate || filters.endDate) && (
-                    <button onClick={clearDates} className="text-[10px] font-black text-red-500 hover:underline uppercase">Vider les dates</button>
+                    <button onClick={clearDates} className="text-[10px] font-normal text-red-500 hover:underline uppercase tracking-tight">Vider les dates</button>
                 )}
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date de début</label>
+                    <label className="block text-[10px] font-medium text-slate-400 uppercase mb-2 ml-1">Date de début</label>
                     <div className="relative group">
                         <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                         <input 
@@ -129,12 +129,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             name="startDate"
                             value={filters.startDate || ''}
                             onChange={handleChange}
-                            className="block w-full pl-9 pr-3 py-3 text-sm font-bold rounded-xl border border-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
+                            className="block w-full pl-9 pr-3 py-3 text-sm font-normal rounded-xl border border-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                         />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Date de fin</label>
+                    <label className="block text-[10px] font-medium text-slate-400 uppercase mb-2 ml-1">Date de fin</label>
                     <div className="relative group">
                         <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                         <input 
@@ -142,7 +142,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             name="endDate"
                             value={filters.endDate || ''}
                             onChange={handleChange}
-                            className="block w-full pl-9 pr-3 py-3 text-sm font-bold rounded-xl border border-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
+                            className="block w-full pl-9 pr-3 py-3 text-sm font-normal rounded-xl border border-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                         />
                     </div>
                 </div>
@@ -150,7 +150,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
 
           <div>
-            <label htmlFor="city" className="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+            <label htmlFor="city" className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
               Ville
             </label>
             <div className="relative">
@@ -159,7 +159,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   name="city"
                   value={filters.city}
                   onChange={handleChange}
-                  className="block w-full rounded-xl border border-slate-100 dark:border-slate-600 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none sm:text-sm dark:bg-slate-700 dark:text-white py-3 px-4 font-bold appearance-none transition-all"
+                  className="block w-full rounded-xl border border-slate-100 dark:border-slate-600 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none sm:text-sm dark:bg-slate-700 dark:text-white py-3 px-4 font-normal appearance-none transition-all"
                 >
                   <option value="">Toutes les villes</option>
                   {cities.map(city => (
@@ -167,22 +167,22 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
                 </div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Niveau client</h3>
+            <h3 className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Niveau client</h3>
             <div className="flex flex-wrap gap-2.5">
               {clientLevels.map(level => (
                 <button
                   key={level}
                   type="button"
                   onClick={() => toggleSelection('gammes', level)}
-                  className={`px-4 py-2 text-[11px] font-black rounded-xl border transition-all ${
+                  className={`px-4 py-2 text-[11px] font-medium rounded-xl border transition-all ${
                     filters.gammes.includes(level)
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200/50 scale-105'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200/40 scale-105'
                       : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border-slate-100 dark:border-slate-600 hover:border-blue-200'
                   }`}
                 >
@@ -193,16 +193,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
           
           <div>
-            <h3 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Priorité IA</h3>
+            <h3 className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">Priorité IA</h3>
             <div className="flex flex-wrap gap-2.5">
               {priorities.map(priority => (
                 <button
                   key={priority}
                   type="button"
                   onClick={() => toggleSelection('priorities', priority)}
-                   className={`px-4 py-2 text-[11px] font-black rounded-xl border transition-all ${
+                   className={`px-4 py-2 text-[11px] font-medium rounded-xl border transition-all ${
                     filters.priorities.includes(priority)
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200/50 scale-105'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200/40 scale-105'
                       : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border-slate-100 dark:border-slate-600 hover:border-indigo-200'
                   }`}
                 >
@@ -217,14 +217,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="flex-1 px-6 py-3.5 text-[12px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-200 hover:text-red-500 transition-colors"
+            className="flex-1 px-6 py-3.5 text-[12px] font-medium uppercase tracking-widest text-slate-500 dark:text-slate-200 hover:text-red-500 transition-colors"
           >
             Réinitialiser
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="flex-[2] px-6 py-3.5 text-[12px] font-black uppercase tracking-widest text-white bg-blue-600 rounded-2xl shadow-xl shadow-blue-200/50 dark:shadow-none hover:bg-blue-700 transition-all active:scale-95"
+            className="flex-[2] px-6 py-3.5 text-[12px] font-medium uppercase tracking-widest text-white bg-blue-600 rounded-2xl shadow-lg shadow-blue-200/40 dark:shadow-none hover:bg-blue-700 transition-all active:scale-95"
           >
             Appliquer
           </button>

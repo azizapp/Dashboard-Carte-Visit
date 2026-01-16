@@ -1,9 +1,10 @@
+
 import { supabase } from './supabase.ts';
 import { UserSession, UserProfile } from '../types.ts';
 
 const login = async (email: string, code: string): Promise<UserSession> => {
     if (!email || !code) {
-        throw new Error("الرجاء إدخال البريد الإلكتروني والرمز");
+        throw new Error("Veuillez saisir votre email et votre code.");
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -17,24 +18,22 @@ const login = async (email: string, code: string): Promise<UserSession> => {
 
     if (error) {
         console.error("Login Error:", JSON.stringify(error, null, 2));
-        throw new Error(error.message || 'حدث خطأ أثناء تسجيل الدخول');
+        throw new Error(error.message || 'Une erreur est survenue lors de la connexion.');
     }
 
     if (!data) {
-        throw new Error('البريد الإلكتروني أو الرمز غير صحيح.');
+        throw new Error('Email ou code incorrect.');
     }
     
     return {
         email: data.email,
-        // FIX: Replaced narrowed cast with the updated 'manager' | 'admin' | 'user' role type.
         role: (data.role || 'user') as 'manager' | 'admin' | 'user'
     };
 };
 
-// FIX: Updated the role parameter type to include 'manager'.
 const signup = async (email: string, code: string, role: 'manager' | 'admin' | 'user' = 'user'): Promise<void> => {
     if (!email || !code) {
-        throw new Error("الرجاء إدخال البريد الإلكتروني والرمز المطلوب");
+        throw new Error("Veuillez saisir l'email et le code requis.");
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -48,11 +47,11 @@ const signup = async (email: string, code: string, role: 'manager' | 'admin' | '
 
     if (checkError) {
         console.error("Signup Check Error:", JSON.stringify(checkError, null, 2));
-        throw new Error(checkError.message || 'خطأ أثناء التحقق من وجود الحساب');
+        throw new Error(checkError.message || "Erreur lors de la vérification de l'existence du compte.");
     }
 
     if (existingUser) {
-        throw new Error('هذا البريد الإلكتروني مسجل مسبقاً.');
+        throw new Error('Cet email est déjà enregistré.');
     }
 
     const { error: insertError } = await supabase
@@ -61,7 +60,7 @@ const signup = async (email: string, code: string, role: 'manager' | 'admin' | '
 
     if (insertError) {
         console.error("Signup Insert Error Details:", JSON.stringify(insertError, null, 2));
-        const errorToThrow = new Error(insertError.message || 'فشل إنشاء الحساب');
+        const errorToThrow = new Error(insertError.message || 'Échec de la création du compte.');
         (errorToThrow as any).code = insertError.code;
         throw errorToThrow;
     }

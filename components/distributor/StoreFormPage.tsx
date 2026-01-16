@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Store, StoreFormData, Customer } from '../../types.ts';
 import LocationMarkerIcon from '../icons/LocationMarkerIcon.tsx';
@@ -20,7 +19,7 @@ import XMarkIcon from '../icons/XMarkIcon.tsx';
 import { supabase } from '../../services/supabase.ts';
 import locationService, { LocationEntry } from '../../services/locationService.ts';
 
-// --- مساعدات الصور ---
+// --- Aides pour les images ---
 const compressImage = (fileOrDataUrl: File | string, quality = 0.7, maxWidth = 1024): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -49,7 +48,7 @@ const compressImage = (fileOrDataUrl: File | string, quality = 0.7, maxWidth = 1
     });
 };
 
-// --- مكون الكاميرا ---
+// --- Composant Caméra ---
 interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -68,7 +67,7 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
           if (videoRef.current) videoRef.current.srcObject = stream;
         })
         .catch(err => {
-          console.error("Camera error:", err);
+          console.error("Erreur caméra :", err);
           alert("Impossible d'accéder à la caméra.");
           onClose();
         });
@@ -138,6 +137,7 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [actionError, setActionError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -200,19 +200,37 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
+      if (name === 'Action Client' && value !== '') {
+          setActionError(false);
+      }
       setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const updateLocation = () => {
       setIsLocating(true);
       if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition((pos) => {
-              setFormData(p => ({ ...p, Localisation: `${pos.coords.latitude}, ${pos.coords.longitude}` }));
-              setIsLocating(false);
-          }, () => {
-              alert("Impossible d'obtenir la position");
-              setIsLocating(false);
-          });
+          navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                  setFormData(p => ({ ...p, Localisation: `${pos.coords.latitude}, ${pos.coords.longitude}` }));
+                  setIsLocating(false);
+              },
+              (err) => {
+                  let msg = "Impossible d'obtenir la position.";
+                  if (err.code === 1) msg = "Accès refusé. Veuillez activer la géolocalisation dans votre navigateur.";
+                  else if (err.code === 2) msg = "Position indisponible.";
+                  else if (err.code === 3) msg = "Délai d'attente dépassé.";
+                  alert(msg);
+                  setIsLocating(false);
+              },
+              { 
+                  enableHighAccuracy: true, 
+                  timeout: 10000, 
+                  maximumAge: 0 
+              }
+          );
+      } else {
+          alert("La géolocalisation n'est pas supportée par votre navigateur.");
+          setIsLocating(false);
       }
   };
 
@@ -222,14 +240,20 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
           return;
       }
 
-      // --- التحقق الصارم من وجود المدينة في قاعدة البيانات (moroccan_locations) ---
+      // --- Vérification du choix de l'action (obligatoire) ---
+      if (!formData['Action Client']) {
+          setActionError(true);
+          return;
+      }
+
+      // --- Vérification stricte de l'existence de la ville dans la base de données ---
       const cityExists = uniqueCities.some(c => c.toLowerCase() === formData.Ville.trim().toLowerCase());
       if (!cityExists) {
           alert("ERREUR : La ville saisie n'existe pas dans notre base de données autorisée. Veuillez sélectionner une ville dans la liste suggérée.");
           return;
       }
 
-      // --- التحقق الصارم من وجود المنطقة/الحي (في حال إدخالها) ---
+      // --- Vérification stricte de l'existence de la région/quartier (si saisie) ---
       if (formData.Région) {
           const regionExists = filteredRegions.some(r => r.toLowerCase() === formData.Région?.trim().toLowerCase());
           if (!regionExists) {
@@ -510,14 +534,14 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 <SectionHeader icon={ClipboardDocumentListIcon} title="Détails Commerciaux" />
                 <div className="space-y-4">
                     <div>
-                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Action à entreprendre</label>
+                        <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Action à entreprendre *</label>
                         <div className="relative">
                             <ClipboardDocumentListIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                             <select 
                                 name="Action Client" 
                                 value={formData['Action Client']} 
                                 onChange={handleChange}
-                                className="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white appearance-none"
+                                className={`w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-700/50 border ${actionError ? 'border-red-500 focus:ring-red-500' : 'border-slate-100 dark:border-slate-700 focus:ring-[#4407EB]'} rounded-xl outline-none focus:ring-2 text-sm dark:text-white appearance-none transition-colors`}
                             >
                                 <option value="">Sélectionnez une action</option>
                                 <option value="Visiter">Visiter</option>
@@ -527,6 +551,39 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                             <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none" />
                         </div>
                     </div>
+
+                    {formData['Action Client'] === 'Acheter' && (
+                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Prix (DH)</label>
+                                <div className="relative">
+                                    <CurrencyDollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+                                    <input 
+                                        type="number" 
+                                        name="Prix"
+                                        placeholder="0.00"
+                                        value={formData.Prix || ''}
+                                        onChange={handleChange}
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Quantité</label>
+                                <div className="relative">
+                                    <CubeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+                                    <input 
+                                        type="number" 
+                                        name="Quantité"
+                                        placeholder="0"
+                                        value={formData.Quantité || ''}
+                                        onChange={handleChange}
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white font-bold"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {formData['Action Client'] === 'Revisiter' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
@@ -546,16 +603,30 @@ const StoreFormPage: React.FC<StoreFormPageProps> = ({ onClose, onSubmit, stores
                 </div>
             </section>
 
+            <section className="bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <SectionHeader icon={ClipboardDocumentListIcon} title="Notes (Optionnel)" />
+                <div>
+                    <label className="text-[12px] font-bold text-slate-500 mb-2 block ml-1">Notes de visite</label>
+                    <textarea 
+                        name="Note"
+                        value={formData.Note}
+                        onChange={handleChange}
+                        placeholder="Ajoutez des détails sur cette première approche..."
+                        className="w-full p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-[#4407EB] text-sm dark:text-white h-32 resize-none"
+                    />
+                </div>
+            </section>
+
             <button 
                 onClick={handleFormSubmit}
                 disabled={isSubmitting}
-                className="w-full bg-[#4407EB] text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-200 dark:shadow-none hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                className={`w-full ${actionError ? 'bg-red-600 shadow-red-200' : 'bg-[#4407EB] shadow-blue-200'} text-white py-4 rounded-xl font-bold shadow-xl dark:shadow-none hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3`}
             >
-                {isSubmitting ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : 'Enregistrer le Lead'}
+                {isSubmitting ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : (actionError ? 'Remplir Action' : 'Enregistrer')}
             </button>
         </main>
 
-        {/* Click outside detection to close suggestions */}
+        {/* Détection du clic à l'extérieur pour fermer les suggestions */}
         {(showCitySuggestions || showRegionSuggestions || showSuggestions) && (
             <div 
                 className="fixed inset-0 z-10" 

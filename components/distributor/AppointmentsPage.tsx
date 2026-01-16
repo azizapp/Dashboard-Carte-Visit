@@ -83,7 +83,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         const dates = s['Rendez-Vous'].split(/[\n,]/).map(d => d.trim()).filter(Boolean);
         dates.forEach(d => {
           const date = new Date(d);
-          // استثناء المواعيد القديمة (قبل اليوم)
           if (!isNaN(date.getTime()) && date >= startOfToday) {
             list.push({ store: s, date, user: s.USER || 'Inconnu', city: s.Ville });
           }
@@ -123,7 +122,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         const currentDay = startOfToday.getDay();
         start = new Date(startOfToday);
         start.setDate(startOfToday.getDate() - currentDay);
-        // التأكد من أن البداية ليست قبل اليوم حتى في فلتر الأسبوع
         if (start < startOfToday) start = startOfToday;
         end = new Date(start);
         end.setDate(start.getDate() + 6);
@@ -140,7 +138,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         break;
       }
       case 'thisMonth':
-        start = startOfToday; // تبدأ الفلترة من اليوم الحالي لنهاية الشهر
+        start = startOfToday;
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         break;
       case 'nextMonth':
@@ -152,7 +150,6 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
         start.setHours(0,0,0,0);
         end = new Date(selectedDate);
         end.setHours(23, 59, 59, 999);
-        // إذا اختار المستخدم يوماً ماضياً في التقويم، لن تظهر مواعيد
         if (start < startOfToday) return [];
         break;
       }
@@ -434,15 +431,15 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
             <select 
               value={filterUser} 
               onChange={(e) => setFilterUser(e.target.value)}
-              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white appearance-none cursor-pointer"
+              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white appearance-none cursor-pointer"
             >
-              <option value="all">Tous les utilisateurs</option>
-              {users.map(u => <option key={u} value={u}>{u}</option>)}
+              <option value="all">Tous les vendeurs</option>
+              {users.map(u => <option key={u} value={u}>{u.split('@')[0]}</option>)}
             </select>
             <select 
               value={filterCity} 
               onChange={(e) => setFilterCity(e.target.value)}
-              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white appearance-none cursor-pointer"
+              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white appearance-none cursor-pointer"
             >
               <option value="all">Toutes les villes</option>
               {cities.map(c => <option key={c} value={c}>{c}</option>)}
@@ -450,7 +447,7 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
             <select 
               value={timeFilter} 
               onChange={(e) => setTimeFilter(e.target.value as TimePeriod)}
-              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white appearance-none cursor-pointer"
+              className="w-full text-sm border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white appearance-none cursor-pointer"
             >
               <option value="all">Toutes les dates</option>
               <option value="today">Aujourd'hui</option>
@@ -607,6 +604,18 @@ const AppointmentsPage: React.FC<AppointmentsPageProps> = ({
                         Aucun rendez-vous à venir trouvé.
                       </div>
                   )}
+              </div>
+
+              {/* Nouveau Bouton: Ajouter un rendez-vous (Admin View) */}
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+                  <button 
+                    onClick={() => setIsNewAppointmentModalOpen(true)}
+                    style={{ backgroundColor: 'rgb(74, 222, 128)' }}
+                    className="w-full py-3.5 text-white font-black rounded-xl shadow-lg shadow-green-200/50 dark:shadow-none hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm uppercase tracking-tight border border-[#4ade80]/20"
+                  >
+                    <PlusIcon className="w-5 h-5 stroke-[3px] text-white" />
+                    <span>Ajouter un rendez-vous</span>
+                  </button>
               </div>
           </div>
         </div>

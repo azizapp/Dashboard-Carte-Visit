@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Store } from '../../types.ts';
 import PhoneCallIcon from '../icons/PhoneCallIcon.tsx';
@@ -115,7 +114,7 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                 
                 <section className="bg-white dark:bg-slate-800 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-700 relative">
                     <div className="absolute top-8 right-8 w-3 h-3 rounded-full bg-slate-400 border-2 border-white dark:border-slate-800"></div>
-                    <h2 className="text-[24px] font-black text-slate-900 dark:text-white mb-4 pr-10 leading-tight">{store.Magazin}</h2>
+                    <h2 className="text-[20px] font-bold text-slate-900 dark:text-white mb-4 pr-10 leading-tight">{store.Magazin}</h2>
                     <div className="flex flex-wrap gap-2">
                         <span className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 px-3 py-1.5 rounded text-[11px] font-bold border border-slate-100 dark:border-slate-700 flex items-center gap-1.5">
                             <TagIcon className="w-3.5 h-3.5" /> {store.Gamme || 'Haute et Moyenne'}
@@ -246,7 +245,7 @@ const UserProspectDetailPage: React.FC<UserProspectDetailPageProps> = ({ store, 
                         <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isHistoryOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {isHistoryOpen && (
-                        <div className="p-8 pt-0 animate-in fade-in slide-in-from-top-2">
+                        <div className="p-8 pt-0 animate-in fade-in duration-300">
                              <div className="relative pl-6 space-y-8 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-100 dark:before:bg-slate-700">
                                 {history.map((visit, idx) => (
                                     <div key={idx} className="relative">

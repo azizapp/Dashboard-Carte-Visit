@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Store } from '../types.ts';
 import CubeIcon from './icons/CubeIcon.tsx';
@@ -7,7 +8,7 @@ import UsersIcon from './icons/UsersIcon.tsx';
 import BellIcon from './icons/BellIcon.tsx';
 import ClockIcon from './icons/ClockIcon.tsx';
 
-// --- StatCard: بطاقة إحصاء بنصوص صغيرة وأوزان خفيفة ---
+// --- StatCard : carte de statistiques avec de petits textes et des poids légers ---
 const StatCard = ({ title, value, sub, icon: Icon, iconBg }: any) => (
   <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
     <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center`}>
@@ -21,7 +22,7 @@ const StatCard = ({ title, value, sub, icon: Icon, iconBg }: any) => (
   </div>
 );
 
-// --- CommissionLevelBar: بطاقة البائع بمستويات واقعية (0-2000 مبيعة) ---
+// --- CommissionLevelBar : carte du vendeur avec des niveaux réalistes (0-2000 ventes) ---
 const CommissionLevelBar: React.FC<{ user: string; currentSales: number; revenue: number }> = ({ user, currentSales, revenue }) => {
   const levels = [0, 700, 1000, 1500, 2000];
   const max = 2000;
@@ -76,7 +77,7 @@ const CommissionLevelBar: React.FC<{ user: string; currentSales: number; revenue
           ))}
         </div>
         <div className="flex justify-between mt-2.5 text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
-          <span>Start</span>
+          <span>Début</span>
           <span>700</span>
           <span>1000</span>
           <span>1500</span>
@@ -98,7 +99,7 @@ const CommissionLevelBar: React.FC<{ user: string; currentSales: number; revenue
 const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedCity, setSelectedCity] = useState('all');
-  // تم تغيير الحالة الافتراضية إلى 'month' (هذا الشهر) بناءً على الطلب
+  // Le statut par défaut a été changé en 'month' (ce mois-ci) selon la demande
   const [period, setPeriod] = useState('month');
 
   const uniqueUsers = useMemo(() => Array.from(new Set(stores.map(s => s.USER))).filter(Boolean).sort(), [stores]);
@@ -107,7 +108,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
   const stats = useMemo(() => {
     const now = new Date();
 
-    // تفعيل الفلترة الصارمة على جميع البيانات المستعملة في الصفحة
+    // Activer le filtrage strict sur toutes les données utilisées dans la page
     const filtered = stores.filter(s => {
       const matchesUser = selectedUser === 'all' || s.USER === selectedUser;
       const matchesCity = selectedCity === 'all' || s.Ville === selectedCity;
@@ -142,7 +143,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
     const citiesCount = new Set(filtered.map(s => s.Ville)).size;
     const interactionsCount = filtered.length;
 
-    // العثور على آخر مبيعة بناءً على البيانات المفلترة
+    // Trouver la dernière vente basée sur les données filtrées
     const salesOnly = filtered.filter(s => s['Action Client']?.toLowerCase() === 'acheter');
     const latestSale = salesOnly.sort((a, b) => 
         new Date(b['Date Heure'] || b.Date).getTime() - new Date(a['Date Heure'] || a.Date).getTime()
@@ -155,7 +156,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
         const isSale = s['Action Client']?.toLowerCase() === 'acheter';
         userMap.set(s.USER, {
             revenue: current.revenue + (Number(s.Prix) || 0),
-            // حساب التقدم بناءً على عدد القطع المباعة (الكمية) وليس عدد الزيارات
+            // Calculer la progression basée sur le nombre de pièces vendues (quantité) et non le nombre de visites
             sales: current.sales + (isSale ? (Number(s.Quantité) || 1) : 0)
         });
     });
@@ -172,7 +173,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto pb-32 bg-[#F7F8FA] dark:bg-slate-900 min-h-screen font-sans">
       
-      {/* Header & Filters Area */}
+      {/* En-tête et zone de filtres */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">Suivi Commercial</h1>
@@ -213,7 +214,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
         </div>
       </div>
 
-      {/* Top Stat Cards Grid */}
+      {/* Grille de cartes de statistiques supérieures */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Pièces Vendues" value={stats.totalSales} sub="Volume cumulé (Période)" icon={CubeIcon} iconBg="bg-blue-50 text-blue-500 dark:bg-blue-900/20" />
         <StatCard title="CA RÉALISÉ" value={`${stats.totalRevenue.toLocaleString()} DH`} sub="Valeur totale (Période)" icon={CurrencyDollarIcon} iconBg="bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20" />
@@ -221,10 +222,10 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
         <StatCard title="Interactions" value={stats.interactionsCount} sub="Visites & Contacts" icon={UsersIcon} iconBg="bg-amber-50 text-amber-500 dark:bg-amber-900/20" />
       </div>
 
-      {/* Main Container with Sidebar alignment */}
+      {/* Conteneur principal aligné avec la barre latérale */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        {/* Left Column: Staff Progression */}
+        {/* Colonne de gauche : Progression du personnel */}
         <div className="lg:col-span-8 flex flex-col gap-6">
              <div className="flex items-center justify-between px-1">
                 <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -245,10 +246,10 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
              </div>
         </div>
 
-        {/* Right Column: Alerts & Performance */}
+        {/* Colonne de droite : Alertes et Performance */}
         <div className="lg:col-span-4 flex flex-col h-full">
           
-          {/* Header MATCHING the left column for alignment */}
+          {/* En-tête CORRESPONDANT à la colonne de gauche pour l'alignement */}
           <div className="flex items-center justify-between px-1 mb-6">
             <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <span className="w-1 h-4 bg-indigo-400 rounded-full"></span>
@@ -257,7 +258,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
             <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">Filtres Actifs</span>
           </div>
 
-          {/* Top Performance Ranking Card */}
+          {/* Carte de classement des meilleures performances */}
           <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mb-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-500">
@@ -291,7 +292,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
 
           <div className="flex-grow"></div>
 
-          {/* Activity Alerts - ALIGNED TO BOTTOM OF GRID */}
+          {/* Alertes d'activité - ALIGNÉES EN BAS DE LA GRILLE */}
           <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm mt-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-500 shadow-sm">
@@ -300,7 +301,7 @@ const CommissionsPage: React.FC<{ stores: Store[] }> = ({ stores }) => {
               <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Dernière Vente (Période)</h3>
             </div>
             <div className="space-y-5">
-               {/* Last Sale Enhanced Alert */}
+               {/* Alerte améliorée de la dernière vente */}
                {stats.latestSale ? (
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border-l-4 border-emerald-500 group hover:bg-emerald-100 transition-colors shadow-sm">
                      <div className="flex items-center justify-between mb-3">

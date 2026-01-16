@@ -21,7 +21,7 @@ const LeadPrioritizationModal: React.FC<LeadPrioritizationModalProps> = ({ isOpe
         setResult('');
         try {
             const leadSummary = stores.slice(0, 100).map(s => ({ name: s.Magazin, city: s.Ville, gamme: s.Gamme, lastVisit: s.Date, action: s['Action Client'] }));
-            const prompt = `Analysez ces leads au Maroc pour un commercial. Identifiez les 7 priorités critiques (Gamme Haute, Récence, Géographie). Répondez en HTML Tailwind (Action Immédiate, Opportunités, Conseil Stratégique).`;
+            const prompt = `Analysez ces leads au Maroc pour un commercial. Identifiez les 7 priorités critiques (Gamme Haute, Récence, Géographie). Répondez exclusivement en français en utilisant un format HTML Tailwind (Action Immédiate, Opportunités, Conseil Stratégique).`;
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: 'gemini-3-pro-preview',

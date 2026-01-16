@@ -15,36 +15,39 @@ root.render(
   </React.StrictMode>
 );
 
-// تسجيل Service Worker لتمكين ميزة PWA
-// يعمل على localhost (http) والإنتاج (https)
+// Enregistrement du Service Worker pour activer la fonctionnalité PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swUrl = '/sw.js';
+    // Utilisation d'un chemin relatif pour sw.js
+    const swUrl = 'sw.js';
 
-    navigator.serviceWorker.register(swUrl, { scope: '/' })
+    navigator.serviceWorker.register(swUrl)
       .then(registration => {
-        console.log('Service Worker successfully registered with scope:', registration.scope);
+        console.log('Service Worker enregistré avec succès, périmètre :', registration.scope);
       })
       .catch(error => {
-        console.warn('Service Worker registration failed:', error.message);
+        console.warn('Échec de l\'enregistrement du Service Worker :', error.message || error);
       });
   });
 }
 
-// إضافة زر التثبيت للـ PWA
+// Ajout du bouton d'installation PWA
 let deferredPrompt: any;
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  // منع ظهور نافذة التثبيت التلقائية
+  // Empêcher l'apparition de la fenêtre d'installation automatique
   e.preventDefault();
-  // حفظ الحدث للاستخدام لاحقاً
+  // Sauvegarder l'événement pour une utilisation ultérieure
   deferredPrompt = e;
 
-  // إظهار زر التثبيت المخصص
+  // Afficher le bouton d'installation personnalisé
   showInstallButton();
 });
 
 function showInstallButton() {
+  const existingButton = document.getElementById('pwa-install-button');
+  if (existingButton) return;
+
   const installButton = document.createElement('button');
   installButton.id = 'pwa-install-button';
   installButton.innerHTML = `
@@ -53,7 +56,7 @@ function showInstallButton() {
       <polyline points="7 10 12 15 17 10"/>
       <line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
-    <span>ثبّت التطبيق</span>
+    <span>Installer l'application</span>
   `;
   installButton.style.cssText = `
     position: fixed;
@@ -88,12 +91,12 @@ function showInstallButton() {
 
   installButton.addEventListener('click', async () => {
     if (deferredPrompt) {
-      // إظهار نافذة التثبيت
+      // Afficher la fenêtre d'installation
       deferredPrompt.prompt();
-      // انتظار اختيار المستخدم
+      // Attendre le choix de l'utilisateur
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
-      // إخفاء الزر بعد التثبيت
+      console.log(`Réponse de l'utilisateur à l'invite d'installation : ${outcome}`);
+      // Supprimer le bouton après l'installation
       installButton.remove();
       deferredPrompt = null;
     }

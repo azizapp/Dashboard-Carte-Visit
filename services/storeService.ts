@@ -1,3 +1,4 @@
+
 import { Store, Mode, StoreFormData, Customer, Visit } from '../types.ts';
 import { supabase, uploadImageToStorage } from './supabase.ts';
 
@@ -21,7 +22,7 @@ const api = {
     const step = 1000;
     let hasMore = true;
 
-    // جلب البيانات على دفعات لتجاوز حد الـ 1000 سجل في Supabase
+    // Récupération des données par lots pour dépasser la limite de 1000 enregistrements de Supabase
     while (hasMore) {
       const { data, error } = await supabase
         .from('visits')
@@ -36,7 +37,7 @@ const api = {
       
       if (data && data.length > 0) {
         allVisits = [...allVisits, ...data];
-        // إذا كان عدد السجلات المسترجعة أقل من الخطوة، فهذا يعني أننا وصلنا للنهاية
+        // Si le nombre d'enregistrements récupérés est inférieur au pas, nous avons atteint la fin
         if (data.length < step) {
           hasMore = false;
         } else {
@@ -46,7 +47,7 @@ const api = {
         hasMore = false;
       }
       
-      // أمان إضافي لمنع الحلقات اللانهائية في حال وجود خلل ما
+      // Sécurité supplémentaire pour éviter les boucles infinies
       if (from > 20000) hasMore = false; 
     }
 
@@ -191,7 +192,7 @@ const api = {
         try {
             imageUrl = await uploadImageToStorage(imageUrl);
         } catch (e) {
-            console.error("Image upload failed", e);
+            console.error("Échec du téléchargement de l'image", e);
         }
     }
 

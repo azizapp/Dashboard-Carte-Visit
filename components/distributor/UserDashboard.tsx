@@ -36,7 +36,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ stores, authenticatedUser
     const userLeads = useMemo(() => {
         const map = new Map<string, { latest: Store, count: number }>();
         
-        // Filter by authenticated user first
+        // Filtrer par utilisateur authentifié d'abord
         const userSpecificStores = stores.filter(s => s.USER === authenticatedUser);
 
         userSpecificStores.forEach(s => {
@@ -57,17 +57,17 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ stores, authenticatedUser
 
         return Array.from(map.values())
             .filter(({ latest }) => {
-                // Search filter
+                // Filtre de recherche
                 const matchesSearch = 
                     latest.Magazin.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     latest.Ville.toLowerCase().includes(searchQuery.toLowerCase());
                 
                 if (!matchesSearch) return false;
 
-                // City filter
+                // Filtre de ville
                 if (filters.city && latest.Ville !== filters.city) return false;
 
-                // Gamme filter
+                // Filtre de gamme
                 if (filters.gammes.length > 0) {
                     if (!latest.Gamme || !filters.gammes.includes(latest.Gamme)) return false;
                 }
@@ -81,7 +81,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ stores, authenticatedUser
 
     return (
         <div className="relative min-h-full pb-24 bg-[#F7F8FA] dark:bg-slate-900 max-w-xl mx-auto">
-            {/* Header / Search Area */}
+            {/* Zone d'en-tête / Recherche */}
             <div className="sticky top-0 z-10 bg-[#F7F8FA]/95 dark:bg-slate-900/95 backdrop-blur-sm pb-4 pt-4 px-2">
                 <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
                     <div className="flex-1 relative">
@@ -120,7 +120,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ stores, authenticatedUser
                 </div>
             </div>
 
-            {/* Leads List */}
+            {/* Liste des prospects */}
             <div className="space-y-4 mt-2 px-2 pb-10">
                 {userLeads.length > 0 ? (
                     userLeads.map(({ latest, count }) => (
@@ -166,12 +166,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ stores, authenticatedUser
                     <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 mx-2">
                         <SearchIcon className="w-12 h-12 text-slate-200 dark:text-slate-700 mx-auto mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 font-bold">Aucun prospect trouvé</p>
-                        <p className="text-slate-400 text-xs mt-1">Essayez d'ajستر vos filtres ou votre recherche</p>
+                        <p className="text-slate-400 text-xs mt-1">Essayez d'ajuster vos filtres ou votre recherche</p>
                     </div>
                 )}
             </div>
 
-            {/* Floating Action Button */}
+            {/* Bouton d'action flottant */}
             <button 
                 onClick={onAddLead}
                 className="fixed bottom-10 right-10 w-16 h-16 bg-[#4407EB] text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-20 shadow-blue-500/20 border-4 border-white/20"

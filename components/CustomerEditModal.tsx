@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Store, Customer } from '../types.ts';
 import XMarkIcon from './icons/XMarkIcon.tsx';
 import SpinnerIcon from './icons/SpinnerIcon.tsx';
 import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon.tsx';
+import LocationMarkerIcon from './icons/LocationMarkerIcon.tsx';
+import ArrowPathIcon from './icons/ArrowPathIcon.tsx';
 import locationService, { LocationEntry } from '../services/locationService.ts';
 
 interface CustomerEditModalProps {
@@ -17,6 +18,7 @@ interface CustomerEditModalProps {
 const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, store, onSave, isAdmin }) => {
     const [formData, setFormData] = useState<Partial<Customer>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
     const [dynamicLocations, setDynamicLocations] = useState<LocationEntry[]>([]);
     
     const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -63,6 +65,30 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
             .sort((a, b) => a.localeCompare(b, 'fr'));
     }, [formData.city, dynamicLocations]);
 
+    const updateLocation = () => {
+        setIsLocating(true);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setFormData(prev => ({
+                        ...prev,
+                        location: `${pos.coords.latitude}, ${pos.coords.longitude}`
+                    }));
+                    setIsLocating(false);
+                },
+                (err) => {
+                    console.error("GPS Error:", err);
+                    alert("Impossible d'obtenir la position. Vérifiez vos permissions GPS.");
+                    setIsLocating(false);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        } else {
+            alert("La géolocalisation n'est pas supportée par votre navigateur.");
+            setIsLocating(false);
+        }
+    };
+
     if (!isOpen || !store) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -74,7 +100,6 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // --- التحقق الصارم من وجود المدينة في قاعدة البيانات ---
         if (formData.city) {
             const cityExists = uniqueCities.some(c => c.toLowerCase() === formData.city?.trim().toLowerCase());
             if (!cityExists) {
@@ -83,11 +108,10 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
             }
         }
 
-        // --- التحقق الصارم من وجود المنطقة ---
         if (formData.region) {
             const regionExists = filteredRegions.some(r => r.toLowerCase() === formData.region?.trim().toLowerCase());
             if (!regionExists) {
-                alert("ERREUR : La région saisie n'appartient pas à la ville sélectionnée dans notre base de données. Veuillez en choisir une dans la liste.");
+                alert("ERREUR : La région saisie n'appartient pas à la ville sélectionnée. Veuillez en choisir une dans la liste.");
                 return;
             }
         }
@@ -150,7 +174,6 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
                             <input name="manager" value={formData.manager || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         
-                        {/* Ville مع الاقتراحات */}
                         <div className="space-y-1.5 relative">
                             <label className="text-[10px] font-black text-slate-400 uppercase">Ville *</label>
                             <input 
@@ -184,7 +207,6 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
                             )}
                         </div>
 
-                        {/* Région مع الاقتراحات */}
                         <div className="space-y-1.5 relative">
                             <label className="text-[10px] font-black text-slate-400 uppercase">Région</label>
                             <input 
@@ -246,8 +268,26 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
                             <textarea name="address" value={formData.address || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none" />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase">Localisation (GPS)</label>
-                            <input name="location" value={formData.location || ''} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="33.5731, -7.5898" />
+                            <label className="text-[10px] font-black text-slate-400 uppercase flex items-center justify-between">
+                                <span>Localisation (GPS)</span>
+                                <button 
+                                    type="button" 
+                                    onClick={updateLocation}
+                                    disabled={isLocating}
+                                    className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 transition-colors flex items-center gap-1.5 text-[9px] font-bold"
+                                    title="Ma position actuelle"
+                                >
+                                    {isLocating ? <SpinnerIcon className="w-2.5 h-2.5 animate-spin" /> : <LocationMarkerIcon className="w-2.5 h-2.5" />}
+                                    <span>Auto-détecter</span>
+                                </button>
+                            </label>
+                            <input 
+                                name="location" 
+                                value={formData.location || ''} 
+                                onChange={handleChange} 
+                                className="w-full bg-slate-50 dark:bg-slate-700 p-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none" 
+                                placeholder="33.5731, -7.5898" 
+                            />
                         </div>
                     </div>
 
@@ -261,7 +301,6 @@ const CustomerEditModal: React.FC<CustomerEditModalProps> = ({ isOpen, onClose, 
                         </button>
                     </div>
 
-                    {/* Click outside to close suggestions */}
                     {(showCitySuggestions || showRegionSuggestions) && (
                         <div className="fixed inset-0 z-10" onClick={() => { setShowCitySuggestions(false); setShowRegionSuggestions(false); }}></div>
                     )}
