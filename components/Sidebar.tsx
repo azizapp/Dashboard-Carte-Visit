@@ -71,7 +71,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] : [
     { id: 'user_home', label: 'Ma Page', icon: HomeIcon },
     { id: 'appointments', label: 'Mes Rendez-vous', icon: CalendarDaysIcon },
-    { id: 'leads', label: 'Mes Prospects', icon: UsersIcon },
     { id: 'settings', label: 'Réglages', icon: SettingsIcon },
   ];
 
