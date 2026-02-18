@@ -1,14 +1,14 @@
 
 import React, { useMemo, useState } from 'react';
-import { Store, FilterState } from '../types.ts';
-import UsersIcon from './icons/UsersIcon.tsx';
-import PresentationChartLineIcon from './icons/PresentationChartLineIcon.tsx';
-import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
-import ChartBarIcon from './icons/ChartBarIcon.tsx';
-import MapIcon from './icons/MapIcon.tsx';
-import FilterModal from './FilterModal.tsx';
-import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
-import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
+import { Store, FilterState } from '../types';
+import UsersIcon from './icons/UsersIcon';
+import PresentationChartLineIcon from './icons/PresentationChartLineIcon';
+import CurrencyDollarIcon from './icons/CurrencyDollarIcon';
+import ChartBarIcon from './icons/ChartBarIcon';
+import MapIcon from './icons/MapIcon';
+import FilterModal from './FilterModal';
+import CalendarDaysIcon from './icons/CalendarDaysIcon';
+import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 
 const FilterIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -65,6 +65,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     startDate: '',
     endDate: ''
   });
+  const [sortKey, setSortKey] = useState<string>('visits');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const stats = useMemo(() => {
     const today = new Date();
@@ -227,12 +229,36 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
     };
   }, [stores, period, filters]);
 
+  const sortedCoverage = useMemo(() => {
+    const data = [...stats.coverage];
+    const getVal = (item: any, key: string) => {
+      if (key === 'name' || key === 'status') return String(item[key] || '').toLowerCase();
+      return Number(item[key]) || 0;
+    };
+    data.sort((a: any, b: any) => {
+      const av = getVal(a, sortKey);
+      const bv = getVal(b, sortKey);
+      if (typeof av === 'string' && typeof bv === 'string') {
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      const nav = Number(av);
+      const nbv = Number(bv);
+      return sortDir === 'asc' ? (nav - nbv) : (nbv - nav);
+    });
+    return data;
+  }, [stats.coverage, sortKey, sortDir]);
+
+  const toggleSort = (key: string) => {
+    if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('desc'); }
+  };
+
   const totalLeadsCount = stats.currentMetrics.leads || 1;
   const circumference = 251; 
-  const p1 = (stats.priority.haute / totalLeadsCount) * circumference;
-  const p2 = (stats.priority.hauteMoyenne / totalLeadsCount) * circumference;
-  const p3 = (stats.priority.moyenne / totalLeadsCount) * circumference;
-  const p4 = (stats.priority.economie / totalLeadsCount) * circumference;
+  const p1 = (Number(stats.priority.haute) / Number(totalLeadsCount)) * circumference;
+  const p2 = (Number(stats.priority.hauteMoyenne) / Number(totalLeadsCount)) * circumference;
+  const p3 = (Number(stats.priority.moyenne) / Number(totalLeadsCount)) * circumference;
+  const p4 = (Number(stats.priority.economie) / Number(totalLeadsCount)) * circumference;
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
@@ -397,69 +423,60 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
             <h3 className="font-bold text-slate-900 dark:text-white text-xl">Aperçu de la Performance</h3>
             <p className="text-sm text-slate-500 -mt-4 font-medium">Suivez les indicateurs clés de vente par ville en temps réel.</p>
             
-            <div className="space-y-3">
-                {stats.coverage.map((city) => (
-                    <div key={city.name} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col relative group hover:shadow-md transition-all duration-300">
-                        <div className="flex flex-col md:flex-row items-center p-4 gap-4 md:gap-0">
-                            {/* Left: Icon & City Info */}
-                            <div className="flex items-center gap-4 w-full md:w-1/4">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-500 flex-shrink-0">
-                                    <ClipboardDocumentListIcon className="w-5 h-5" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <h4 className="text-xl font-semibold text-slate-800 dark:text-white tracking-tight">{city.name}</h4>
-                                    <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded uppercase tracking-wider">Actif</span>
-                                </div>
-                            </div>
-
-                            {/* Center: Metrics Grid (Plus fin) */}
-                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full text-center md:text-left">
-                                {/* Visites */}
-                                <div className="md:px-6">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Visites</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.visits}</p>
-                                </div>
-                                
-                                {/* Ventes */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Ventes</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.sales}</p>
-                                </div>
-
-                                {/* Montant */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Montant</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">
-                                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} <span className="text-[10px] font-semibold text-slate-400">DH</span>
-                                    </p>
-                                </div>
-
-                                {/* Conversion */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Conversion</p>
-                                    <div className="flex items-baseline gap-1 justify-center md:justify-start">
-                                        <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{city.conv}%</p>
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase">Conv.</p>
-                                    </div>
-                                </div>
-                            </div>
+            <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+              <table className="min-w-full w-full table-auto">
+                <thead className="bg-slate-50 dark:bg-slate-900">
+                  <tr>
+                    <th onClick={() => toggleSort('name')} className="text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Ville {sortKey === 'name' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('status')} className="text-left px-4 py-3 hidden sm:table-cell text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Statut {sortKey === 'status' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('visits')} className="text-right px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Visites {sortKey === 'visits' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('sales')} className="text-right px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Ventes {sortKey === 'sales' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('revenue')} className="text-right px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Montant {sortKey === 'revenue' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('conv')} className="text-right px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Conversion {sortKey === 'conv' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                    <th onClick={() => toggleSort('contribution')} className="text-right px-4 py-3 hidden md:table-cell text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none">Contribution {sortKey === 'contribution' && (sortDir === 'asc' ? '▲' : '▼')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedCoverage.map((city) => (
+                    <tr key={city.name} className="odd:bg-white even:bg-slate-50 dark:odd:bg-slate-800 dark:even:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors">
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500">
+                            <ClipboardDocumentListIcon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-slate-800 dark:text-white">{city.name}</div>
+                            <div className="text-[10px] text-slate-400">{city.visits} visites</div>
+                          </div>
                         </div>
-                        
-                        {/* Bottom Decoration: Realistic Blue Progress Bar */}
-                        <div className="w-full bg-slate-50 dark:bg-slate-900 h-1 relative overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-1000 ease-out rounded-r-full shadow-[0_0_4px_rgba(59,130,246,0.3)]" 
-                                style={{ width: `${Math.min(city.conv, 100)}%` }} 
-                            />
+                      </td>
+                      <td className="px-4 py-3 align-middle hidden sm:table-cell">
+                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded ${city.status === 'Actif' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-700/40'}`}>{city.status}</span>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right font-bold text-slate-900 dark:text-white">{city.visits}</td>
+                      <td className="px-4 py-3 align-middle text-right font-bold text-slate-900 dark:text-white">{city.sales}</td>
+                      <td className="px-4 py-3 align-middle text-right text-slate-700 dark:text-slate-300">
+                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} <span className="text-[11px] text-slate-400">DH</span>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right">
+                        <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">{city.conv}%</div>
+                        <div className="w-24 h-2 bg-slate-100 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600" style={{ width: `${Math.min(city.conv,100)}%` }} />
                         </div>
-                    </div>
-                ))}
-                
-                {stats.coverage.length === 0 && (
-                    <div className="py-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200">
-                        <p className="text-slate-400 italic font-medium">Aucune donnée disponible pour cette période.</p>
-                    </div>
-                )}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right hidden md:table-cell">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">{city.contribution.toFixed(1)}%</div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {stats.coverage.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-16 text-center text-slate-400 italic font-medium">Aucune donnée disponible pour cette période.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {/* Footer Note */}
