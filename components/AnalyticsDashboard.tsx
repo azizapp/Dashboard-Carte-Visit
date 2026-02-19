@@ -1,14 +1,16 @@
 
 import React, { useMemo, useState } from 'react';
-import { Store, FilterState } from '../types.ts';
-import UsersIcon from './icons/UsersIcon.tsx';
-import PresentationChartLineIcon from './icons/PresentationChartLineIcon.tsx';
-import CurrencyDollarIcon from './icons/CurrencyDollarIcon.tsx';
-import ChartBarIcon from './icons/ChartBarIcon.tsx';
-import MapIcon from './icons/MapIcon.tsx';
-import FilterModal from './FilterModal.tsx';
-import CalendarDaysIcon from './icons/CalendarDaysIcon.tsx';
-import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon.tsx';
+import { Store, FilterState } from '../types';
+import UsersIcon from './icons/UsersIcon';
+import PresentationChartLineIcon from './icons/PresentationChartLineIcon';
+import CurrencyDollarIcon from './icons/CurrencyDollarIcon';
+import ChartBarIcon from './icons/ChartBarIcon';
+import MapIcon from './icons/MapIcon';
+import FilterModal from './FilterModal';
+import CalendarDaysIcon from './icons/CalendarDaysIcon';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import StoreIcon from './icons/StoreIcon';
+
 
 const FilterIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -190,26 +192,75 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         else priorityStats.economie++;
     });
 
-    const coverageMap = currentData.reduce((acc: any, curr) => {
-        const city = curr.Ville;
-        if (!acc[city]) acc[city] = { visits: 0, sales: 0, revenue: 0 };
-        acc[city].visits++;
-        if (curr['Action Client']?.trim().toLowerCase() === 'acheter') {
-            acc[city].sales++;
-            acc[city].revenue += Number(curr.Prix) || 0;
-        }
-        return acc;
-    }, {});
+    // Monthly performance data for the calendar year
+    const yearStart = new Date(currentEnd.getFullYear(), 0, 1);
+    const yearEnd = new Date(currentEnd.getFullYear(), 11, 31, 23, 59, 59, 999);
+    const yearData = getFilteredData(yearStart, yearEnd);
+    
+    const monthlyPerformanceMap: Record<number, { visits: number, sales: number, revenue: number }> = {};
+    Array.from({ length: 12 }, (_, i) => {
+      monthlyPerformanceMap[i] = { visits: 0, sales: 0, revenue: 0 };
+    });
 
-    const coverageData = Object.entries(coverageMap).map(([name, data]: any) => ({
+    yearData.forEach(s => {
+      const d = parseWritingDate(s);
+      if (!d) return;
+      const month = d.getMonth();
+      monthlyPerformanceMap[month].visits++;
+      if (s['Action Client']?.trim().toLowerCase() === 'acheter') {
+        monthlyPerformanceMap[month].sales++;
+        monthlyPerformanceMap[month].revenue += Number(s.Prix) || 0;
+      }
+    });
+
+    const monthsFull = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const totalYearRevenue = Object.values(monthlyPerformanceMap).reduce((sum, m) => sum + m.revenue, 0) || 1;
+
+    const coverageData = monthsFull.map((name, idx) => {
+      const data = monthlyPerformanceMap[idx];
+      return {
         name,
-        status: data.sales > 0 ? 'Actif' : 'Prospect',
+        status: data.sales > 0 ? 'Actif' : 'Inactif',
         conv: Math.round((data.sales / (data.visits || 1)) * 100),
         visits: data.visits,
         sales: data.sales,
         revenue: data.revenue,
-        contribution: (data.revenue / totalRevenue) * 100
-    })).sort((a,b) => b.visits - a.visits);
+        contribution: (data.revenue / totalYearRevenue) * 100
+      };
+    });
+
+    const monthlyVisits = Array.from({ length: 12 }, () => 0);
+    yearData.forEach(s => {
+      const d = parseWritingDate(s);
+      if (!d) return;
+      monthlyVisits[d.getMonth()] = (monthlyVisits[d.getMonth()] || 0) + 1;
+    });
+
+    const cityMetrics: Record<string, { visits: number, sales: number, revenue: number }> = {};
+    currentData.forEach(s => {
+        const city = s.Ville || 'Autre';
+        if (!cityMetrics[city]) {
+            cityMetrics[city] = { visits: 0, sales: 0, revenue: 0 };
+        }
+        cityMetrics[city].visits++;
+        if (s['Action Client']?.trim().toLowerCase() === 'acheter') {
+            cityMetrics[city].sales++;
+            cityMetrics[city].revenue += Number(s.Prix) || 0;
+        }
+    });
+
+    const totalRev = currentMetrics.revenue || 1;
+    const cityAnalytics = Object.entries(cityMetrics).map(([name, m]) => ({
+        name,
+        visits: m.visits,
+        sales: m.sales,
+        revenue: m.revenue,
+        status: m.revenue > 0 ? 'Actif' : 'Prospect',
+        conversion: Math.round((m.sales / (m.visits || 1)) * 100),
+        contribution: (m.revenue / totalRev) * 100
+    })).sort((a, b) => b.revenue - a.revenue);
+
+    const maxRevenue = Math.max(...cityAnalytics.map(c => c.revenue), 1);
 
     const customLabel = (filters.startDate && filters.endDate) 
         ? `${new Date(filters.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} - ${new Date(filters.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}`
@@ -220,7 +271,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         prevMetrics,
         trends,
         sortedCities,
-        coverage: coverageData,
+        cityAnalytics,
+        maxRevenue,
+      coverage: coverageData,
+      monthlyVisits,
+      year: currentEnd.getFullYear(),
         priority: priorityStats,
         isCustom,
         customLabel
@@ -229,10 +284,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
 
   const totalLeadsCount = stats.currentMetrics.leads || 1;
   const circumference = 251; 
-  const p1 = (stats.priority.haute / totalLeadsCount) * circumference;
-  const p2 = (stats.priority.hauteMoyenne / totalLeadsCount) * circumference;
-  const p3 = (stats.priority.moyenne / totalLeadsCount) * circumference;
-  const p4 = (stats.priority.economie / totalLeadsCount) * circumference;
+  const p1 = (Number(stats.priority.haute) / Number(totalLeadsCount)) * circumference;
+  const p2 = (Number(stats.priority.hauteMoyenne) / Number(totalLeadsCount)) * circumference;
+  const p3 = (Number(stats.priority.moyenne) / Number(totalLeadsCount)) * circumference;
+  const p4 = (Number(stats.priority.economie) / Number(totalLeadsCount)) * circumference;
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
@@ -317,36 +372,68 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Répartition par Ville</h3>
-                <p className="text-xs text-slate-500 font-medium italic">Villes les plus actives ({stats.isCustom ? 'Période personnalisée' : period})</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Visites par Mois</h3>
+                <p className="text-xs text-slate-500 font-medium italic">Répartition mensuelle — {stats.year}</p>
               </div>
             </div>
-            <div className="flex items-end space-x-6 h-64 w-full pt-4">
-              {stats.sortedCities.slice(0, 7).map(([city, count], idx) => {
-                const maxCount = Math.max(...stats.sortedCities.map(c => c[1]));
-                const heightPercent = (count / (maxCount || 1)) * 100;
-                return (
-                  <div key={city} className="flex flex-col items-center justify-end flex-1 h-full group">
-                    <div className="relative w-full max-w-[44px] flex flex-col justify-end h-full">
-                      <div 
-                        className="w-full bg-blue-500 rounded-t-xl group-hover:bg-blue-600 transition-all duration-500 relative shadow-sm" 
-                        style={{ height: `${heightPercent}%` }}
-                      >
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-xl">
-                          {count} visites
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-4 truncate w-full text-center" title={city}>{city}</span>
-                  </div>
-                );
-              })}
-              {stats.sortedCities.length === 0 && (
-                <div className="w-full h-full flex items-center justify-center text-slate-300 font-bold italic text-sm">Aucune donnée disponible</div>
-              )}
+            
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart 
+                data={stats.coverage}
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="#e2e8f0" 
+                  className="dark:stroke-slate-700"
+                />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  className="dark:text-slate-400"
+                  tickFormatter={(value) => value.substring(0, 3)}
+                />
+                <YAxis 
+                  stroke="#e2e8f0"
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  className="dark:text-slate-400"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1e293b', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    color: '#fff'
+                  }}
+                  cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+                  formatter={(value: any) => [value, 'Visites']}
+                />
+                <Bar 
+                  dataKey="visits" 
+                  fill="#3b82f6" 
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={800}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+            
+            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Total Annuel</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.monthlyVisits.reduce((a, b) => a + b, 0)}</p>
+                </div>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Moyenne/Mois</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{Math.round(stats.monthlyVisits.reduce((a, b) => a + b, 0) / 12)}</p>
+                </div>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Meilleur Mois</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{Math.max(...stats.monthlyVisits)}</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -392,81 +479,81 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
           </div>
         </div>
 
-        {/* --- SECTION: Efficacité par Territoire (Mise à jour: Plus fine/rallongée) --- */}
-        <div className="space-y-6">
-            <h3 className="font-bold text-slate-900 dark:text-white text-xl">Aperçu de la Performance</h3>
-            <p className="text-sm text-slate-500 -mt-4 font-medium">Suivez les indicateurs clés de vente par ville en temps réel.</p>
-            
-            <div className="space-y-3">
-                {stats.coverage.map((city) => (
-                    <div key={city.name} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col relative group hover:shadow-md transition-all duration-300">
-                        <div className="flex flex-col md:flex-row items-center p-4 gap-4 md:gap-0">
-                            {/* Left: Icon & City Info */}
-                            <div className="flex items-center gap-4 w-full md:w-1/4">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-500 flex-shrink-0">
-                                    <ClipboardDocumentListIcon className="w-5 h-5" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <h4 className="text-xl font-semibold text-slate-800 dark:text-white tracking-tight">{city.name}</h4>
-                                    <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded uppercase tracking-wider">Actif</span>
-                                </div>
-                            </div>
-
-                            {/* Center: Metrics Grid (Plus fin) */}
-                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full text-center md:text-left">
-                                {/* Visites */}
-                                <div className="md:px-6">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Visites</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.visits}</p>
-                                </div>
-                                
-                                {/* Ventes */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Ventes</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.sales}</p>
-                                </div>
-
-                                {/* Montant */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Montant</p>
-                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">
-                                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} <span className="text-[10px] font-semibold text-slate-400">DH</span>
-                                    </p>
-                                </div>
-
-                                {/* Conversion */}
-                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
-                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Conversion</p>
-                                    <div className="flex items-baseline gap-1 justify-center md:justify-start">
-                                        <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{city.conv}%</p>
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase">Conv.</p>
+        {/* City Performance Table */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50/50 dark:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700">
+                        <tr>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ville</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Statut</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Visites</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ventes</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Montant</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Conversion</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Contribution</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                        {stats.cityAnalytics.map((city) => (
+                            <tr key={city.name} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors group">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                                            <StoreIcon className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{city.name}</p>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{city.visits} visites</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Bottom Decoration: Realistic Blue Progress Bar */}
-                        <div className="w-full bg-slate-50 dark:bg-slate-900 h-1 relative overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-1000 ease-out rounded-r-full shadow-[0_0_4px_rgba(59,130,246,0.3)]" 
-                                style={{ width: `${Math.min(city.conv, 100)}%` }} 
-                            />
-                        </div>
-                    </div>
-                ))}
-                
-                {stats.coverage.length === 0 && (
-                    <div className="py-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200">
-                        <p className="text-slate-400 italic font-medium">Aucune donnée disponible pour cette période.</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Footer Note */}
-            <div className="text-center py-4">
-                <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                    Dernière mise à jour : Aujourd'hui à {new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})} • Données basées sur la période sélectionnée
-                </p>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                        city.status === 'Actif' 
+                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' 
+                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                    }`}>
+                                        {city.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-center font-black text-slate-700 dark:text-slate-200 text-lg">
+                                    {city.visits}
+                                </td>
+                                <td className="px-6 py-4 text-center font-black text-slate-700 dark:text-slate-200 text-lg">
+                                    {city.sales}
+                                </td>
+                                <td className="px-6 py-4 min-w-[200px]">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-baseline mb-1">
+                                                <span className="text-sm font-black text-slate-900 dark:text-white">
+                                                    {(city.revenue / 1000).toFixed(1)}k <span className="text-[10px] font-bold text-slate-400">DH</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-blue-600 rounded-full transition-all duration-1000"
+                                                    style={{ width: `${(city.revenue / stats.maxRevenue) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                                        {city.conversion}%
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="text-sm font-black text-slate-900 dark:text-white">
+                                        {city.contribution.toFixed(1)}%
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
       </div>
