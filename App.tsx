@@ -41,7 +41,7 @@ const App: React.FC = () => {
 
   // App Configuration State
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'dark');
   const [font, setFont] = useState(() => localStorage.getItem('font') || 'Inter');
   const [accentColor, setAccentColor] = useState('#4f46e5');
 
