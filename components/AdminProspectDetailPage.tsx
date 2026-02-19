@@ -72,11 +72,19 @@ const AdminProspectDetailPage: React.FC<AdminProspectDetailPageProps> = ({ store
         }));
 
         history.forEach(h => {
-            const method = (h['Contacté'] || '').toLowerCase().trim();
-            if (method === 'email') emailCount++;
-            else if (method.includes('whatsapp')) whatsappCount++;
-            else if (method.includes('phone') || method.includes('téléphone') || method.includes('telephone')) phoneCount++;
-            else if (method.includes('physique')) physicsCount++;
+            // FIX: Robust check for contact method using multiple property keys and includes()
+            const rawMethod = h['Contacté'] || (h as any).contacted || '';
+            const method = String(rawMethod).toLowerCase().trim();
+            
+            if (method === 'email') {
+                emailCount++;
+            } else if (method.includes('whatsapp')) {
+                whatsappCount++;
+            } else if (method.includes('phone') || method.includes('téléphone') || method.includes('telephone') || method === 'téléphone' || method === 'phone') {
+                phoneCount++;
+            } else if (method.includes('physique') || method === 'physique') {
+                physicsCount++;
+            }
         });
 
         // حساب تواريخ الشراء بناءً على created_at (Date Heure)
