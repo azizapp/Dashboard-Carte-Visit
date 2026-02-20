@@ -215,15 +215,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
         ? `${new Date(filters.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} - ${new Date(filters.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}`
         : "Période Personnalisée";
 
-    const maxRevenue = Math.max(...coverageData.map(c => c.revenue), 1);
-
     return {
         currentMetrics,
         prevMetrics,
         trends,
         sortedCities,
         coverage: coverageData,
-        maxRevenue,
         priority: priorityStats,
         isCustom,
         customLabel
@@ -395,99 +392,74 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ stores }) => {
           </div>
         </div>
 
-        {/* --- SECTION: Aperçu de la Performance (Image-inspired Redesign) --- */}
+        {/* --- SECTION: Efficacité par Territoire (Mise à jour: Plus fine/rallongée) --- */}
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-xl">Aperçu de la Performance</h3>
-                    <p className="text-sm text-slate-500 font-medium">Suivez les indicateurs clés de vente par ville en temps réel.</p>
-                </div>
-            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-xl">Aperçu de la Performance</h3>
+            <p className="text-sm text-slate-500 -mt-4 font-medium">Suivez les indicateurs clés de vente par ville en temps réel.</p>
             
-            <div className="bg-[#111827] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
-                {/* Table Header */}
-                <div className="hidden md:grid grid-cols-[1.5fr_1fr_0.8fr_0.8fr_1.5fr_1fr_1fr] px-6 py-4 border-b border-slate-800 bg-[#111827]">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ville</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Statut</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center flex items-center justify-center gap-1">
-                        Visites <span className="text-[8px]">▼</span>
-                    </div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Ventes</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Montant</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Conversion</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Contribution</div>
-                </div>
-
-                {/* Table Body */}
-                <div className="divide-y divide-slate-800/50">
-                    {stats.coverage.map((city) => (
-                        <div key={city.name} className="grid grid-cols-2 md:grid-cols-[1.5fr_1fr_0.8fr_0.8fr_1.5fr_1fr_1fr] px-6 py-5 items-center hover:bg-slate-800/30 transition-colors group gap-y-4 md:gap-y-0">
-                            {/* Ville */}
-                            <div className="flex items-center gap-4 col-span-2 md:col-span-1">
-                                <div className="w-10 h-10 rounded-lg bg-blue-900/20 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <div className="space-y-3">
+                {stats.coverage.map((city) => (
+                    <div key={city.name} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col relative group hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col md:flex-row items-center p-4 gap-4 md:gap-0">
+                            {/* Left: Icon & City Info */}
+                            <div className="flex items-center gap-4 w-full md:w-1/4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-500 flex-shrink-0">
                                     <ClipboardDocumentListIcon className="w-5 h-5" />
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-white tracking-tight">{city.name}</h4>
-                                    <p className="text-[10px] text-slate-500 font-medium">{city.visits} visites</p>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-xl font-semibold text-slate-800 dark:text-white tracking-tight">{city.name}</h4>
+                                    <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded uppercase tracking-wider">Actif</span>
                                 </div>
                             </div>
 
-                            {/* Statut */}
-                            <div className="flex justify-center">
-                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                                    city.status === 'Actif' 
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                    : 'bg-slate-700/30 text-slate-500 border border-slate-700/50'
-                                }`}>
-                                    {city.status}
-                                </span>
-                            </div>
-
-                            {/* Visites */}
-                            <div className="text-center">
-                                <span className="text-lg font-bold text-white">{city.visits}</span>
-                            </div>
-
-                            {/* Ventes */}
-                            <div className="text-center">
-                                <span className="text-lg font-bold text-white">{city.sales}</span>
-                            </div>
-
-                            {/* Montant */}
-                            <div className="flex flex-col items-center gap-2 px-4">
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-bold text-white">
-                                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">DH</span>
+                            {/* Center: Metrics Grid (Plus fin) */}
+                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full text-center md:text-left">
+                                {/* Visites */}
+                                <div className="md:px-6">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Visites</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.visits}</p>
                                 </div>
-                                <div className="w-full max-w-[100px] bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
-                                        style={{ width: `${(city.revenue / stats.maxRevenue) * 100}%` }} 
-                                    />
+                                
+                                {/* Ventes */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Ventes</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">{city.sales}</p>
                                 </div>
-                            </div>
 
-                            {/* Conversion */}
-                            <div className="text-center">
-                                <span className="text-lg font-bold text-blue-400">{city.conv}%</span>
-                            </div>
+                                {/* Montant */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Montant</p>
+                                    <p className="text-xl font-semibold text-slate-900 dark:text-white">
+                                        {city.revenue >= 1000 ? `${(city.revenue / 1000).toFixed(1)}k` : city.revenue} <span className="text-[10px] font-semibold text-slate-400">DH</span>
+                                    </p>
+                                </div>
 
-                            {/* Contribution */}
-                            <div className="text-center">
-                                <span className="text-lg font-bold text-white">{(city.contribution || 0).toFixed(1)}%</span>
+                                {/* Conversion */}
+                                <div className="md:px-6 border-l border-slate-100 dark:border-slate-700">
+                                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mb-0.5">Conversion</p>
+                                    <div className="flex items-baseline gap-1 justify-center md:justify-start">
+                                        <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{city.conv}%</p>
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase">Conv.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    ))}
-
-                    {stats.coverage.length === 0 && (
-                        <div className="py-20 text-center">
-                            <p className="text-slate-500 italic font-medium">Aucune donnée disponible pour cette période.</p>
+                        
+                        {/* Bottom Decoration: Realistic Blue Progress Bar */}
+                        <div className="w-full bg-slate-50 dark:bg-slate-900 h-1 relative overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-1000 ease-out rounded-r-full shadow-[0_0_4px_rgba(59,130,246,0.3)]" 
+                                style={{ width: `${Math.min(city.conv, 100)}%` }} 
+                            />
                         </div>
-                    )}
-                </div>
+                    </div>
+                ))}
+                
+                {stats.coverage.length === 0 && (
+                    <div className="py-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-slate-400 italic font-medium">Aucune donnée disponible pour cette période.</p>
+                    </div>
+                )}
             </div>
 
             {/* Footer Note */}

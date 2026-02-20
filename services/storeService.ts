@@ -89,10 +89,9 @@ const api = {
   },
 
   async createCustomer(customerData: Partial<Customer>): Promise<Customer> {
-    // Utilisation de upsert avec onConflict sur name et city pour éviter les doublons et les erreurs 409
     const { data, error } = await supabase
         .from('customers')
-        .upsert([{
+        .insert([{
             name: customerData.name,
             manager: customerData.manager,
             city: customerData.city,
@@ -106,14 +105,11 @@ const api = {
             location: customerData.location,
             user_email: customerData.user_email,
             is_blocked: customerData.is_blocked || false
-        }], { onConflict: 'name,city' })
+        }])
         .select()
         .single();
 
-    if (error) {
-        console.error("Erreur Create/Upsert Customer:", error);
-        throw new Error(`Erreur lors de la gestion du client: ${error.message}`);
-    }
+    if (error) throw new Error(`Erreur lors de la création du client: ${error.message}`);
     return data as Customer;
   },
 
@@ -218,53 +214,24 @@ const api = {
         customerId = newCust.id;
     }
 
-    // Tentative d'insertion de la visite avec gestion des conflits (409)
-    let newVisit = null;
-    let visitErr = null;
-    let attempts = 0;
+    const { data: newVisit, error: visitErr } = await supabase
+        .from('visits')
+        .insert([{
+            customer_id: customerId,
+            user_email: userEmail || formData.USER || 'vendeur@apollo.com',
+            action: formData['Action Client'] || 'Visite',
+            appointment_date: formData['Rendez-Vous'] || null,
+            note: formData.Note || '',
+            contacted: formData['Contacté'] || '',
+            discussed: formData['Discuté'] || '',
+            price: Number(formData.Prix) || 0,
+            quantity: Number(formData.Quantité) || 0,
+            image: imageUrl
+        }])
+        .select()
+        .single();
 
-    while (attempts < 2) {
-        const { data, error } = await supabase
-            .from('visits')
-            .insert([{
-                customer_id: customerId,
-                user_email: userEmail || formData.USER || 'vendeur@apollo.com',
-                action: formData['Action Client'] || 'Visite',
-                appointment_date: formData['Rendez-Vous'] || null,
-                note: formData.Note || '',
-                contacted: formData['Contacté'] || '',
-                discussed: formData['Discuté'] || '',
-                price: Number(formData.Prix) || 0,
-                quantity: Number(formData.Quantité) || 0,
-                image: imageUrl
-            }])
-            .select()
-            .maybeSingle();
-
-        if (!error && data) {
-            newVisit = data;
-            break;
-        }
-
-        visitErr = error;
-        // Si erreur 409 (Conflict / Unique violation)
-        if (error && (error.code === '23505' || error.status === 409)) {
-            console.warn(`Conflit détecté lors de l'insertion de la visite (tentative ${attempts + 1}). Réessai...`);
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1s avant de réessayer
-        } else {
-            break;
-        }
-    }
-
-    if (visitErr && !newVisit) {
-        console.error("Détails de l'erreur de visite:", visitErr);
-        throw new Error(`Erreur lors de l'enregistrement de la visite: ${visitErr.message}`);
-    }
-
-    if (!newVisit) {
-        throw new Error("Échec de l'enregistrement de la visite: aucune donnée retournée.");
-    }
+    if (visitErr) throw new Error(`Erreur lors de l'enregistrement de la visite: ${visitErr.message}`);
 
     return { ...formData, id: customerId, ID: newVisit.id.toString(), Image: imageUrl } as Store;
   },
